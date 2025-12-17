@@ -12,8 +12,20 @@ public class SegmentLooper : MonoBehaviour
     public Transform worldRoot;   // WorldRoot
     public Transform obstaclesRoot; // Obstacles
 
-    // 한 세그먼트당 장애물 1개를 붙여두고 재활용할 때 교체
-    Dictionary<Transform, GameObject> segObstacle = new Dictionary<Transform, GameObject>();
+    // 한 세그먼트당 재활용되는 장애물들
+    Dictionary<Transform, List<GameObject>> segObstacle = new Dictionary<Transform, List<GameObject>>();
+
+    [Tooltip("Lane X positions (e.g. -2,0,2)")]
+    public float[] lanes = new float[] { -2f, 0f, 2f };
+
+    [Tooltip("Base number of obstacles per segment (will scale with difficulty)")]
+    public int baseObstaclesPerSegment = 1;
+
+    [Tooltip("Seconds for difficulty to increase by one obstacle")]
+    public float secondsPerDifficultyStep = 20f;
+
+    // keep a safe lane index to guarantee a continuous path; it can change occasionally
+    int safeLaneIndex = 1; // start at middle lane by default
 
     float lowestY;
 
@@ -25,7 +37,7 @@ public class SegmentLooper : MonoBehaviour
         for (int i = 0; i < segments.Count; i++)
         {
             lowestY = Mathf.Min(lowestY, segments[i].position.y);
-            SpawnOneObstacleOnSegment(segments[i]);
+            SpawnObstaclesOnSegment(segments[i]);
         }
     }
 
@@ -51,29 +63,57 @@ public class SegmentLooper : MonoBehaviour
         }
     }
 
-    void SpawnOneObstacleOnSegment(Transform seg)
+    void SpawnObstaclesOnSegment(Transform seg)
     {
-        var obs = obstaclePool.Get();
-        obs.transform.SetParent(obstaclesRoot);
+        // determine difficulty-scaled obstacle count but always leave at least one free lane
+        int maxObstacles = Mathf.Max(0, lanes.Length - 1);
+        int add = 0;
+        if (GameManager.Instance != null)
+            add = Mathf.FloorToInt(GameManager.Instance.score / secondsPerDifficultyStep);
 
-        // “세그먼트 중앙 근처”에 하나 배치 + X는 랜덤(좌/우 레인)
-        float[] lanes = { -2f, 0f, 2f };
-        float x = lanes[Random.Range(0, lanes.Length)];
-        float y = seg.position.y - (segmentHeight * 0.5f); // 세그먼트 안쪽(대충 중앙)
+        int desired = Mathf.Clamp(baseObstaclesPerSegment + add, 0, maxObstacles);
 
-        obs.transform.position = new Vector3(x, y, 0f);
+        var list = new List<GameObject>();
 
-        segObstacle[seg] = obs;
+        // decide safe lane; occasionally shift it depending on difficulty
+        if (Random.value < 0.2f + (add * 0.02f)) // small chance to switch safe lane, grows with difficulty
+        {
+            safeLaneIndex = Random.Range(0, lanes.Length);
+        }
+
+        // choose lanes to place obstacles in: pick `desired` lanes from lanes excluding safeLaneIndex
+        var candidateIndices = new List<int>();
+        for (int i = 0; i < lanes.Length; i++) if (i != safeLaneIndex) candidateIndices.Add(i);
+
+        for (int i = 0; i < desired && candidateIndices.Count > 0; i++)
+        {
+            int pick = Random.Range(0, candidateIndices.Count);
+            int laneIndex = candidateIndices[pick];
+            candidateIndices.RemoveAt(pick);
+
+            var obs = obstaclePool.Get();
+            obs.transform.SetParent(obstaclesRoot);
+            float x = lanes[laneIndex];
+            float y = seg.position.y - (segmentHeight * 0.5f);
+            obs.transform.position = new Vector3(x, y, 0f);
+            list.Add(obs);
+        }
+
+        // store list (may be empty if desired was 0)
+        segObstacle[seg] = list;
     }
 
     void RespawnObstacleOnSegment(Transform seg)
     {
-        if (segObstacle.TryGetValue(seg, out var oldObs) && oldObs != null)
+        if (segObstacle.TryGetValue(seg, out var oldList) && oldList != null)
         {
-            obstaclePool.Release(oldObs);
+            foreach (var o in oldList)
+            {
+                if (o != null) obstaclePool.Release(o);
+            }
             segObstacle.Remove(seg);
         }
 
-        SpawnOneObstacleOnSegment(seg);
+        SpawnObstaclesOnSegment(seg);
     }
 }

@@ -42,6 +42,9 @@ TagManager:
   - name: Default
     uniqueID: 0
     locked: 0
+  - name: Ground
+    uniqueID: 50408481
+    locked: 0
   - name: Trail
     uniqueID: 2641501013
     locked: 0
