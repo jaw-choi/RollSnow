@@ -11,8 +11,9 @@ GameObject:
   - component: {fileID: 5694627787000626357}
   - component: {fileID: 7162193288606294710}
   - component: {fileID: 844063248094032479}
+  - component: {fileID: 8473870192830538250}
   m_Layer: 0
-  m_Name: ObstacleTreePrefab
+  m_Name: ObstacleTreePrefab2
   m_TagString: Obstacle
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -83,7 +84,7 @@ SpriteRenderer:
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_Sprite: {fileID: 7482667652216324306, guid: 75f5f34dc1b5347e0b8351032682f224, type: 3}
-  m_Color: {r: 0.40204123, g: 1, b: 0.1415093, a: 1}
+  m_Color: {r: 0.9748427, g: 0.9363571, b: 0.2912265, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
@@ -143,3 +144,21 @@ PolygonCollider2D:
       - {x: 0.5, y: -0.28866667}
       - {x: 0.5, y: -0.28866667}
   m_UseDelaunayMesh: 1
+--- !u!114 &8473870192830538250
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5685015320992687327}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 059bfa2498cab9e42ac487b5242587ba, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ObstacleBehavior
+  alwaysLethal: 0
+  shrinkOverTime: 1
+  startScale: 3
+  endScale: 1
+  shrinkDuration: 10
+  safeScale: 1

@@ -5,7 +5,7 @@ public class Player : MonoBehaviour
     [Tooltip("Growth rate in scale units per second")]
     public float growthRate = 0.02f;
     [Tooltip("Maximum uniform scale")]
-    public float maxScale = 3f;
+    public float maxScale = 1f;
 
     void Update()
     {
@@ -41,13 +41,21 @@ public class Player : MonoBehaviour
 
     void OnTriggerEnter2D(Collider2D other)
     {
-        if (other.CompareTag("Obstacle"))
+        // 장애물 타입에 따라 치명 여부가 달라질 수 있으므로 컴포넌트를 우선 확인
+        var obstacle = other.GetComponent<ObstacleBehavior>();
+        if (obstacle != null)
         {
-            Debug.Log("GAME OVER: hit obstacle");
-            if (GameManager.Instance != null)
-                GameManager.Instance.GameOver();
-            else
-                Time.timeScale = 0f; // fallback
+            if (!obstacle.IsLethal()) return;
         }
+        else if (!other.CompareTag("Obstacle"))
+        {
+            return;
+        }
+
+        Debug.Log("GAME OVER: hit obstacle");
+        if (GameManager.Instance != null)
+            GameManager.Instance.GameOver();
+        else
+            Time.timeScale = 0f; // fallback
     }
 }

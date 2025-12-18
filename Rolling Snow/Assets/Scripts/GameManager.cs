@@ -1,8 +1,6 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
-#if ENABLE_INPUT_SYSTEM && !ENABLE_LEGACY_INPUT_MANAGER
 using UnityEngine.InputSystem;
-#endif
 
 public class GameManager : MonoBehaviour
 {
@@ -15,9 +13,7 @@ public class GameManager : MonoBehaviour
 
     public bool IsGameOver { get; private set; } = false;
 
-#if ENABLE_INPUT_SYSTEM && !ENABLE_LEGACY_INPUT_MANAGER
     [SerializeField] private InputActionReference restartAction;
-#endif
 
     void Awake()
     {
@@ -29,30 +25,35 @@ public class GameManager : MonoBehaviour
         else if (Instance != this)
         {
             Destroy(gameObject);
+            return;
+        }
+    }
+
+    void OnDestroy()
+    {
+        if (Instance == this)
+        {
+            Instance = null;
         }
     }
 
     void OnEnable()
     {
-#if ENABLE_INPUT_SYSTEM && !ENABLE_LEGACY_INPUT_MANAGER
         if (restartAction != null && restartAction.action != null)
         {
-            restartAction.action.performed += OnRestartPerformed;
             restartAction.action.Enable();
         }
-#endif
     }
 
     void OnDisable()
     {
-#if ENABLE_INPUT_SYSTEM && !ENABLE_LEGACY_INPUT_MANAGER
         if (restartAction != null && restartAction.action != null)
         {
-            restartAction.action.performed -= OnRestartPerformed;
             restartAction.action.Disable();
         }
-#endif
     }
+
+    // Note: input is polled from `restartAction` in Update()
 
     void Update()
     {
@@ -61,22 +62,12 @@ public class GameManager : MonoBehaviour
             score += scoreRate * Time.deltaTime;
         }
 
-#if !ENABLE_INPUT_SYSTEM || ENABLE_LEGACY_INPUT_MANAGER
-        // Fallback for legacy input if project still uses it
-        if (Input.GetKeyDown(KeyCode.R))
+        // Poll the Input System restart action (if assigned)
+        if (restartAction != null && restartAction.action != null && restartAction.action.triggered)
         {
             Restart();
         }
-#endif
     }
-
-#if ENABLE_INPUT_SYSTEM && !ENABLE_LEGACY_INPUT_MANAGER
-    private void OnRestartPerformed(InputAction.CallbackContext ctx)
-    {
-        Restart();
-    }
-#endif
-
     public void GameOver()
     {
         if (IsGameOver) return;
@@ -90,6 +81,6 @@ public class GameManager : MonoBehaviour
         Time.timeScale = 1f;
         score = 0f;
         IsGameOver = false;
-        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+        SceneManager.LoadScene("GameScene");
     }
 }

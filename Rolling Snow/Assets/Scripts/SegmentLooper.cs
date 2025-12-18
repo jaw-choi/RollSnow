@@ -6,13 +6,13 @@ public class SegmentLooper : MonoBehaviour
     public Camera cam;
     public float segmentHeight = 10f;
     public float recycleOffset = 12f; // camera above threshold
-    public List<Transform> segments;  // drag Segment_0..3
+    [SerializeField] private Transform segment; // single segment to recycle
+    [SerializeField] private List<Transform> segments; // optional legacy list (uses first item)
     public ObstaclePool obstaclePool;
 
     public Transform worldRoot;   // WorldRoot
     public Transform obstaclesRoot; // Obstacles
 
-    // 한 세그먼트당 재활용되는 장애물들
     Dictionary<Transform, List<GameObject>> segObstacle = new Dictionary<Transform, List<GameObject>>();
 
     [Tooltip("Lane X positions (e.g. -2,0,2)")]
@@ -33,33 +33,35 @@ public class SegmentLooper : MonoBehaviour
     {
         if (cam == null) cam = Camera.main;
 
-        lowestY = segments[0].position.y;
-        for (int i = 0; i < segments.Count; i++)
+        if (segment == null && segments != null && segments.Count > 0)
         {
-            lowestY = Mathf.Min(lowestY, segments[i].position.y);
-            SpawnObstaclesOnSegment(segments[i]);
+            segment = segments[0];
         }
+
+        if (segment == null)
+        {
+            enabled = false;
+            return;
+        }
+
+        lowestY = segment.position.y;
+        SpawnObstaclesOnSegment(segment);
     }
 
     void Update()
     {
+        if (segment == null || cam == null) return;
+
         float camY = cam.transform.position.y;
+        var seg = segment;
 
-        for (int i = 0; i < segments.Count; i++)
+        if (seg.position.y > camY + recycleOffset)
         {
-            var seg = segments[i];
+            float newY = lowestY - segmentHeight;
+            seg.position = new Vector3(seg.position.x, newY, seg.position.z);
+            lowestY = newY;
 
-            // 세그먼트가 카메라 위로 충분히 올라갔으면(= 지나갔으면) 아래로 재배치
-            if (seg.position.y > camY + recycleOffset)
-            {
-                // 아래로 하나 더 내림
-                float newY = lowestY - segmentHeight;
-                seg.position = new Vector3(seg.position.x, newY, seg.position.z);
-                lowestY = newY;
-
-                // 이 세그먼트의 장애물도 새로 배치
-                RespawnObstacleOnSegment(seg);
-            }
+            RespawnObstacleOnSegment(seg);
         }
     }
 

@@ -13,6 +13,8 @@ public class TrailStampSpawner : MonoBehaviour
     public GameObject turnParticlePrefab;
     [Tooltip("Seconds to keep spawned turn particle before destroy (0 = let particle handle)")]
     public float turnParticleLife = 2f;
+    [Tooltip("Scale multiplier for spawned turn particles")]
+    public float turnParticleScale = 0.5f;
     [Tooltip("Minimum horizontal movement to consider (to avoid noise)")]
     public float turnDetectThreshold = 0.01f;
     [Tooltip("Cooldown between turn particle spawns")]
@@ -52,6 +54,7 @@ public class TrailStampSpawner : MonoBehaviour
         {
           Vector3 p = transform.position + offset;
           var go = Instantiate(turnParticlePrefab, p, Quaternion.identity, trailRoot);
+          if (turnParticleScale > 0f) go.transform.localScale *= turnParticleScale;
           if (turnParticleLife > 0f) Destroy(go, turnParticleLife);
         }
         turnTimer = turnCooldown;

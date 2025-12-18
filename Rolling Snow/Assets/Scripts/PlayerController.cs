@@ -9,7 +9,7 @@ public class PlayerController : MonoBehaviour
     [Header("Turn Settings")]
     public float tapThreshold = 0.18f; // seconds to consider a tap (quick flip)
     public float slowFlipDuration = 0.6f; // duration of slow flip when long-press
-    public float quickFlipDuration = 0.15f; // duration of quick flip for short tap
+    // quickFlipDuration removed — short taps now use slowFlipDuration (curved behavior)
 
     // continuous direction value used for movement (-1..1)
     float dirValue = 0f;
@@ -91,29 +91,12 @@ public class PlayerController : MonoBehaviour
         if (released && isPressing)
         {
             float hold = Time.time - pressStartTime;
-            // Short tap -> start a quick gradual flip
-            if (hold < tapThreshold && !flipTriggeredThisPress)
+            // Start flip on release if not already triggered for this press
+            if (!flipTriggeredThisPress)
             {
-                flipStartValue = dirValue;
-                moveDir = -moveDir;
-                flipTargetValue = moveDir;
-                flipProgress = 0f;
-                currentFlipDuration = quickFlipDuration;
-                flipInProgress = true;
-                flipTriggeredThisPress = true;
-            }
-            else
-            {
-                // For long holds that didn't start flip yet, start slow flip now
-                if (!flipInProgress && !flipTriggeredThisPress)
+                if (!flipInProgress)
                 {
-                    flipStartValue = dirValue;
-                    moveDir = -moveDir; // set new logical direction
-                    flipTargetValue = moveDir;
-                    flipProgress = 0f;
-                    currentFlipDuration = slowFlipDuration;
-                    flipInProgress = true;
-                    flipTriggeredThisPress = true;
+                    StartFlip(slowFlipDuration);
                 }
                 // otherwise let existing flipInProgress continue
             }
@@ -125,13 +108,7 @@ public class PlayerController : MonoBehaviour
         {
             if (Time.time - pressStartTime >= tapThreshold)
             {
-                flipStartValue = dirValue;
-                moveDir = -moveDir;
-                flipTargetValue = moveDir;
-                flipProgress = 0f;
-                currentFlipDuration = slowFlipDuration;
-                flipInProgress = true;
-                flipTriggeredThisPress = true;
+                StartFlip(slowFlipDuration);
             }
         }
 
@@ -162,5 +139,16 @@ public class PlayerController : MonoBehaviour
             Vector3 newPos = rb.position + Vector3.right * (dirValue * moveSpeed * Time.fixedDeltaTime);
             rb.MovePosition(newPos);
         }
+    }
+
+    private void StartFlip(float duration)
+    {
+        flipStartValue = dirValue;
+        moveDir = -moveDir;
+        flipTargetValue = moveDir;
+        flipProgress = 0f;
+        currentFlipDuration = duration;
+        flipInProgress = true;
+        flipTriggeredThisPress = true;
     }
 }
