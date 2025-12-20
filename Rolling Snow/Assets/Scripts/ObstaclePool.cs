@@ -4,36 +4,62 @@ using UnityEngine;
 public class ObstaclePool : MonoBehaviour
 {
     [Header("Obstacle Prefabs")]
-    public GameObject obstaclePrefab; // 기존 단일 프리팹(하위 호환)
-    public List<GameObject> obstaclePrefabs = new List<GameObject>(); // 여러 타입 장애물용 프리팹 목록
-    public bool randomizePrefabs = true; // 활성화 시 매번 랜덤 프리팹 선택
+    public GameObject obstaclePrefab;
+    public List<GameObject> obstaclePrefabs = new List<GameObject>();
+    public bool randomizePrefabs = true;
 
     [Header("Pooling")]
-    public int prewarmCount = 20; // 프리팹 1개당 미리 만들어 둘 개수
+    public int prewarmCount = 20;
+
+    [Header("Visual Variation")]
+    public bool randomizeScale = true;
+    public Vector2 scaleRange = new Vector2(0.85f, 1.25f);
+    public bool randomizeRotation = true;
+    public Vector2 rotationRange = new Vector2(-10f, 10f);
 
     readonly Dictionary<GameObject, Queue<GameObject>> poolByPrefab = new Dictionary<GameObject, Queue<GameObject>>();
     readonly Dictionary<int, GameObject> prefabByInstanceId = new Dictionary<int, GameObject>();
-    List<GameObject> activePrefabs = new List<GameObject>();
+    readonly List<GameObject> activePrefabs = new List<GameObject>();
 
     void Awake()
     {
-        // 사용할 프리팹 목록 확정(여러 개가 없으면 기존 단일 프리팹 사용)
+        BuildPrefabList();
+        PrewarmPools();
+    }
+
+    void BuildPrefabList()
+    {
+        activePrefabs.Clear();
+
         if (obstaclePrefabs != null && obstaclePrefabs.Count > 0)
         {
-            activePrefabs.AddRange(obstaclePrefabs);
+            foreach (var prefab in obstaclePrefabs)
+            {
+                if (prefab != null && !activePrefabs.Contains(prefab))
+                {
+                    activePrefabs.Add(prefab);
+                }
+            }
         }
-        else if (obstaclePrefab != null)
+
+        if (activePrefabs.Count == 0 && obstaclePrefab != null)
         {
             activePrefabs.Add(obstaclePrefab);
         }
 
-        // 각 프리팹별로 풀을 준비
-        for (int p = 0; p < activePrefabs.Count; p++)
+        if (activePrefabs.Count == 0)
         {
-            var prefab = activePrefabs[p];
-            if (!poolByPrefab.ContainsKey(prefab))
-                poolByPrefab[prefab] = new Queue<GameObject>();
+            Debug.LogWarning($"{nameof(ObstaclePool)} has no prefabs assigned.", this);
+        }
+    }
 
+    void PrewarmPools()
+    {
+        if (activePrefabs.Count == 0 || prewarmCount <= 0) return;
+
+        foreach (var prefab in activePrefabs)
+        {
+            EnsureQueue(prefab);
             for (int i = 0; i < prewarmCount; i++)
             {
                 var obj = Instantiate(prefab, transform);
@@ -42,6 +68,13 @@ public class ObstaclePool : MonoBehaviour
                 prefabByInstanceId[obj.GetInstanceID()] = prefab;
             }
         }
+    }
+
+    void EnsureQueue(GameObject prefab)
+    {
+        if (prefab == null) return;
+        if (!poolByPrefab.ContainsKey(prefab))
+            poolByPrefab[prefab] = new Queue<GameObject>();
     }
 
     public GameObject Get()
@@ -57,26 +90,48 @@ public class ObstaclePool : MonoBehaviour
 
         obj.SetActive(false);
         obj.transform.SetParent(transform);
+
         var id = obj.GetInstanceID();
         if (prefabByInstanceId.TryGetValue(id, out var prefab) && prefab != null)
         {
-            if (!poolByPrefab.ContainsKey(prefab))
-                poolByPrefab[prefab] = new Queue<GameObject>();
+            EnsureQueue(prefab);
             poolByPrefab[prefab].Enqueue(obj);
+        }
+    }
+
+    public void ApplyVariation(Transform instance)
+    {
+        if (instance == null) return;
+
+        if (randomizeRotation)
+        {
+            float minRot = Mathf.Min(rotationRange.x, rotationRange.y);
+            float maxRot = Mathf.Max(rotationRange.x, rotationRange.y);
+            instance.rotation = Quaternion.Euler(0f, 0f, Random.Range(minRot, maxRot));
+        }
+
+        if (randomizeScale)
+        {
+            float minScale = Mathf.Min(scaleRange.x, scaleRange.y);
+            float maxScale = Mathf.Max(scaleRange.x, scaleRange.y);
+            instance.localScale = Vector3.one * Random.Range(minScale, maxScale);
         }
     }
 
     GameObject PickPrefab()
     {
-        if (activePrefabs == null || activePrefabs.Count == 0) return obstaclePrefab;
-        if (!randomizePrefabs || activePrefabs.Count == 1) return activePrefabs[0];
+        if (activePrefabs == null || activePrefabs.Count == 0)
+            return obstaclePrefab;
+
+        if (!randomizePrefabs || activePrefabs.Count == 1)
+            return activePrefabs[0];
+
         return activePrefabs[Random.Range(0, activePrefabs.Count)];
     }
 
     GameObject GetFromPrefab(GameObject prefab)
     {
-        if (!poolByPrefab.ContainsKey(prefab))
-            poolByPrefab[prefab] = new Queue<GameObject>();
+        EnsureQueue(prefab);
 
         GameObject obj = (poolByPrefab[prefab].Count > 0)
             ? poolByPrefab[prefab].Dequeue()

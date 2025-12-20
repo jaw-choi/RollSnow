@@ -190,12 +190,12 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_MaskInteraction: 0
-  m_Sprite: {fileID: 6175540280708717853, guid: f93ea0f60c6de46449f9afaf0842cc06, type: 3}
+  m_Sprite: {fileID: 6065647311605328400, guid: 329b4b7b4320bc149af4f2a78090910b, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
-  m_Size: {x: 1, y: 1}
+  m_Size: {x: 1.39, y: 1.41}
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
@@ -276,7 +276,7 @@ MonoBehaviour:
   offset: {x: 0, y: 0.15, z: 0}
   turnParticlePrefab: {fileID: 483485926508529444, guid: a3dbf19ac6aa8af448fdd4b66b24ee3e, type: 3}
   turnParticleLife: 2
-  turnParticleScale: 0.5
+  turnParticleScale: 0.1
   turnDetectThreshold: 0.01
   turnCooldown: 0.2
 --- !u!58 &351361347
@@ -327,7 +327,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9122fe2da8e5c944386c6d54e03a0700, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Player
-  growthRate: 0.1
+  growthRate: 0.02
   maxScale: 1
 --- !u!1 &371810948
 GameObject:
@@ -356,7 +356,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0.18, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 3, z: 1}
+  m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 468379106}
@@ -908,19 +908,15 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SegmentLooper
   cam: {fileID: 519420031}
-  segmentHeight: 10
-  recycleOffset: 12
-  segment: {fileID: 371810949}
-  segments: []
   obstaclePool: {fileID: 1716853417}
-  worldRoot: {fileID: 468379106}
   obstaclesRoot: {fileID: 1716853418}
-  lanes:
-  - -2
-  - 0
-  - 2
-  baseObstaclesPerSegment: 1
-  secondsPerDifficultyStep: 20
+  segmentLayouts:
+  - segment: {fileID: 371810949}
+    obstaclePositions:
+    - {x: 3, y: 0}
+    - {x: -3, y: 2}
+    - {x: 3, y: 4}
+    - {x: -3, y: 7}
 --- !u!1 &1574106985
 GameObject:
   m_ObjectHideFlags: 0
@@ -1029,12 +1025,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a9d26ea6b171edf4992703ec1b59f73c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ObstaclePool
-  obstaclePrefab: {fileID: 5685015320992687327, guid: 06bbff30bada58f44bbf554e388fe014, type: 3}
+  obstaclePrefab: {fileID: 9074424868245300563, guid: 97a29f461a83ec649a5efbdeecfec212, type: 3}
   obstaclePrefabs:
+  - {fileID: 9074424868245300563, guid: 97a29f461a83ec649a5efbdeecfec212, type: 3}
   - {fileID: 5685015320992687327, guid: 06bbff30bada58f44bbf554e388fe014, type: 3}
-  - {fileID: 5685015320992687327, guid: 5e788a6ce40e33545a7e64b357c89f5f, type: 3}
   randomizePrefabs: 1
   prewarmCount: 20
+  randomizeScale: 0
+  scaleRange: {x: 0.25, y: 0.35}
+  randomizeRotation: 0
+  rotationRange: {x: -10, y: 10}
 --- !u!4 &1716853418
 Transform:
   m_ObjectHideFlags: 0
