@@ -7,18 +7,28 @@ public class Player : MonoBehaviour
     [Tooltip("Maximum uniform scale")]
     public float maxScale = 1f;
 
+    Vector3 baseScale;
+    float externalScaleMultiplier = 1f;
+
+    void Awake()
+    {
+        baseScale = transform.localScale;
+        if (baseScale.x > maxScale)
+            baseScale = Vector3.one * maxScale;
+    }
+
     void Update()
     {
         // Increase player scale over time (uniformly)
-        if (transform.localScale.x < maxScale)
+        if (baseScale.x < maxScale)
         {
             var delta = Vector3.one * growthRate * Time.deltaTime;
-            transform.localScale += delta;
-            if (transform.localScale.x > maxScale)
-                transform.localScale = Vector3.one * maxScale;
+            baseScale += delta;
+            if (baseScale.x > maxScale)
+                baseScale = Vector3.one * maxScale;
         }
 
-        // Restart moved to GameManager
+        ApplyScale();
 
         // Check if player left the camera viewport -> game over
         if (GameManager.Instance != null && !GameManager.Instance.IsGameOver)
@@ -30,10 +40,10 @@ public class Player : MonoBehaviour
                 if (vp.x < 0f || vp.x > 1f || vp.y < 0f || vp.y > 1f)
                 {
                     Debug.Log("GAME OVER: left screen");
-            if (GameManager.Instance != null)
-                GameManager.Instance.GameOver();
-            else
-                Time.timeScale = 0f; // fallback
+                    if (GameManager.Instance != null)
+                        GameManager.Instance.GameOver();
+                    else
+                        Time.timeScale = 0f;
                 }
             }
         }
@@ -52,10 +62,20 @@ public class Player : MonoBehaviour
             return;
         }
 
-        Debug.Log("GAME OVER: hit obstacle");
         if (GameManager.Instance != null)
             GameManager.Instance.GameOver();
         else
             Time.timeScale = 0f; // fallback
+    }
+
+    void ApplyScale()
+    {
+        transform.localScale = baseScale * externalScaleMultiplier;
+    }
+
+    public void SetExternalScaleMultiplier(float multiplier)
+    {
+        externalScaleMultiplier = Mathf.Max(0.01f, multiplier);
+        ApplyScale();
     }
 }

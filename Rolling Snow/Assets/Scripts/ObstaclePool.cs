@@ -4,7 +4,6 @@ using UnityEngine;
 public class ObstaclePool : MonoBehaviour
 {
     [Header("Obstacle Prefabs")]
-    public GameObject obstaclePrefab;
     public List<GameObject> obstaclePrefabs = new List<GameObject>();
     public bool randomizePrefabs = true;
 
@@ -12,8 +11,8 @@ public class ObstaclePool : MonoBehaviour
     public int prewarmCount = 20;
 
     [Header("Visual Variation")]
-    public bool randomizeScale = true;
-    public Vector2 scaleRange = new Vector2(0.85f, 1.25f);
+    [Tooltip("Uniform obstacle scale")]
+    public float obstacleScale = 1f;
     public bool randomizeRotation = true;
     public Vector2 rotationRange = new Vector2(-10f, 10f);
 
@@ -40,16 +39,6 @@ public class ObstaclePool : MonoBehaviour
                     activePrefabs.Add(prefab);
                 }
             }
-        }
-
-        if (activePrefabs.Count == 0 && obstaclePrefab != null)
-        {
-            activePrefabs.Add(obstaclePrefab);
-        }
-
-        if (activePrefabs.Count == 0)
-        {
-            Debug.LogWarning($"{nameof(ObstaclePool)} has no prefabs assigned.", this);
         }
     }
 
@@ -110,19 +99,11 @@ public class ObstaclePool : MonoBehaviour
             instance.rotation = Quaternion.Euler(0f, 0f, Random.Range(minRot, maxRot));
         }
 
-        if (randomizeScale)
-        {
-            float minScale = Mathf.Min(scaleRange.x, scaleRange.y);
-            float maxScale = Mathf.Max(scaleRange.x, scaleRange.y);
-            instance.localScale = Vector3.one * Random.Range(minScale, maxScale);
-        }
+        instance.localScale = Vector3.one * Mathf.Max(0.01f, obstacleScale);
     }
 
     GameObject PickPrefab()
     {
-        if (activePrefabs == null || activePrefabs.Count == 0)
-            return obstaclePrefab;
-
         if (!randomizePrefabs || activePrefabs.Count == 1)
             return activePrefabs[0];
 

@@ -37,6 +37,7 @@ public class TrailStampSpawner : MonoBehaviour
         timer = 0f;
         Vector3 pos = transform.position + offset;
         GameObject stamp = Instantiate(stampPrefab, pos, Quaternion.identity, trailRoot);
+        stamp.transform.localScale = transform.localScale;
         Destroy(stamp, lifeTime);
       }
 

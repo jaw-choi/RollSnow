@@ -4,11 +4,16 @@ using UnityEngine.InputSystem;
 public class PlayerController : MonoBehaviour
 {
     public float moveSpeed = 1f;
+    [Header("Vertical Descent")]
+    [Tooltip("Speed at which the player falls until reaching groundY")]
+    public float descentSpeed = 2f;
+    [Tooltip("Lowest Y position the player can reach")]
+    public float groundY = 1.2f;
     private int moveDir = 0; // -1 = left, +1 = right, 0 = waiting
 
     [Header("Turn Settings")]
     public float tapThreshold = 0.18f; // seconds to consider a tap (quick flip)
-    public float slowFlipDuration = 0.6f; // duration of slow flip when long-press
+    public float slowFlipDuration = 0.3f; // duration of slow flip when long-press
     // quickFlipDuration removed — short taps now use slowFlipDuration (curved behavior)
 
     // continuous direction value used for movement (-1..1)
@@ -124,20 +129,17 @@ public class PlayerController : MonoBehaviour
             }
         }
 
-        // If there's no Rigidbody, apply movement here (legacy behavior) using dirValue
-        if (rb == null && Mathf.Abs(dirValue) > 0.001f)
+        if (rb == null)
         {
-            transform.position += Vector3.right * (dirValue * moveSpeed * Time.deltaTime);
+            ApplyTransformMovement(Time.deltaTime);
         }
     }
 
     void FixedUpdate()
     {
-        // If there's a Rigidbody, perform physics-friendly movement here
-        if (rb != null && Mathf.Abs(dirValue) > 0.001f)
+        if (rb != null)
         {
-            Vector3 newPos = rb.position + Vector3.right * (dirValue * moveSpeed * Time.fixedDeltaTime);
-            rb.MovePosition(newPos);
+            ApplyRigidbodyMovement(Time.fixedDeltaTime);
         }
     }
 
@@ -150,5 +152,31 @@ public class PlayerController : MonoBehaviour
         currentFlipDuration = duration;
         flipInProgress = true;
         flipTriggeredThisPress = true;
+    }
+
+    void ApplyTransformMovement(float deltaTime)
+    {
+        Vector3 pos = transform.position;
+        pos.y = Mathf.MoveTowards(pos.y, groundY, descentSpeed * deltaTime);
+
+        if (Mathf.Abs(dirValue) > 0.001f)
+        {
+            pos += Vector3.right * (dirValue * moveSpeed * deltaTime);
+        }
+
+        transform.position = pos;
+    }
+
+    void ApplyRigidbodyMovement(float deltaTime)
+    {
+        Vector3 newPos = rb.position;
+        newPos.y = Mathf.MoveTowards(newPos.y, groundY, descentSpeed * deltaTime);
+
+        if (Mathf.Abs(dirValue) > 0.001f)
+        {
+            newPos += Vector3.right * (dirValue * moveSpeed * deltaTime);
+        }
+
+        rb.MovePosition(newPos);
     }
 }
