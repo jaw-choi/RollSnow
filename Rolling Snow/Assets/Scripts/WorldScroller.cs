@@ -22,7 +22,7 @@ public class WorldScroller : MonoBehaviour
     public Transform player;
 
     [Tooltip("World-space Y value the player must fall to start scrolling")]
-    public float triggerY = 1.3f;
+    public float triggerY = 1.2f;
 
     float currentSpeed;
     bool hasStarted;
@@ -60,5 +60,15 @@ public class WorldScroller : MonoBehaviour
         {
             currentSpeed = Mathf.Min(currentSpeed, maxSpeed);
         }
+    }
+
+    public void ResetScrollState(float targetY = 0f)
+    {
+        Vector3 pos = transform.position;
+        pos.y = targetY;
+        transform.position = pos;
+
+        currentSpeed = Mathf.Max(0f, initialSpeed);
+        hasStarted = false;
     }
 }

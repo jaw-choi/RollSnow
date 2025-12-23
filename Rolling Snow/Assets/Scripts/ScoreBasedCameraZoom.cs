@@ -55,7 +55,7 @@ public class ScoreBasedCameraZoom : MonoBehaviour
             desiredBlend = 1f;
 
         currentBlend = Mathf.MoveTowards(currentBlend, desiredBlend, zoomLerpSpeed * Time.deltaTime);
-        ApplyZoom(currentBlend);
+        //ApplyZoom(currentBlend);
     }
 
     void ApplyZoom(float blend)

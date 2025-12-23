@@ -8,6 +8,7 @@ public class Player : MonoBehaviour
     public float maxScale = 1f;
 
     Vector3 baseScale;
+    Vector3 initialBaseScale;
     float externalScaleMultiplier = 1f;
 
     void Awake()
@@ -15,6 +16,8 @@ public class Player : MonoBehaviour
         baseScale = transform.localScale;
         if (baseScale.x > maxScale)
             baseScale = Vector3.one * maxScale;
+
+        initialBaseScale = baseScale;
     }
 
     void Update()
@@ -49,19 +52,55 @@ public class Player : MonoBehaviour
         }
     }
 
+    public void ResetPlayerData()
+    {
+        baseScale = initialBaseScale;
+        externalScaleMultiplier = 1f;
+        ApplyScale();
+    }
+
     void OnTriggerEnter2D(Collider2D other)
     {
-        // 장애물 타입에 따라 치명 여부가 달라질 수 있으므로 컴포넌트를 우선 확인
+        TryHandleCollision(other);
+    }
+
+    void OnTriggerEnter(Collider other)
+    {
+        TryHandleCollision(other);
+    }
+
+    void OnCollisionEnter2D(Collision2D collision)
+    {
+        if (collision != null)
+            TryHandleCollision(collision.collider);
+    }
+
+    void OnCollisionEnter(Collision collision)
+    {
+        if (collision != null)
+            TryHandleCollision(collision.collider);
+    }
+
+    void TryHandleCollision(Component other)
+    {
+        if (other == null) return;
+
         var obstacle = other.GetComponent<ObstacleBehavior>();
         if (obstacle != null)
         {
-            if (!obstacle.IsLethal()) return;
+            if (!obstacle.IsLethal())
+                return;
         }
         else if (!other.CompareTag("Obstacle"))
         {
             return;
         }
 
+        TriggerGameOver();
+    }
+
+    void TriggerGameOver()
+    {
         if (GameManager.Instance != null)
             GameManager.Instance.GameOver();
         else

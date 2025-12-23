@@ -9,7 +9,8 @@ public class PlayerController : MonoBehaviour
     public float descentSpeed = 2f;
     [Tooltip("Lowest Y position the player can reach")]
     public float groundY = 1.2f;
-    private int moveDir = 0; // -1 = left, +1 = right, 0 = waiting
+    private int moveDir = 1; // start heading right; -1 = left, +1 = right, 0 = waiting
+    int startingMoveDir = 1;
 
     [Header("Turn Settings")]
     public float tapThreshold = 0.18f; // seconds to consider a tap (quick flip)
@@ -37,6 +38,11 @@ public class PlayerController : MonoBehaviour
     {
         rb = GetComponent<Rigidbody>();
         mainCam = Camera.main;
+
+        // begin with a gentle movement toward bottom-right
+        startingMoveDir = (moveDir == 0) ? 1 : moveDir;
+        moveDir = startingMoveDir;
+        dirValue = moveDir;
     }
 
     void Update()
@@ -95,21 +101,16 @@ public class PlayerController : MonoBehaviour
         // Released handling (determine tap vs long press)
         if (released && isPressing)
         {
-            float hold = Time.time - pressStartTime;
             // Start flip on release if not already triggered for this press
             if (!flipTriggeredThisPress)
             {
-                if (!flipInProgress)
-                {
-                    StartFlip(slowFlipDuration);
-                }
-                // otherwise let existing flipInProgress continue
+                StartFlip(slowFlipDuration);
             }
             isPressing = false;
         }
 
         // If holding and reached tapThreshold, begin gradual flip while still holding
-        if (isPressing && !flipInProgress && !flipTriggeredThisPress)
+        if (isPressing && !flipTriggeredThisPress)
         {
             if (Time.time - pressStartTime >= tapThreshold)
             {
@@ -178,5 +179,30 @@ public class PlayerController : MonoBehaviour
         }
 
         rb.MovePosition(newPos);
+    }
+
+    public void ResetControllerState(Vector3 position, Quaternion rotation)
+    {
+        int dir = startingMoveDir == 0 ? 1 : startingMoveDir;
+        moveDir = dir;
+        dirValue = dir;
+        flipStartValue = dir;
+        flipTargetValue = dir;
+        flipProgress = 0f;
+        currentFlipDuration = slowFlipDuration;
+        isPressing = false;
+        flipInProgress = false;
+        flipTriggeredThisPress = false;
+        pressStartTime = 0f;
+
+        if (rb != null)
+        {
+            rb.linearVelocity = Vector3.zero;
+            rb.angularVelocity = Vector3.zero;
+            rb.position = position;
+            rb.rotation = rotation;
+        }
+
+        transform.SetPositionAndRotation(position, rotation);
     }
 }

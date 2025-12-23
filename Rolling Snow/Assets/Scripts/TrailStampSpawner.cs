@@ -78,4 +78,25 @@ public class TrailStampSpawner : MonoBehaviour
 
 //         Destroy(stamp, lifeTime);
 //     }
+
+    public void ClearTrail()
+    {
+        if (trailRoot == null) return;
+
+        for (int i = trailRoot.childCount - 1; i >= 0; i--)
+        {
+            var child = trailRoot.GetChild(i);
+            if (child == null) continue;
+
+            if (Application.isPlaying)
+                Destroy(child.gameObject);
+            else
+                DestroyImmediate(child.gameObject);
+        }
+
+        timer = 0f;
+        prevSign = 0;
+        turnTimer = 0f;
+        prevX = transform.position.x;
+    }
 }

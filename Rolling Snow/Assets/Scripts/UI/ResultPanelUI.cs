@@ -61,7 +61,7 @@ public class ResultPanelUI : MonoBehaviour
         }
     }
 
-    public void Show(float score, float elapsedTime, ResultState state)
+    public void Show(float elapsedTime, ResultState state)
     {
         if (panelRoot != null && !panelRoot.activeSelf)
             panelRoot.SetActive(true);
@@ -69,7 +69,10 @@ public class ResultPanelUI : MonoBehaviour
         if (titleLabel != null)
             titleLabel.text = state == ResultState.Clear ? clearTitle : gameOverTitle;
         if (scoreLabel != null)
-            scoreLabel.text = $"Score : {Mathf.FloorToInt(score)}";
+        {
+            int displayScore = Mathf.FloorToInt(elapsedTime) * 5;
+            scoreLabel.text = $"{displayScore}";
+        }
         if (timeLabel != null)
             timeLabel.text = $"Time : {FormatTime(elapsedTime)}";
     }
@@ -92,7 +95,10 @@ public class ResultPanelUI : MonoBehaviour
         if (GameManager.Instance != null)
             GameManager.Instance.Restart();
         else
+        {
+            Time.timeScale = 1f;
             SceneManager.LoadScene("GameScene");
+        }
     }
 
     void OnMainMenu()
