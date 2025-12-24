@@ -9,7 +9,7 @@ public class PlayerController : MonoBehaviour
     public float descentSpeed = 2f;
     [Tooltip("Lowest Y position the player can reach")]
     public float groundY = 1.2f;
-    private int moveDir = 1; // start heading right; -1 = left, +1 = right, 0 = waiting
+    private int moveDir = 1; // start heading right; -1 = left, +1 = right
     int startingMoveDir = 1;
 
     [Header("Turn Settings")]
@@ -40,24 +40,28 @@ public class PlayerController : MonoBehaviour
         mainCam = Camera.main;
 
         // begin with a gentle movement toward bottom-right
-        startingMoveDir = (moveDir == 0) ? 1 : moveDir;
+        startingMoveDir = moveDir;
         moveDir = startingMoveDir;
         dirValue = moveDir;
     }
 
     void Update()
     {
+        if (!IsGameplayActive())
+        {
+            Debug.Log("Gameplay not active, skipping PlayerController Update.");
+            return;
+        }
+
         // 1) input: mouse click or touch
         bool pressedDown = false;
         bool released = false;
-        Vector2 pressPos = Vector2.zero;
 
         if (Mouse.current != null)
         {
             if (Mouse.current.leftButton.wasPressedThisFrame)
             {
                 pressedDown = true;
-                pressPos = Mouse.current.position.ReadValue();
             }
             if (Mouse.current.leftButton.wasReleasedThisFrame) released = true;
         }
@@ -66,36 +70,18 @@ public class PlayerController : MonoBehaviour
             if (Touchscreen.current.primaryTouch.press.wasPressedThisFrame)
             {
                 pressedDown = true;
-                pressPos = Touchscreen.current.primaryTouch.position.ReadValue();
             }
             if (Touchscreen.current.primaryTouch.press.wasReleasedThisFrame) released = true;
         }
 
-        // 2) when pressed: if currently stopped, decide left/right using screen position;
-        //    otherwise (already moving) flip the current direction.
+        // 2) when pressed, start tracking to differentiate tap vs hold.
         // Pressed down handling
         if (pressedDown)
         {
             // new press: allow flip for this press
             flipTriggeredThisPress = false;
-
-            // If currently stopped, decide initial direction using screen X
-            if (moveDir == 0)
-            {
-                if (mainCam == null) mainCam = Camera.main;
-                if (mainCam != null)
-                {
-                    Vector3 myScreenPos = mainCam.WorldToScreenPoint(transform.position);
-                    moveDir = (pressPos.x < myScreenPos.x) ? -1 : 1;
-                    dirValue = moveDir;
-                }
-            }
-            else
-            {
-                // already moving: start press timing for tap vs long-press
-                isPressing = true;
-                pressStartTime = Time.time;
-            }
+            isPressing = true;
+            pressStartTime = Time.time;
         }
 
         // Released handling (determine tap vs long press)
@@ -183,11 +169,10 @@ public class PlayerController : MonoBehaviour
 
     public void ResetControllerState(Vector3 position, Quaternion rotation)
     {
-        int dir = startingMoveDir == 0 ? 1 : startingMoveDir;
-        moveDir = dir;
-        dirValue = dir;
-        flipStartValue = dir;
-        flipTargetValue = dir;
+        moveDir = startingMoveDir;
+        dirValue = startingMoveDir;
+        flipStartValue = startingMoveDir;
+        flipTargetValue = startingMoveDir;
         flipProgress = 0f;
         currentFlipDuration = slowFlipDuration;
         isPressing = false;
@@ -204,5 +189,15 @@ public class PlayerController : MonoBehaviour
         }
 
         transform.SetPositionAndRotation(position, rotation);
+    }
+
+    bool IsGameplayActive()
+    {
+        if (GameManager.Instance == null)
+        {
+            return true;
+        }
+
+        return GameManager.Instance.IsPlaying();
     }
 }

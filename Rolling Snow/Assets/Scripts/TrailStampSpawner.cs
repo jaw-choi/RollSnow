@@ -51,13 +51,13 @@ public class TrailStampSpawner : MonoBehaviour
       if (prevSign != 0 && sign != 0 && sign != prevSign && turnTimer <= 0f)
       {
         // direction flipped -> spawn particle at trail position
-        if (turnParticlePrefab != null)
-        {
-          Vector3 p = transform.position + offset;
-          var go = Instantiate(turnParticlePrefab, p, Quaternion.identity, trailRoot);
-          if (turnParticleScale > 0f) go.transform.localScale *= turnParticleScale;
-          if (turnParticleLife > 0f) Destroy(go, turnParticleLife);
-        }
+        // if (turnParticlePrefab != null)
+        // {
+        //   Vector3 p = transform.position + offset;
+        //   var go = Instantiate(turnParticlePrefab, p, Quaternion.identity, trailRoot);
+        //   if (turnParticleScale > 0f) go.transform.localScale *= turnParticleScale;
+        //   if (turnParticleLife > 0f) Destroy(go, turnParticleLife);
+        // }
         turnTimer = turnCooldown;
       }
 

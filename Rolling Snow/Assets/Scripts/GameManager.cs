@@ -289,6 +289,11 @@ public class GameManager : MonoBehaviour
         }
     }
 
+    public bool IsPlaying()
+    {
+        return !IsGameOver && IsInGameScene();
+    }
+
     bool IsInGameScene()
     {
         return SceneManager.GetActiveScene().name == gameSceneName;

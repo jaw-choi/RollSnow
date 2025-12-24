@@ -28,18 +28,33 @@ public class MenuManager : MonoBehaviour
     public void LoadMainMenu()
     {
         Resume();
-        SceneManager.LoadScene(mainMenuSceneName);
+        if (GameManager.Instance != null)
+        {
+            GameManager.Instance.LoadMainMenu();
+        }
+        else
+        {
+            SceneManager.LoadScene(mainMenuSceneName);
+        }
     }
 
     public void LoadGameScene()
     {
         Resume();
+        if (GameManager.Instance != null)
+        {
+            GameManager.Instance.Restart();
+        }
         SceneManager.LoadScene(gameSceneName);
     }
 
     public void RestartGame()
     {
         Resume();
+        if (GameManager.Instance != null)
+        {
+            GameManager.Instance.Restart();
+        }
         SceneManager.LoadScene(gameSceneName);
     }
 

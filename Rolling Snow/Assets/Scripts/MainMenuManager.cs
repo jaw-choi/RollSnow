@@ -32,6 +32,10 @@ public class MainMenuManager : MonoBehaviour
         Time.timeScale = 1f;
         AudioListener.pause = false;
         //characterSelectPanel.SetActive(true);
+        if (GameManager.Instance != null)
+        {
+            GameManager.Instance.Restart();
+        }
         SceneManager.LoadScene("GameScene");
     }
     public void OnClickCharacter(int Id)
@@ -68,7 +72,15 @@ public class MainMenuManager : MonoBehaviour
 
     public void OnClickMainMenu()
     {
-        SceneManager.LoadScene("MainMenu");
+        if (GameManager.Instance != null)
+        {
+            GameManager.Instance.LoadMainMenu();
+        }
+        else
+        {
+            Time.timeScale = 1f;
+            SceneManager.LoadScene("MainMenu");
+        }
     }
 
     public void OnClickLogin()
