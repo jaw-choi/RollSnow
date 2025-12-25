@@ -42,7 +42,10 @@ public class Player : MonoBehaviour
                 Vector3 vp = cam.WorldToViewportPoint(transform.position);
                 if (vp.x < 0f || vp.x > 1f || vp.y < 0f || vp.y > 1f)
                 {
-                    Debug.Log("GAME OVER: left screen");
+                    Vector3 camPos = cam.transform.position;
+                    Vector2 boundaryMin = Vector2.zero;
+                    Vector2 boundaryMax = Vector2.one;
+                    Debug.Log($"GAME OVER: left screen (CamPos={camPos}, PlayerPos={transform.position}, Viewport={vp}, BoundsMin={boundaryMin}, BoundsMax={boundaryMax})");
                     if (GameManager.Instance != null)
                         GameManager.Instance.GameOver();
                     else

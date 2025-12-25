@@ -341,8 +341,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::LogoIntro
   nextSceneName: MainMenu
-  holdDuration: 1
-  fadeDuration: 0.5
+  holdDuration: 0.1
+  fadeDuration: 0.1
 --- !u!225 &1785799654
 CanvasGroup:
   m_ObjectHideFlags: 0

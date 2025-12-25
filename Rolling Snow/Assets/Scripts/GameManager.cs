@@ -20,7 +20,6 @@ public class GameManager : MonoBehaviour
     [SerializeField] private PlayerController playerController;
 
     [Header("World References")]
-    [SerializeField] private WorldScroller worldScroller;
     [SerializeField] private TrailStampSpawner[] trailStampSpawners;
 
     public bool IsGameOver { get; private set; } = false;
@@ -42,7 +41,7 @@ public class GameManager : MonoBehaviour
             DontDestroyOnLoad(gameObject);
             StartNewSession();
             CachePlayerReferences(true);
-            CacheWorldScroller(true);
+            CacheTrailStampSpawners(true);
         }
         else if (Instance != this)
         {
@@ -138,7 +137,6 @@ public class GameManager : MonoBehaviour
         player = null;
         playerController = null;
         playerStartCaptured = false;
-        worldScroller = null;
         trailStampSpawners = null;
         SceneManager.LoadScene(mainMenuSceneName);
     }
@@ -185,7 +183,6 @@ public class GameManager : MonoBehaviour
     void ResetGameplayState()
     {
         CachePlayerReferences(!playerStartCaptured);
-        CacheWorldScroller(false);
         CacheTrailStampSpawners(false);
 
         if (trailStampSpawners != null)
@@ -195,11 +192,6 @@ public class GameManager : MonoBehaviour
                 if (spawner != null)
                     spawner.ClearTrail();
             }
-        }
-
-        if (worldScroller != null)
-        {
-            worldScroller.ResetScrollState(0f);
         }
 
         if (!playerStartCaptured)
@@ -228,6 +220,7 @@ public class GameManager : MonoBehaviour
         {
             player.ResetPlayerData();
         }
+
     }
 
     void CachePlayerReferences(bool refreshStartValues)
@@ -244,14 +237,6 @@ public class GameManager : MonoBehaviour
             playerStartPosition = target.position;
             playerStartRotation = target.rotation;
             playerStartCaptured = true;
-        }
-    }
-
-    void CacheWorldScroller(bool forceRefresh)
-    {
-        if (forceRefresh || worldScroller == null)
-        {
-            worldScroller = FindObjectOfType<WorldScroller>();
         }
     }
 
@@ -275,7 +260,6 @@ public class GameManager : MonoBehaviour
             playerController = null;
             playerStartCaptured = false;
             CachePlayerReferences(true);
-            CacheWorldScroller(true);
             CacheTrailStampSpawners(true);
             StartNewSession();
         }
@@ -284,7 +268,6 @@ public class GameManager : MonoBehaviour
             player = null;
             playerController = null;
             playerStartCaptured = false;
-            worldScroller = null;
             trailStampSpawners = null;
         }
     }

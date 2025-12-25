@@ -1,9 +1,14 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.InputSystem.EnhancedTouch;
 
 public class PlayerController : MonoBehaviour
 {
     public float moveSpeed = 1f;
+    [Header("Horizontal Bounds")]
+    [SerializeField] private float minX = -9.49f;
+    [SerializeField] private float maxX = 9.49f;
+
     [Header("Vertical Descent")]
     [Tooltip("Speed at which the player falls until reaching groundY")]
     public float descentSpeed = 2f;
@@ -32,12 +37,27 @@ public class PlayerController : MonoBehaviour
     float currentFlipDuration = 0.6f;
 
     Rigidbody rb;
-    Camera mainCam;
+    bool inputModeLogged;
+    bool mouseUnavailableLogged;
+    bool touchUnavailableLogged;
+
+#if UNITY_EDITOR
+    void OnEnable()
+    {
+        TouchSimulation.Enable();
+        EnhancedTouchSupport.Enable();
+    }
+
+    void OnDisable()
+    {
+        EnhancedTouchSupport.Disable();
+        TouchSimulation.Disable();
+    }
+#endif
 
     void Start()
     {
         rb = GetComponent<Rigidbody>();
-        mainCam = Camera.main;
 
         // begin with a gentle movement toward bottom-right
         startingMoveDir = moveDir;
@@ -49,7 +69,7 @@ public class PlayerController : MonoBehaviour
     {
         if (!IsGameplayActive())
         {
-            Debug.Log("Gameplay not active, skipping PlayerController Update.");
+            
             return;
         }
 
@@ -57,21 +77,51 @@ public class PlayerController : MonoBehaviour
         bool pressedDown = false;
         bool released = false;
 
-        if (Mouse.current != null)
+        if (!inputModeLogged)
         {
-            if (Mouse.current.leftButton.wasPressedThisFrame)
-            {
-                pressedDown = true;
-            }
-            if (Mouse.current.leftButton.wasReleasedThisFrame) released = true;
+            Debug.Log("PlayerController 입력 모드 초기화: 사용 가능한 Mouse/Touch 모두 감지");
+            inputModeLogged = true;
         }
-        if (!pressedDown && Touchscreen.current != null)
+
+        var mouse = Mouse.current;
+        if (mouse != null)
         {
-            if (Touchscreen.current.primaryTouch.press.wasPressedThisFrame)
+            if (mouse.leftButton.wasPressedThisFrame)
             {
                 pressedDown = true;
+                Debug.Log($"입력 감지: Mouse Down @ {Time.time:F2}");
             }
-            if (Touchscreen.current.primaryTouch.press.wasReleasedThisFrame) released = true;
+            if (mouse.leftButton.wasReleasedThisFrame)
+            {
+                released = true;
+                Debug.Log($"입력 감지: Mouse Up @ {Time.time:F2}");
+            }
+        }
+        else if (!mouseUnavailableLogged)
+        {
+            Debug.LogWarning("Mouse 장치를 찾을 수 없습니다.");
+            mouseUnavailableLogged = true;
+        }
+
+        var touch = Touchscreen.current;
+        if (touch != null)
+        {
+            var primary = touch.primaryTouch;
+            if (primary.press.wasPressedThisFrame)
+            {
+                pressedDown = true;
+                Debug.Log($"입력 감지: Touch Down @ {Time.time:F2}");
+            }
+            if (primary.press.wasReleasedThisFrame)
+            {
+                released = true;
+                Debug.Log($"입력 감지: Touch Up @ {Time.time:F2}");
+            }
+        }
+        else if (!touchUnavailableLogged)
+        {
+            Debug.LogWarning("Touchscreen 장치를 찾을 수 없습니다.");
+            touchUnavailableLogged = true;
         }
 
         // 2) when pressed, start tracking to differentiate tap vs hold.
@@ -144,12 +194,15 @@ public class PlayerController : MonoBehaviour
     void ApplyTransformMovement(float deltaTime)
     {
         Vector3 pos = transform.position;
-        pos.y = Mathf.MoveTowards(pos.y, groundY, descentSpeed * deltaTime);
+        pos.y -= descentSpeed * deltaTime;
 
         if (Mathf.Abs(dirValue) > 0.001f)
         {
             pos += Vector3.right * (dirValue * moveSpeed * deltaTime);
         }
+
+        if (minX < maxX)
+            pos.x = Mathf.Clamp(pos.x, minX, maxX);
 
         transform.position = pos;
     }
@@ -157,12 +210,15 @@ public class PlayerController : MonoBehaviour
     void ApplyRigidbodyMovement(float deltaTime)
     {
         Vector3 newPos = rb.position;
-        newPos.y = Mathf.MoveTowards(newPos.y, groundY, descentSpeed * deltaTime);
+        newPos.y -= descentSpeed * deltaTime;
 
         if (Mathf.Abs(dirValue) > 0.001f)
         {
             newPos += Vector3.right * (dirValue * moveSpeed * deltaTime);
         }
+
+        if (minX < maxX)
+            newPos.x = Mathf.Clamp(newPos.x, minX, maxX);
 
         rb.MovePosition(newPos);
     }
@@ -184,11 +240,17 @@ public class PlayerController : MonoBehaviour
         {
             rb.linearVelocity = Vector3.zero;
             rb.angularVelocity = Vector3.zero;
-            rb.position = position;
+            Vector3 clamped = position;
+            if (minX < maxX)
+                clamped.x = Mathf.Clamp(clamped.x, minX, maxX);
+            rb.position = clamped;
             rb.rotation = rotation;
         }
 
-        transform.SetPositionAndRotation(position, rotation);
+        Vector3 safePos = position;
+        if (minX < maxX)
+            safePos.x = Mathf.Clamp(safePos.x, minX, maxX);
+        transform.SetPositionAndRotation(safePos, rotation);
     }
 
     bool IsGameplayActive()
