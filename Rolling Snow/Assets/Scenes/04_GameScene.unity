@@ -4930,11 +4930,6 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 1044024470345199796, guid: 78b8f28b4ff88264cb863bb668253d08, type: 3}
   m_PrefabInstance: {fileID: 616112470}
   m_PrefabAsset: {fileID: 0}
---- !u!1 &273517934 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 5826991206221522737, guid: d7a8de671b5fd5a4bacd84b2938f8070, type: 3}
-  m_PrefabInstance: {fileID: 253258674}
-  m_PrefabAsset: {fileID: 0}
 --- !u!224 &273517938 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 7620677843816853883, guid: d7a8de671b5fd5a4bacd84b2938f8070, type: 3}
@@ -8332,54 +8327,6 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 1044024470345199796, guid: 78b8f28b4ff88264cb863bb668253d08, type: 3}
   m_PrefabInstance: {fileID: 870494752}
   m_PrefabAsset: {fileID: 0}
---- !u!1 &509773087
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 509773089}
-  - component: {fileID: 509773088}
-  m_Layer: 0
-  m_Name: menumanager
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!114 &509773088
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 509773087}
-  m_Enabled: 0
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 468b2f4f29b575949a51cf21cf586525, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::MenuManager
-  mainMenuSceneName: MainMenu
-  gameSceneName: GameScene
-  pausePanel: {fileID: 273517934}
-  pauseOnStart: 0
---- !u!4 &509773089
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 509773087}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -1.27572, y: 290.48245, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &510362099
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -30866,4 +30813,3 @@ SceneRoots:
   - {fileID: 120953471}
   - {fileID: 468379106}
   - {fileID: 2144177198}
-  - {fileID: 509773089}

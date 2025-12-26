@@ -5,7 +5,7 @@ using UnityEngine.SceneManagement;
 [RequireComponent(typeof(CanvasGroup))]
 public class LogoIntro : MonoBehaviour
 {
-    [SerializeField] private string nextSceneName = "MainMenu";
+    [SerializeField] private string nextSceneName = "01_MainMenu";
     [SerializeField] private float holdDuration = 1f;
     [SerializeField] private float fadeDuration = 1f;
 

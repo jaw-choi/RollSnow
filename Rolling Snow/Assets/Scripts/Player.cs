@@ -18,6 +18,11 @@ public class Player : MonoBehaviour
             baseScale = Vector3.one * maxScale;
 
         initialBaseScale = baseScale;
+
+        if (GameManager.Instance != null)
+        {
+            GameManager.Instance.RegisterPlayer(this);
+        }
     }
 
     void Update()
@@ -119,5 +124,13 @@ public class Player : MonoBehaviour
     {
         externalScaleMultiplier = Mathf.Max(0.01f, multiplier);
         ApplyScale();
+    }
+
+    void OnDestroy()
+    {
+        if (GameManager.Instance != null)
+        {
+            GameManager.Instance.UnregisterPlayer(this);
+        }
     }
 }

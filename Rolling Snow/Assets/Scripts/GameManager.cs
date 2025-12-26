@@ -1,6 +1,5 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
-using UnityEngine.InputSystem;
 
 public class GameManager : MonoBehaviour
 {
@@ -12,26 +11,19 @@ public class GameManager : MonoBehaviour
     public float scoreRate = 1f;
 
     [Header("Scenes")]
-    [SerializeField] private string gameSceneName = "GameScene";
-    [SerializeField] private string mainMenuSceneName = "MainMenu";
-
-    [Header("Player References")]
-    [SerializeField] private Player player;
-    [SerializeField] private PlayerController playerController;
-
-    [Header("World References")]
-    [SerializeField] private TrailStampSpawner[] trailStampSpawners;
+    [SerializeField] private string gameSceneName = "04_GameScene";
+    [SerializeField] private string mainMenuSceneName = "01_MainMenu";
 
     public bool IsGameOver { get; private set; } = false;
     public bool IsCleared { get; private set; } = false;
 
-    [SerializeField] private InputActionReference restartAction;
-
     ResultPanelUI resultPanel;
+    [SerializeField] private Player player;
     Vector3 playerStartPosition;
     Quaternion playerStartRotation;
     bool playerStartCaptured = false;
     float playSessionStartTime;
+    bool isGameplayActive = false;
 
     void Awake()
     {
@@ -39,9 +31,8 @@ public class GameManager : MonoBehaviour
         {
             Instance = this;
             DontDestroyOnLoad(gameObject);
-            StartNewSession();
-            CachePlayerReferences(true);
-            CacheTrailStampSpawners(true);
+            SceneManager.sceneLoaded += HandleSceneLoaded;
+            HandleSceneLoaded(SceneManager.GetActiveScene(), LoadSceneMode.Single);
         }
         else if (Instance != this)
         {
@@ -59,47 +50,21 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    void OnEnable()
-    {
-        if (restartAction != null && restartAction.action != null)
-        {
-            restartAction.action.Enable();
-        }
-
-        SceneManager.sceneLoaded += HandleSceneLoaded;
-    }
-
-    void OnDisable()
-    {
-        if (restartAction != null && restartAction.action != null)
-        {
-            restartAction.action.Disable();
-        }
-
-        SceneManager.sceneLoaded -= HandleSceneLoaded;
-    }
-
-    // Note: input is polled from `restartAction` in Update()
-
     void Update()
     {
-        if (!IsGameOver && IsInGameScene())
+        if (!IsGameOver && isGameplayActive)
         {
             score += scoreRate * Time.deltaTime;
         }
-
-        // Poll the Input System restart action (if assigned)
-        if (restartAction != null && restartAction.action != null && restartAction.action.triggered)
-        {
-            Restart();
-        }
     }
+
     public void GameOver()
     {
         if (IsGameOver) return;
 
         IsGameOver = true;
         IsCleared = false;
+        isGameplayActive = false;
         Time.timeScale = 0f;
         float elapsedTime = GetSessionElapsedTime();
 
@@ -113,6 +78,7 @@ public class GameManager : MonoBehaviour
 
         IsGameOver = true;
         IsCleared = true;
+        isGameplayActive = false;
         Time.timeScale = 0f;
         float elapsedTime = GetSessionElapsedTime();
 
@@ -123,21 +89,33 @@ public class GameManager : MonoBehaviour
     public void Restart()
     {
         Time.timeScale = 1f;
+        AudioListener.pause = false;
         ResetCoreState();
         HideResultPanel();
+        isGameplayActive = false;
+
+        if (!IsInGameScene())
+        {
+            player = null;
+            playerStartCaptured = false;
+            SceneManager.LoadScene(gameSceneName);
+            return;
+        }
+
+        ResetPlayerState();
         StartNewSession();
-        ResetGameplayState();
+        isGameplayActive = true;
     }
 
     public void LoadMainMenu()
     {
         Time.timeScale = 1f;
+        AudioListener.pause = false;
         ResetCoreState();
         HideResultPanel();
+        isGameplayActive = false;
         player = null;
-        playerController = null;
         playerStartCaptured = false;
-        trailStampSpawners = null;
         SceneManager.LoadScene(mainMenuSceneName);
     }
 
@@ -163,7 +141,7 @@ public class GameManager : MonoBehaviour
     {
         var panel = GetOrFindResultPanel();
         if (panel != null)
-            panel.Show( elapsedTime, state);
+            panel.Show(elapsedTime, state);
     }
 
     void HideResultPanel()
@@ -180,106 +158,88 @@ public class GameManager : MonoBehaviour
         IsCleared = false;
     }
 
-    void ResetGameplayState()
-    {
-        CachePlayerReferences(!playerStartCaptured);
-        CacheTrailStampSpawners(false);
-
-        if (trailStampSpawners != null)
-        {
-            foreach (var spawner in trailStampSpawners)
-            {
-                if (spawner != null)
-                    spawner.ClearTrail();
-            }
-        }
-
-        if (!playerStartCaptured)
-            return;
-
-        if (playerController != null)
-        {
-            playerController.ResetControllerState(playerStartPosition, playerStartRotation);
-        }
-        else if (player != null)
-        {
-            Transform target = player.transform;
-            target.SetPositionAndRotation(playerStartPosition, playerStartRotation);
-
-            var rb = player.GetComponent<Rigidbody>();
-            if (rb != null)
-            {
-                rb.linearVelocity = Vector3.zero;
-                rb.angularVelocity = Vector3.zero;
-                rb.position = playerStartPosition;
-                rb.rotation = playerStartRotation;
-            }
-        }
-
-        if (player != null)
-        {
-            player.ResetPlayerData();
-        }
-
-    }
-
-    void CachePlayerReferences(bool refreshStartValues)
-    {
-        if (player == null)
-            player = FindObjectOfType<Player>();
-
-        if (player != null && playerController == null)
-            playerController = player.GetComponent<PlayerController>();
-
-        if (player != null && (refreshStartValues || !playerStartCaptured))
-        {
-            Transform target = player.transform;
-            playerStartPosition = target.position;
-            playerStartRotation = target.rotation;
-            playerStartCaptured = true;
-        }
-    }
-
-    void CacheTrailStampSpawners(bool forceRefresh)
-    {
-        if (forceRefresh || trailStampSpawners == null || trailStampSpawners.Length == 0)
-        {
-            trailStampSpawners = FindObjectsOfType<TrailStampSpawner>();
-        }
-    }
-
     void HandleSceneLoaded(Scene scene, LoadSceneMode mode)
     {
-        bool loadedGameScene = scene.name == gameSceneName;
-        if (loadedGameScene)
+        if (scene.name == gameSceneName)
         {
             Time.timeScale = 1f;
+            AudioListener.pause = false;
             ResetCoreState();
             HideResultPanel();
-            player = null;
-            playerController = null;
             playerStartCaptured = false;
             CachePlayerReferences(true);
-            CacheTrailStampSpawners(true);
+            ResetPlayerState();
             StartNewSession();
+            isGameplayActive = true;
         }
         else
         {
             player = null;
-            playerController = null;
             playerStartCaptured = false;
-            trailStampSpawners = null;
+            isGameplayActive = false;
         }
     }
 
     public bool IsPlaying()
     {
-        return !IsGameOver && IsInGameScene();
+        return !IsGameOver && isGameplayActive;
     }
 
     bool IsInGameScene()
     {
         return SceneManager.GetActiveScene().name == gameSceneName;
+    }
+
+    void CachePlayerReferences(bool refreshStartValues)
+    {
+        if (player == null || player.Equals(null))
+        {
+            player = FindObjectOfType<Player>(true);
+        }
+
+        if (player != null && (refreshStartValues || !playerStartCaptured))
+        {
+            playerStartPosition = player.transform.position;
+            playerStartRotation = player.transform.rotation;
+            playerStartCaptured = true;
+        }
+    }
+
+    public void RegisterPlayer(Player target)
+    {
+        player = target;
+        playerStartCaptured = false;
+        CachePlayerReferences(true);
+    }
+
+    public void UnregisterPlayer(Player target)
+    {
+        if (player == target)
+        {
+            player = null;
+            playerStartCaptured = false;
+        }
+    }
+
+    void ResetPlayerState()
+    {
+        CachePlayerReferences(false);
+        if (!playerStartCaptured || player == null || player.Equals(null))
+            return;
+
+        var target = player.transform;
+        target.SetPositionAndRotation(playerStartPosition, playerStartRotation);
+
+        var rb = player.GetComponent<Rigidbody>();
+        if (rb != null)
+        {
+            rb.linearVelocity = Vector3.zero;
+            rb.angularVelocity = Vector3.zero;
+            rb.position = playerStartPosition;
+            rb.rotation = playerStartRotation;
+        }
+
+        player.ResetPlayerData();
     }
 
     void StartNewSession()

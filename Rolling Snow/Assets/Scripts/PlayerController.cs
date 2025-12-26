@@ -67,11 +67,7 @@ public class PlayerController : MonoBehaviour
 
     void Update()
     {
-        if (!IsGameplayActive())
-        {
-            
-            return;
-        }
+
 
         // 1) input: mouse click or touch
         bool pressedDown = false;

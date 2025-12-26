@@ -17,7 +17,8 @@ public class ResultPanelUI : MonoBehaviour
     [SerializeField] private Button mainMenuButton;
 
     [Header("Scenes")]
-    [SerializeField] private string mainMenuSceneName = "MainMenu";
+    [SerializeField] private string mainMenuSceneName = "01_MainMenu";
+    [SerializeField] private string gameSceneName = "04_GameScene";
 
     [Header("Titles")]
     [SerializeField] private string gameOverTitle = "Game Over!";
@@ -97,7 +98,7 @@ public class ResultPanelUI : MonoBehaviour
         else
         {
             Time.timeScale = 1f;
-            SceneManager.LoadScene("GameScene");
+            SceneManager.LoadScene(gameSceneName);
         }
     }
 

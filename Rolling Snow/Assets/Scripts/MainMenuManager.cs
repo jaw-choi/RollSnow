@@ -4,88 +4,88 @@ using UnityEngine.UI;
 
 public class MainMenuManager : MonoBehaviour
 {
-    [Header("Refs")]
-    [SerializeField] private Button startButton;
-    //[SerializeField] private Button upgradeButton;
-    [SerializeField] private Button settingsButton;
-    //[SerializeField] private Button quitButton;
-    //[SerializeField] private Button loginButton;
+    private static MainMenuManager instance;
 
-    [SerializeField] private GameObject settingsPanelPrefab;
-    [SerializeField] private Transform uiRoot; // Canvas �Ʒ� �� ������Ʈ
-    //[SerializeField] private GameObject characterSelectPanel;
-    private GameObject settingsInstance;
+    [Header("Persistence")]
+    [SerializeField] private GameObject persistentRoot;
 
-    void Awake()
+    [SerializeField] private Button mainMenuButton;
+    [SerializeField] private Button achievementButton;
+    [SerializeField] private Button shopButton;
+    [SerializeField] private Button inventoryButton;
+    [SerializeField] private Button settingsSceneButton;
+    [SerializeField] private Canvas menuCanvas;
+
+    private void Awake()
     {
-        if (startButton) startButton.onClick.AddListener(OnClickStart);
-        //if (upgradeButton) upgradeButton.onClick.AddListener(OnClickUpGrade);
-        if (settingsButton) settingsButton.onClick.AddListener(OnClickSettings);
-        //if (quitButton) quitButton.onClick.AddListener(OnClickQuit);
-        //if (loginButton) loginButton.onClick.AddListener(OnClickLogin);
+        var root = ResolvePersistentRoot();
+
+        if (instance != null && instance != this)
+        {
+            Destroy(root);
+            return;
+        }
+
+        instance = this;
+        DontDestroyOnLoad(root);
+
+        RegisterButtonListeners();
+        SceneManager.sceneLoaded += HandleSceneLoaded;
+        UpdateVisibility(SceneManager.GetActiveScene().name);
     }
 
+    private void OnDestroy()
+    {
+        if (instance == this)
+        {
+            SceneManager.sceneLoaded -= HandleSceneLoaded;
+        }
+    }
 
+    private void RegisterButtonListeners()
+    {
+        if (mainMenuButton) mainMenuButton.onClick.AddListener(() => LoadMenuScene("01_MainMenu"));
+        if (achievementButton) achievementButton.onClick.AddListener(() => LoadMenuScene("02_Achivement"));
+        if (shopButton) shopButton.onClick.AddListener(() => LoadMenuScene("03_Shop"));
+        //if (playButton) playButton.onClick.AddListener(() => LoadMenuScene("04_GameScene"));
+        if (inventoryButton) inventoryButton.onClick.AddListener(() => LoadMenuScene("05_Inventory"));
+        if (settingsSceneButton) settingsSceneButton.onClick.AddListener(() => LoadMenuScene("06_Settings"));
+    }
 
-    public void OnClickStart()
+    private void LoadMenuScene(string sceneName)
     {
         Time.timeScale = 1f;
         AudioListener.pause = false;
-        //characterSelectPanel.SetActive(true);
-        if (GameManager.Instance != null)
+        SceneManager.LoadScene(sceneName);
+    }
+
+    private void HandleSceneLoaded(Scene scene, LoadSceneMode mode)
+    {
+        UpdateVisibility(scene.name);
+    }
+
+    private void UpdateVisibility(string sceneName)
+    {
+        if (menuCanvas == null)
         {
-            GameManager.Instance.Restart();
+            menuCanvas = GetComponentInChildren<Canvas>(true);
         }
-        SceneManager.LoadScene("GameScene");
-    }
-    public void OnClickCharacter(int Id)
-    {
-       //PlayerStats.Instance.playerID = Id;
-        // ���� ����
-        SceneManager.LoadScene("GameScene");
-    }
-    public void OnClickUpGrade()
-    {
-        //SceneManager.LoadScene("UpgradeScene");
-    }
 
-    public void OnClickSettings()
-    {
-        if (uiRoot == null) uiRoot = FindFirstObjectByType<Canvas>()?.transform; // ������ġ
-        if (settingsInstance == null)
-            settingsInstance = Instantiate(settingsPanelPrefab, uiRoot);
-        settingsInstance.SetActive(true);
-        var panel = settingsInstance.GetComponent<SettingsUI>();
-        panel.SetMode(SettingsUI.SettingsMode.MainMenu);
-
-    }
-
-    public void OnClickBack()
-    {
-        if (settingsInstance) settingsInstance.SetActive(false);
-    }
-
-    public void OnClickQuit()
-    {
-        Application.Quit();
-    }
-
-    public void OnClickMainMenu()
-    {
-        if (GameManager.Instance != null)
+        bool shouldHide = sceneName == "04_GameScene";
+        if (menuCanvas != null)
         {
-            GameManager.Instance.LoadMainMenu();
-        }
-        else
-        {
-            Time.timeScale = 1f;
-            SceneManager.LoadScene("MainMenu");
+            menuCanvas.enabled = !shouldHide;
         }
     }
 
-    public void OnClickLogin()
+    private GameObject ResolvePersistentRoot()
     {
-        ///SceneManager.LoadScene("Login");
-    }
+        if (persistentRoot != null)
+        {
+            return persistentRoot;
+        }
 
+        var rootTransform = transform.root != null ? transform.root : transform;
+        return rootTransform.gameObject;
+    }
 }

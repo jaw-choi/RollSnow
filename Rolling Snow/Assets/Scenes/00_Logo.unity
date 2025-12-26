@@ -228,14 +228,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameManager
   score: 0
-  scoreRate: 5
-  gameSceneName: GameScene
-  mainMenuSceneName: MainMenu
+  scoreRate: 1
+  gameSceneName: 04_GameScene
+  mainMenuSceneName: 01_MainMenu
   player: {fileID: 0}
-  playerController: {fileID: 0}
-  worldScroller: {fileID: 0}
-  trailStampSpawners: []
-  restartAction: {fileID: 0}
 --- !u!4 &1584719638
 Transform:
   m_ObjectHideFlags: 0
@@ -340,7 +336,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4001b1782c7ba4541a355053c9c8d112, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::LogoIntro
-  nextSceneName: MainMenu
+  nextSceneName: 01_MainMenu
   holdDuration: 0.1
   fadeDuration: 0.1
 --- !u!225 &1785799654

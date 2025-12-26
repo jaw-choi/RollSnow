@@ -4,8 +4,8 @@ using UnityEngine.SceneManagement;
 public class MenuManager : MonoBehaviour
 {
     [Header("Scene Names")]
-    [SerializeField] private string mainMenuSceneName = "MainMenu";
-    [SerializeField] private string gameSceneName = "GameScene";
+    [SerializeField] private string mainMenuSceneName = "01_MainMenu";
+    [SerializeField] private string gameSceneName = "04_GameScene";
 
     [Header("Pause UI")]
     [SerializeField] private GameObject pausePanel;
@@ -45,7 +45,10 @@ public class MenuManager : MonoBehaviour
         {
             GameManager.Instance.Restart();
         }
-        SceneManager.LoadScene(gameSceneName);
+        else
+        {
+            SceneManager.LoadScene(gameSceneName);
+        }
     }
 
     public void RestartGame()
@@ -55,7 +58,10 @@ public class MenuManager : MonoBehaviour
         {
             GameManager.Instance.Restart();
         }
-        SceneManager.LoadScene(gameSceneName);
+        else
+        {
+            SceneManager.LoadScene(gameSceneName);
+        }
     }
 
     public void Pause()
