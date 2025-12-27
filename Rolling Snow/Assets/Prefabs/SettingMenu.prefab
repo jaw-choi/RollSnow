@@ -149,7 +149,7 @@ GameObject:
   - component: {fileID: 2013463945205541971}
   - component: {fileID: 4960523493609874947}
   m_Layer: 5
-  m_Name: Menus
+  m_Name: SettingMenu
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -391,7 +391,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 301}
+  m_SizeDelta: {x: 0, y: 401}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &5551811633269593198
 CanvasRenderer:
@@ -421,7 +421,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 318375788579120763, guid: fc6794aa4bd7c87409abed443136cd00, type: 3}
+  m_Sprite: {fileID: 3511670917268408798, guid: fc6794aa4bd7c87409abed443136cd00, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -1286,7 +1286,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 401}
+  m_SizeDelta: {x: 0, y: 301}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &4371022885413313967
 CanvasRenderer:
@@ -1316,7 +1316,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 4775926194885725279, guid: fc6794aa4bd7c87409abed443136cd00, type: 3}
+  m_Sprite: {fileID: -4650153461358351028, guid: fc6794aa4bd7c87409abed443136cd00, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1

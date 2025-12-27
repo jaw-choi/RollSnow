@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
@@ -15,6 +16,18 @@ public class MainMenuManager : MonoBehaviour
     [SerializeField] private Button inventoryButton;
     [SerializeField] private Button settingsSceneButton;
     [SerializeField] private Canvas menuCanvas;
+    [Header("Scene Prefabs")]
+    [SerializeField] private ScenePrefabMapping[] scenePrefabs;
+
+    [System.Serializable]
+    private struct ScenePrefabMapping
+    {
+        public string sceneName;
+        public GameObject prefab;
+    }
+
+    private readonly Dictionary<string, GameObject> scenePrefabLookup = new Dictionary<string, GameObject>();
+    private GameObject activeScenePrefab;
 
     private void Awake()
     {
@@ -29,9 +42,11 @@ public class MainMenuManager : MonoBehaviour
         instance = this;
         DontDestroyOnLoad(root);
 
+        BuildScenePrefabLookup();
         RegisterButtonListeners();
         SceneManager.sceneLoaded += HandleSceneLoaded;
-        UpdateVisibility(SceneManager.GetActiveScene().name);
+        var currentScene = SceneManager.GetActiveScene();
+        HandleSceneLoaded(currentScene, LoadSceneMode.Single);
     }
 
     private void OnDestroy()
@@ -61,6 +76,7 @@ public class MainMenuManager : MonoBehaviour
 
     private void HandleSceneLoaded(Scene scene, LoadSceneMode mode)
     {
+        SwapScenePrefab(scene.name);
         UpdateVisibility(scene.name);
     }
 
@@ -87,5 +103,44 @@ public class MainMenuManager : MonoBehaviour
 
         var rootTransform = transform.root != null ? transform.root : transform;
         return rootTransform.gameObject;
+    }
+
+    private void BuildScenePrefabLookup()
+    {
+        scenePrefabLookup.Clear();
+
+        if (scenePrefabs == null)
+        {
+            return;
+        }
+
+        foreach (var entry in scenePrefabs)
+        {
+            if (string.IsNullOrEmpty(entry.sceneName) || entry.prefab == null)
+            {
+                continue;
+            }
+
+            scenePrefabLookup[entry.sceneName] = entry.prefab;
+        }
+    }
+
+    private void SwapScenePrefab(string sceneName)
+    {
+        if (activeScenePrefab != null)
+        {
+            Destroy(activeScenePrefab);
+            activeScenePrefab = null;
+        }
+
+        if (!scenePrefabLookup.TryGetValue(sceneName, out var prefab) || prefab == null)
+        {
+            return;
+        }
+
+        var parent = menuCanvas != null ? menuCanvas.transform :
+            persistentRoot != null ? persistentRoot.transform : transform;
+        activeScenePrefab = Instantiate(prefab, parent);
+        DontDestroyOnLoad(activeScenePrefab);
     }
 }
