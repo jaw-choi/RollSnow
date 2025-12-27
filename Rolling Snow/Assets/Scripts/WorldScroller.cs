@@ -14,8 +14,8 @@ public class WorldScroller : MonoBehaviour
     [Header("Segments")]
     [SerializeField] private List<Transform> segments = new List<Transform>();
     [SerializeField] private bool randomizeOrderOnStart = true;
-    [SerializeField] private float firstSegmentTopX = 2.6f;
-    [SerializeField] private float firstSegmentTopY = 16f;
+    [SerializeField] private float firstSegmentTopX = 0f;
+    [SerializeField] private float firstSegmentTopY = 0f;
     [SerializeField] private float cameraPassThreshold = 0.25f;
 
     readonly List<SegmentInfo> orderedSegments = new List<SegmentInfo>();
@@ -108,6 +108,45 @@ public class WorldScroller : MonoBehaviour
         orderedSegments.Add(passedSegment);
     }
 
+    public bool TryGetSegmentHorizontalBounds(float sampleY, out float minX, out float maxX)
+    {
+        minX = maxX = 0f;
+        if (orderedSegments.Count == 0)
+            return false;
+
+        SegmentInfo closest = null;
+        float closestDistance = float.MaxValue;
+
+        foreach (var info in orderedSegments)
+        {
+            float top = info.GetWorldTopY();
+            float bottom = info.GetWorldBottomY();
+            if (sampleY <= top && sampleY >= bottom)
+            {
+                minX = info.GetWorldLeftX();
+                maxX = info.GetWorldRightX();
+                return true;
+            }
+
+            float center = (top + bottom) * 0.5f;
+            float distance = Mathf.Abs(sampleY - center);
+            if (distance < closestDistance)
+            {
+                closestDistance = distance;
+                closest = info;
+            }
+        }
+
+        if (closest != null)
+        {
+            minX = closest.GetWorldLeftX();
+            maxX = closest.GetWorldRightX();
+            return true;
+        }
+
+        return false;
+    }
+
     float GetCameraTop()
     {
         if (followCamera == null)
@@ -151,6 +190,8 @@ public class WorldScroller : MonoBehaviour
 
         Vector3 localTop;
         Vector3 localBottom;
+        Vector3 localLeft;
+        Vector3 localRight;
         float cachedHeight = 1f;
         bool hasBounds;
 
@@ -166,14 +207,20 @@ public class WorldScroller : MonoBehaviour
             {
                 Vector3 topWorld = new Vector3(bounds.center.x, bounds.max.y, bounds.center.z);
                 Vector3 bottomWorld = new Vector3(bounds.center.x, bounds.min.y, bounds.center.z);
+                Vector3 leftWorld = new Vector3(bounds.min.x, bounds.center.y, bounds.center.z);
+                Vector3 rightWorld = new Vector3(bounds.max.x, bounds.center.y, bounds.center.z);
                 localTop = transform.InverseTransformPoint(topWorld);
                 localBottom = transform.InverseTransformPoint(bottomWorld);
+                localLeft = transform.InverseTransformPoint(leftWorld);
+                localRight = transform.InverseTransformPoint(rightWorld);
                 cachedHeight = Mathf.Abs(localTop.y - localBottom.y);
             }
             else
             {
                 localTop = Vector3.up * 0.5f;
                 localBottom = Vector3.down * 0.5f;
+                localLeft = Vector3.left * 0.5f;
+                localRight = Vector3.right * 0.5f;
                 cachedHeight = 1f;
             }
         }
@@ -192,6 +239,22 @@ public class WorldScroller : MonoBehaviour
                 CacheBounds();
 
             return transform.TransformPoint(localBottom).y;
+        }
+
+        public float GetWorldLeftX()
+        {
+            if (!hasBounds)
+                CacheBounds();
+
+            return transform.TransformPoint(localLeft).x;
+        }
+
+        public float GetWorldRightX()
+        {
+            if (!hasBounds)
+                CacheBounds();
+
+            return transform.TransformPoint(localRight).x;
         }
 
         public float GetHeight()

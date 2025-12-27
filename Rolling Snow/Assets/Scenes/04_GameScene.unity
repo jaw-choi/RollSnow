@@ -8625,6 +8625,10 @@ MonoBehaviour:
   player: {fileID: 120953473}
   followOffset: {x: 0, y: 0.1, z: -10}
   followLerpSpeed: 20
+  deadZoneSize: {x: 1, y: 1}
+  applyDeadZoneY: 1
+  segmentProvider: {fileID: 755867641}
+  boundaryPadding: 0.1
   startZoomValue: 1
   maxZoomValue: 20
   zoomOutSpeed: 0.5
@@ -11974,8 +11978,8 @@ MonoBehaviour:
   - {fileID: 886469436}
   - {fileID: 2072008588}
   randomizeOrderOnStart: 1
-  firstSegmentTopX: 2.6
-  firstSegmentTopY: 10
+  firstSegmentTopX: 0
+  firstSegmentTopY: 12
   cameraPassThreshold: 0.25
 --- !u!1001 &762708720
 PrefabInstance:
