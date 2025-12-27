@@ -5,6 +5,9 @@ using UnityEngine.InputSystem.EnhancedTouch;
 public class PlayerController : MonoBehaviour
 {
     public float moveSpeed = 1f;
+    [Header("Speed Scaling")]
+    [SerializeField] private float moveSpeedIncreasePerSecond = 0f;
+    [SerializeField] private float maxMoveSpeed = 3f;
     [Header("Horizontal Bounds")]
     [SerializeField] private float minX = -9.49f;
     [SerializeField] private float maxX = 9.49f;
@@ -35,6 +38,8 @@ public class PlayerController : MonoBehaviour
     // prevent repeated flips while holding the same press
     bool flipTriggeredThisPress = false;
     float currentFlipDuration = 0.6f;
+    float currentMoveSpeed;
+    float baseMoveSpeed;
 
     Rigidbody rb;
     bool inputModeLogged;
@@ -63,11 +68,13 @@ public class PlayerController : MonoBehaviour
         startingMoveDir = moveDir;
         moveDir = startingMoveDir;
         dirValue = moveDir;
+        baseMoveSpeed = Mathf.Max(0f, moveSpeed);
+        currentMoveSpeed = baseMoveSpeed;
     }
 
     void Update()
     {
-
+        UpdateMoveSpeed(Time.deltaTime);
 
         // 1) input: mouse click or touch
         bool pressedDown = false;
@@ -194,7 +201,7 @@ public class PlayerController : MonoBehaviour
 
         if (Mathf.Abs(dirValue) > 0.001f)
         {
-            pos += Vector3.right * (dirValue * moveSpeed * deltaTime);
+            pos += Vector3.right * (dirValue * currentMoveSpeed * deltaTime);
         }
 
         if (minX < maxX)
@@ -210,7 +217,7 @@ public class PlayerController : MonoBehaviour
 
         if (Mathf.Abs(dirValue) > 0.001f)
         {
-            newPos += Vector3.right * (dirValue * moveSpeed * deltaTime);
+            newPos += Vector3.right * (dirValue * currentMoveSpeed * deltaTime);
         }
 
         if (minX < maxX)
@@ -231,6 +238,7 @@ public class PlayerController : MonoBehaviour
         flipInProgress = false;
         flipTriggeredThisPress = false;
         pressStartTime = 0f;
+        currentMoveSpeed = baseMoveSpeed;
 
         if (rb != null)
         {
@@ -247,6 +255,18 @@ public class PlayerController : MonoBehaviour
         if (minX < maxX)
             safePos.x = Mathf.Clamp(safePos.x, minX, maxX);
         transform.SetPositionAndRotation(safePos, rotation);
+    }
+
+    void UpdateMoveSpeed(float deltaTime)
+    {
+        if (moveSpeedIncreasePerSecond <= 0f)
+        {
+            currentMoveSpeed = Mathf.Max(0f, baseMoveSpeed);
+            return;
+        }
+
+        float targetMax = Mathf.Max(baseMoveSpeed, maxMoveSpeed);
+        currentMoveSpeed = Mathf.MoveTowards(currentMoveSpeed, targetMax, moveSpeedIncreasePerSecond * deltaTime);
     }
 
     bool IsGameplayActive()

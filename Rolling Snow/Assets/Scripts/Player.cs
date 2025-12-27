@@ -93,13 +93,7 @@ public class Player : MonoBehaviour
     {
         if (other == null) return;
 
-        var obstacle = other.GetComponent<ObstacleBehavior>();
-        if (obstacle != null)
-        {
-            if (!obstacle.IsLethal())
-                return;
-        }
-        else if (!other.CompareTag("Obstacle"))
+        if (!other.CompareTag("Obstacle"))
         {
             return;
         }

@@ -19,9 +19,14 @@ public class GameManager : MonoBehaviour
 
     ResultPanelUI resultPanel;
     [SerializeField] private Player player;
+    [SerializeField] private ScoreBasedCameraFollow cameraFollow;
+    [SerializeField] private Camera gameplayCamera;
     Vector3 playerStartPosition;
     Quaternion playerStartRotation;
     bool playerStartCaptured = false;
+    Vector3 cameraStartPosition;
+    Quaternion cameraStartRotation;
+    bool cameraStartCaptured = false;
     float playSessionStartTime;
     bool isGameplayActive = false;
 
@@ -98,6 +103,9 @@ public class GameManager : MonoBehaviour
         {
             player = null;
             playerStartCaptured = false;
+            cameraFollow = null;
+            gameplayCamera = null;
+            cameraStartCaptured = false;
             SceneManager.LoadScene(gameSceneName);
             return;
         }
@@ -116,6 +124,9 @@ public class GameManager : MonoBehaviour
         isGameplayActive = false;
         player = null;
         playerStartCaptured = false;
+        cameraFollow = null;
+        gameplayCamera = null;
+        cameraStartCaptured = false;
         SceneManager.LoadScene(mainMenuSceneName);
     }
 
@@ -167,8 +178,13 @@ public class GameManager : MonoBehaviour
             ResetCoreState();
             HideResultPanel();
             playerStartCaptured = false;
+            cameraStartCaptured = false;
+            cameraFollow = null;
+            gameplayCamera = null;
             CachePlayerReferences(true);
+            CacheCameraReferences(true);
             ResetPlayerState();
+            ResetCameraState();
             StartNewSession();
             isGameplayActive = true;
         }
@@ -176,6 +192,9 @@ public class GameManager : MonoBehaviour
         {
             player = null;
             playerStartCaptured = false;
+            cameraFollow = null;
+            gameplayCamera = null;
+            cameraStartCaptured = false;
             isGameplayActive = false;
         }
     }
@@ -240,6 +259,53 @@ public class GameManager : MonoBehaviour
         }
 
         player.ResetPlayerData();
+        ResetCameraState();
+    }
+
+    void ResetCameraState()
+    {
+        CacheCameraReferences(false);
+
+        if (cameraFollow != null && !cameraFollow.Equals(null))
+        {
+            cameraFollow.SnapToPlayerImmediately();
+            return;
+        }
+
+        if (!cameraStartCaptured || gameplayCamera == null || gameplayCamera.Equals(null))
+            return;
+
+        gameplayCamera.transform.SetPositionAndRotation(cameraStartPosition, cameraStartRotation);
+    }
+
+    void CacheCameraReferences(bool refreshStartValues)
+    {
+        if (cameraFollow == null || cameraFollow.Equals(null))
+        {
+            cameraFollow = FindObjectOfType<ScoreBasedCameraFollow>(true);
+        }
+
+        if ((gameplayCamera == null || gameplayCamera.Equals(null)) && cameraFollow != null && !cameraFollow.Equals(null))
+        {
+            gameplayCamera = cameraFollow.GetComponent<Camera>();
+        }
+
+        if (gameplayCamera == null || gameplayCamera.Equals(null))
+        {
+            var mainCam = Camera.main;
+            if (mainCam != null && !mainCam.Equals(null))
+            {
+                gameplayCamera = mainCam;
+            }
+        }
+
+        if (gameplayCamera != null && !gameplayCamera.Equals(null) && (refreshStartValues || !cameraStartCaptured))
+        {
+            var camTransform = gameplayCamera.transform;
+            cameraStartPosition = camTransform.position;
+            cameraStartRotation = camTransform.rotation;
+            cameraStartCaptured = true;
+        }
     }
 
     void StartNewSession()
