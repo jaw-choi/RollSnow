@@ -28,6 +28,14 @@ public class PlayerController : MonoBehaviour
     // continuous direction value used for movement (-1..1)
     float dirValue = 0f;
 
+    [Header("Ski Physics")]
+    [SerializeField] private float downhillAcceleration = 5f;
+    [SerializeField] private float horizontalAcceleration = 10f;
+
+    [Header("Turn FX")]
+    [SerializeField] private SnowSprayController snowSprayController;
+    [SerializeField] private int turnBurstCount = 8;
+
     // press/flip state
     bool isPressing = false;
     float pressStartTime = 0f;
@@ -40,6 +48,7 @@ public class PlayerController : MonoBehaviour
     float currentFlipDuration = 0.6f;
     float currentMoveSpeed;
     float baseMoveSpeed;
+    Vector3 currentVelocity;
 
     Rigidbody rb;
     bool inputModeLogged;
@@ -70,6 +79,7 @@ public class PlayerController : MonoBehaviour
         dirValue = moveDir;
         baseMoveSpeed = Mathf.Max(0f, moveSpeed);
         currentMoveSpeed = baseMoveSpeed;
+        currentVelocity = new Vector3(dirValue * currentMoveSpeed, -Mathf.Abs(descentSpeed), 0f);
     }
 
     void Update()
@@ -192,38 +202,55 @@ public class PlayerController : MonoBehaviour
         currentFlipDuration = duration;
         flipInProgress = true;
         flipTriggeredThisPress = true;
+        EmitTurnBurst();
     }
 
     void ApplyTransformMovement(float deltaTime)
     {
-        Vector3 pos = transform.position;
-        pos.y -= descentSpeed * deltaTime;
-
-        if (Mathf.Abs(dirValue) > 0.001f)
-        {
-            pos += Vector3.right * (dirValue * currentMoveSpeed * deltaTime);
-        }
-
-        if (minX < maxX)
-            pos.x = Mathf.Clamp(pos.x, minX, maxX);
-
-        transform.position = pos;
+        SimulateSkiMotion(deltaTime, false);
     }
 
     void ApplyRigidbodyMovement(float deltaTime)
     {
-        Vector3 newPos = rb.position;
-        newPos.y -= descentSpeed * deltaTime;
+        SimulateSkiMotion(deltaTime, true);
+    }
 
-        if (Mathf.Abs(dirValue) > 0.001f)
-        {
-            newPos += Vector3.right * (dirValue * currentMoveSpeed * deltaTime);
-        }
+    void SimulateSkiMotion(float deltaTime, bool useRigidbody)
+    {
+        if (deltaTime <= 0f)
+            return;
+
+        UpdateSkiVelocity(deltaTime);
+
+        Vector3 newPos = useRigidbody && rb != null ? rb.position : transform.position;
+        newPos += currentVelocity * deltaTime;
 
         if (minX < maxX)
-            newPos.x = Mathf.Clamp(newPos.x, minX, maxX);
+        {
+            float clampedX = Mathf.Clamp(newPos.x, minX, maxX);
+            if (!Mathf.Approximately(clampedX, newPos.x))
+                currentVelocity.x = 0f;
+            newPos.x = clampedX;
+        }
 
-        rb.MovePosition(newPos);
+        if (useRigidbody && rb != null)
+        {
+            rb.MovePosition(newPos);
+            rb.linearVelocity = currentVelocity;
+        }
+        else
+        {
+            transform.position = newPos;
+        }
+    }
+
+    void UpdateSkiVelocity(float deltaTime)
+    {
+        float targetDownhill = -Mathf.Abs(descentSpeed);
+        currentVelocity.y = Mathf.MoveTowards(currentVelocity.y, targetDownhill, downhillAcceleration * deltaTime);
+
+        float targetLateral = dirValue * currentMoveSpeed;
+        currentVelocity.x = Mathf.MoveTowards(currentVelocity.x, targetLateral, horizontalAcceleration * deltaTime);
     }
 
     public void ResetControllerState(Vector3 position, Quaternion rotation)
@@ -239,10 +266,11 @@ public class PlayerController : MonoBehaviour
         flipTriggeredThisPress = false;
         pressStartTime = 0f;
         currentMoveSpeed = baseMoveSpeed;
+        currentVelocity = new Vector3(dirValue * currentMoveSpeed, -Mathf.Abs(descentSpeed), 0f);
 
         if (rb != null)
         {
-            rb.linearVelocity = Vector3.zero;
+            rb.linearVelocity = currentVelocity;
             rb.angularVelocity = Vector3.zero;
             Vector3 clamped = position;
             if (minX < maxX)
@@ -277,5 +305,13 @@ public class PlayerController : MonoBehaviour
         }
 
         return GameManager.Instance.IsPlaying();
+    }
+
+    void EmitTurnBurst()
+    {
+        if (snowSprayController == null || turnBurstCount <= 0)
+            return;
+
+        snowSprayController.EmitManualBurst(turnBurstCount);
     }
 }

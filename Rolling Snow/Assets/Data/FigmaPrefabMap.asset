@@ -1,0 +1,29 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: db4f63c056ae0c54e8225101f5fb3e2d, type: 3}
+  m_Name: FigmaPrefabMap
+  m_EditorClassIdentifier: Assembly-CSharp::FigmaPrefabMap
+  entries:
+  - key: background
+    prefab: {fileID: 5858317702881368146, guid: 2d5e79f992550b743a35d535e9d5ffd8, type: 3}
+  - key: tree 1
+    prefab: {fileID: 5797807750809674799, guid: 9fb9e90f9e283af4895ecf5fb6bc960b, type: 3}
+  - key: tree 2
+    prefab: {fileID: 5797807750809674799, guid: 9fb9e90f9e283af4895ecf5fb6bc960b, type: 3}
+  - key: tree 3
+    prefab: {fileID: 9144328159469077398, guid: cf35f76edccf8964d9653d338ec7dfc5, type: 3}
+  - key: tree 4
+    prefab: {fileID: 7194638532536829717, guid: 165f6d59fcac90a40a2317bcb83189f4, type: 3}
+  - key: rock 1
+    prefab: {fileID: 7466989204317355097, guid: 956ec953aae14d946b545e6d52933df9, type: 3}
+  - key: rock 2
+    prefab: {fileID: 5888037381800685893, guid: 1c389f074ed2b764eb69b52185363a43, type: 3}

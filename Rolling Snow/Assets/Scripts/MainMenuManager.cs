@@ -10,9 +10,9 @@ public class MainMenuManager : MonoBehaviour
     [Header("Persistence")]
     [SerializeField] private GameObject persistentRoot;
 
-    [SerializeField] private Button mainMenuButton;
     [SerializeField] private Button achievementButton;
     [SerializeField] private Button shopButton;
+    [SerializeField] private Button mainMenuButton;
     [SerializeField] private Button inventoryButton;
     [SerializeField] private Button settingsSceneButton;
     [SerializeField] private Canvas menuCanvas;
