@@ -3143,7 +3143,7 @@ PrefabInstance:
   m_SourcePrefab: {fileID: 100100000, guid: 834d2e80b77e78c47ad884cca4296632, type: 3}
 --- !u!224 &1744998569 stripped
 RectTransform:
-  m_CorrespondingSourceObject: {fileID: 3234671183390799706, guid: 834d2e80b77e78c47ad884cca4296632, type: 3}
+  m_CorrespondingSourceObject: {fileID: 2466111645738429031, guid: 834d2e80b77e78c47ad884cca4296632, type: 3}
   m_PrefabInstance: {fileID: 1744998568}
   m_PrefabAsset: {fileID: 0}
 --- !u!1 &1769336000
@@ -3516,45 +3516,53 @@ MonoBehaviour:
   m_CurrentScreenInstance: {fileID: 0}
   m_PrototypeFlowInitialScreenId: 
   m_Screens:
-  - FigmaNodeId: 2004:14
-    FigmaScreenPrefab: {fileID: 4744012690720658278, guid: 84c8521f06bcafb4986633759ee2cd67, type: 3}
-    FigmaScreenName: SHOP
-    ParentSectionNodeId: 
   - FigmaNodeId: 2004:16
-    FigmaScreenPrefab: {fileID: 5458238031705094748, guid: 9b522d1643afa0e41afa8f8ce2b6d48b, type: 3}
+    FigmaScreenPrefab: {fileID: 423197212424789406, guid: 9b522d1643afa0e41afa8f8ce2b6d48b, type: 3}
     FigmaScreenName: ACHIEVEMENTS
     ParentSectionNodeId: 
   - FigmaNodeId: 2003:2
-    FigmaScreenPrefab: {fileID: 572494474090563386, guid: 53866a26d23f56d4f9a2d9c3ab00c88a, type: 3}
+    FigmaScreenPrefab: {fileID: 3865382079802251524, guid: 53866a26d23f56d4f9a2d9c3ab00c88a, type: 3}
     FigmaScreenName: MAIN HOME
     ParentSectionNodeId: 
   - FigmaNodeId: 2004:10
-    FigmaScreenPrefab: {fileID: 6303042681150808566, guid: 883627937622a494c80a549ad1f5f51c, type: 3}
+    FigmaScreenPrefab: {fileID: 5438828761872611037, guid: 883627937622a494c80a549ad1f5f51c, type: 3}
     FigmaScreenName: SETTINGS
     ParentSectionNodeId: 
   - FigmaNodeId: 2068:9
-    FigmaScreenPrefab: {fileID: 3120077259991040662, guid: 834d2e80b77e78c47ad884cca4296632, type: 3}
+    FigmaScreenPrefab: {fileID: 9040402608290638419, guid: 834d2e80b77e78c47ad884cca4296632, type: 3}
     FigmaScreenName: course 1
     ParentSectionNodeId: 
   - FigmaNodeId: 2068:12
-    FigmaScreenPrefab: {fileID: 8251312856827209604, guid: 0fd554d843e184c4bb6bf33a93f29984, type: 3}
+    FigmaScreenPrefab: {fileID: 9021877446393444862, guid: 0fd554d843e184c4bb6bf33a93f29984, type: 3}
     FigmaScreenName: course 2
     ParentSectionNodeId: 
   - FigmaNodeId: 2068:16
-    FigmaScreenPrefab: {fileID: 6392360878007813987, guid: 373cef5f4fe032443b127db02a96d857, type: 3}
+    FigmaScreenPrefab: {fileID: 558767130726154478, guid: 373cef5f4fe032443b127db02a96d857, type: 3}
     FigmaScreenName: course 3
     ParentSectionNodeId: 
   - FigmaNodeId: 2068:20
-    FigmaScreenPrefab: {fileID: 5278040195561319317, guid: fee6215e0f0490348b372b09d93bb3ec, type: 3}
+    FigmaScreenPrefab: {fileID: 6589724820563168375, guid: fee6215e0f0490348b372b09d93bb3ec, type: 3}
     FigmaScreenName: course 4
     ParentSectionNodeId: 
   - FigmaNodeId: 2068:24
-    FigmaScreenPrefab: {fileID: 7762772297992296536, guid: b08dddfcebd4d494fa8b5394a7c2e34d, type: 3}
+    FigmaScreenPrefab: {fileID: 4841874550337616980, guid: b08dddfcebd4d494fa8b5394a7c2e34d, type: 3}
     FigmaScreenName: course 5
     ParentSectionNodeId: 
-  - FigmaNodeId: 2099:18
-    FigmaScreenPrefab: {fileID: 192092065629243677, guid: 7d2033244c1d5ff46b80d4143dcf04c4, type: 3}
-    FigmaScreenName: tree 3
+  - FigmaNodeId: 2139:3
+    FigmaScreenPrefab: {fileID: 2992817052864309234, guid: 84c8521f06bcafb4986633759ee2cd67, type: 3}
+    FigmaScreenName: SHOP
+    ParentSectionNodeId: 
+  - FigmaNodeId: 2139:121
+    FigmaScreenPrefab: {fileID: 7047219873380873155, guid: 51339e5d1fe8bb94bb519b64c2322d95, type: 3}
+    FigmaScreenName: ACHIEVEMENTS_1
+    ParentSectionNodeId: 
+  - FigmaNodeId: 2139:141
+    FigmaScreenPrefab: {fileID: 3250138077392539765, guid: a9157a49c3677c24fb6e9631b4bd327a, type: 3}
+    FigmaScreenName: MAIN HOME_1
+    ParentSectionNodeId: 
+  - FigmaNodeId: 2139:183
+    FigmaScreenPrefab: {fileID: 425714452657150329, guid: ad71f7e2784147c4d9db57d1ea936d5d, type: 3}
+    FigmaScreenName: SETTINGS_1
     ParentSectionNodeId: 
   m_Sections: []
 --- !u!114 &2071816238

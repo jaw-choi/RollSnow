@@ -119,6 +119,62 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
+--- !u!1 &1023380278
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1023380280}
+  - component: {fileID: 1023380279}
+  m_Layer: 0
+  m_Name: MenuManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1023380279
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1023380278}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 159b4dc595f0c304ab11f5f99126b6f5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MainMenuManager
+  targetCanvas: {fileID: 0}
+  scenePrefabs:
+  - sceneName: 02_Achievement
+    prefab: {fileID: 3511728168094361982, guid: d877b26f038bd714fad85a7995dee5e9, type: 3}
+  - sceneName: 03_Shop
+    prefab: {fileID: 3511728168094361982, guid: 669be5384704fd14e8d96b4e2a2d9b5d, type: 3}
+  - sceneName: 01_MainMenu
+    prefab: {fileID: 3511728168094361982, guid: bec05d178cdadef4393cd38aab142aa5, type: 3}
+  - sceneName: 05_Inventory
+    prefab: {fileID: 3511728168094361982, guid: b3b290bbfdf588240bc62eb00d48cd19, type: 3}
+  - sceneName: 06_Settings
+    prefab: {fileID: 3511728168094361982, guid: 78d9745208c7b42459e80f45340c2cb0, type: 3}
+--- !u!4 &1023380280
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1023380278}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 2.50236, y: 1.42421, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1427817390
 GameObject:
   m_ObjectHideFlags: 0
@@ -232,6 +288,8 @@ MonoBehaviour:
   gameSceneName: 04_GameScene
   mainMenuSceneName: 01_MainMenu
   player: {fileID: 0}
+  cameraFollow: {fileID: 0}
+  gameplayCamera: {fileID: 0}
 --- !u!4 &1584719638
 Transform:
   m_ObjectHideFlags: 0
@@ -598,3 +656,4 @@ SceneRoots:
   - {fileID: 2103697776}
   - {fileID: 1427817393}
   - {fileID: 1584719638}
+  - {fileID: 1023380280}
