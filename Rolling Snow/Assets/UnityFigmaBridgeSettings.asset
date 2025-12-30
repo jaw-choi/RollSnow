@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 119c1bd3601648f28a252a6030e067b6, type: 3}
   m_Name: UnityFigmaBridgeSettings
   m_EditorClassIdentifier: UnityFigmaBridgeEditor::UnityFigmaBridge.Editor.Settings.UnityFigmaBridgeSettings
-  DocumentUrl: https://www.figma.com/design/dIuxTLzETYSkEP2jdrzlrs/
+  DocumentUrl: https://www.figma.com/design/HU1U17iI6l25NI3KBu6E4J/
   BuildPrototypeFlow: 1
   RunTimeAssetsScenePath: Assets/Scenes/Figma.unity
   EnableAutoLayout: 0
@@ -26,6 +26,9 @@ MonoBehaviour:
   - Name: Page 1
     NodeId: 0:1
     Selected: 1
-  - Name: shop page
+  - Name: ui page
     NodeId: 2097:2
+    Selected: 1
+  - Name: asset
+    NodeId: 2139:39
     Selected: 1
