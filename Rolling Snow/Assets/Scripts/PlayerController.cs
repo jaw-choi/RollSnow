@@ -84,6 +84,9 @@ public class PlayerController : MonoBehaviour
 
     void Update()
     {
+        if (!IsGameplayActive())
+            return;
+
         UpdateMoveSpeed(Time.deltaTime);
 
         // 1) input: mouse click or touch
@@ -92,7 +95,9 @@ public class PlayerController : MonoBehaviour
 
         if (!inputModeLogged)
         {
-            Debug.Log("PlayerController 입력 모드 초기화: 사용 가능한 Mouse/Touch 모두 감지");
+            #if UNITY_EDITOR || DEVELOPMENT_BUILD
+            Debug.Log("PlayerController input mode init: detecting Mouse/Touch availability.");
+            #endif
             inputModeLogged = true;
         }
 
@@ -102,17 +107,23 @@ public class PlayerController : MonoBehaviour
             if (mouse.leftButton.wasPressedThisFrame)
             {
                 pressedDown = true;
-                Debug.Log($"입력 감지: Mouse Down @ {Time.time:F2}");
+                #if UNITY_EDITOR || DEVELOPMENT_BUILD
+                Debug.Log($"Input detected: Mouse Down @ {Time.time:F2}");
+                #endif
             }
             if (mouse.leftButton.wasReleasedThisFrame)
             {
                 released = true;
-                Debug.Log($"입력 감지: Mouse Up @ {Time.time:F2}");
+                #if UNITY_EDITOR || DEVELOPMENT_BUILD
+                Debug.Log($"Input detected: Mouse Up @ {Time.time:F2}");
+                #endif
             }
         }
         else if (!mouseUnavailableLogged)
         {
-            Debug.LogWarning("Mouse 장치를 찾을 수 없습니다.");
+            #if UNITY_EDITOR || DEVELOPMENT_BUILD
+            Debug.LogWarning("Mouse device not found.");
+            #endif
             mouseUnavailableLogged = true;
         }
 
@@ -123,17 +134,23 @@ public class PlayerController : MonoBehaviour
             if (primary.press.wasPressedThisFrame)
             {
                 pressedDown = true;
-                Debug.Log($"입력 감지: Touch Down @ {Time.time:F2}");
+                #if UNITY_EDITOR || DEVELOPMENT_BUILD
+                Debug.Log($"Input detected: Touch Down @ {Time.time:F2}");
+                #endif
             }
             if (primary.press.wasReleasedThisFrame)
             {
                 released = true;
-                Debug.Log($"입력 감지: Touch Up @ {Time.time:F2}");
+                #if UNITY_EDITOR || DEVELOPMENT_BUILD
+                Debug.Log($"Input detected: Touch Up @ {Time.time:F2}");
+                #endif
             }
         }
         else if (!touchUnavailableLogged)
         {
-            Debug.LogWarning("Touchscreen 장치를 찾을 수 없습니다.");
+            #if UNITY_EDITOR || DEVELOPMENT_BUILD
+            Debug.LogWarning("Touchscreen device not found.");
+            #endif
             touchUnavailableLogged = true;
         }
 
@@ -187,6 +204,9 @@ public class PlayerController : MonoBehaviour
 
     void FixedUpdate()
     {
+        if (!IsGameplayActive())
+            return;
+
         if (rb != null)
         {
             ApplyRigidbodyMovement(Time.fixedDeltaTime);
@@ -300,6 +320,9 @@ public class PlayerController : MonoBehaviour
 
     bool IsGameplayActive()
     {
+        if (Time.timeScale <= 0f)
+            return false;
+
         if (GameManager.Instance == null)
         {
             return true;

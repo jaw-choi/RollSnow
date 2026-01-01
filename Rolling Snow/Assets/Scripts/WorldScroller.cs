@@ -28,20 +28,7 @@ public class WorldScroller : MonoBehaviour
 
     void Start()
     {
-        BuildSegmentList();
-        if (orderedSegments.Count == 0)
-        {
-            Debug.LogWarning($"{nameof(WorldScroller)} disabled: no segments found.", this);
-            enabled = false;
-            return;
-        }
-
-        if (randomizeOrderOnStart)
-        {
-            Shuffle(orderedSegments);
-        }
-
-        ArrangeSegmentsFromOrigin();
+        ResetWorld();
     }
 
     void Update()
@@ -77,6 +64,24 @@ public class WorldScroller : MonoBehaviour
             info.CacheBounds();
             orderedSegments.Add(info);
         }
+    }
+
+    public void ResetWorld()
+    {
+        BuildSegmentList();
+        if (orderedSegments.Count == 0)
+        {
+            Debug.LogWarning($"{nameof(WorldScroller)} disabled: no segments found.", this);
+            enabled = false;
+            return;
+        }
+
+        if (randomizeOrderOnStart)
+        {
+            Shuffle(orderedSegments);
+        }
+
+        ArrangeSegmentsFromOrigin();
     }
 
     void ArrangeSegmentsFromOrigin()

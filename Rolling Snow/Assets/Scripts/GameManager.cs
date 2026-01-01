@@ -21,6 +21,7 @@ public class GameManager : MonoBehaviour
     [SerializeField] private Player player;
     [SerializeField] private ScoreBasedCameraFollow cameraFollow;
     [SerializeField] private Camera gameplayCamera;
+    GameSceneManager gameSceneManager;
     Vector3 playerStartPosition;
     Quaternion playerStartRotation;
     bool playerStartCaptured = false;
@@ -113,6 +114,7 @@ public class GameManager : MonoBehaviour
         }
 
         ResetPlayerState();
+        ResetWorldState();
         StartNewSession();
         isGameplayActive = true;
         AudioManager.instance?.PlayBGM(true);
@@ -184,6 +186,7 @@ public class GameManager : MonoBehaviour
             cameraStartCaptured = false;
             cameraFollow = null;
             gameplayCamera = null;
+            CacheSceneManagerReferences();
             CachePlayerReferences(true);
             CacheCameraReferences(true);
             ResetPlayerState();
@@ -199,6 +202,7 @@ public class GameManager : MonoBehaviour
             cameraFollow = null;
             gameplayCamera = null;
             cameraStartCaptured = false;
+            gameSceneManager = null;
             isGameplayActive = false;
         }
     }
@@ -242,6 +246,25 @@ public class GameManager : MonoBehaviour
             player = null;
             playerStartCaptured = false;
         }
+    }
+
+    void CacheSceneManagerReferences()
+    {
+        if (gameSceneManager == null || gameSceneManager.Equals(null))
+        {
+            gameSceneManager = FindObjectOfType<GameSceneManager>(true);
+        }
+    }
+
+    void ResetWorldState()
+    {
+        CacheSceneManagerReferences();
+        if (gameSceneManager == null || gameSceneManager.Equals(null))
+            return;
+
+        var scroller = gameSceneManager.WorldScroller;
+        if (scroller != null && !scroller.Equals(null))
+            scroller.ResetWorld();
     }
 
     void ResetPlayerState()

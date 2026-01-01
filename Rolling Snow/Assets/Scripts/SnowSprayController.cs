@@ -76,7 +76,9 @@ public class SnowSprayController : MonoBehaviour
         if (reversedHorizontalDir && burstTimer <= 0f)
         {
             int count = Random.Range(burstCountMin, burstCountMax + 1);
+            #if UNITY_EDITOR || DEVELOPMENT_BUILD
             Debug.Log("Emitting snow burst (direction flip). Count: " + count);
+            #endif
             snowPs.Emit(count);
             burstTimer = burstInterval;
         }

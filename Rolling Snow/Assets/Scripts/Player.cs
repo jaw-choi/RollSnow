@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class Player : MonoBehaviour
 {
@@ -10,6 +11,7 @@ public class Player : MonoBehaviour
     Vector3 baseScale;
     Vector3 initialBaseScale;
     float externalScaleMultiplier = 1f;
+    Camera cachedCamera;
 
     void Awake()
     {
@@ -19,10 +21,22 @@ public class Player : MonoBehaviour
 
         initialBaseScale = baseScale;
 
+        CacheCamera();
+
         if (GameManager.Instance != null)
         {
             GameManager.Instance.RegisterPlayer(this);
         }
+    }
+
+    void OnEnable()
+    {
+        SceneManager.sceneLoaded += HandleSceneLoaded;
+    }
+
+    void OnDisable()
+    {
+        SceneManager.sceneLoaded -= HandleSceneLoaded;
     }
 
     void Update()
@@ -41,8 +55,14 @@ public class Player : MonoBehaviour
         // Check if player left the camera viewport -> game over
         if (GameManager.Instance != null && !GameManager.Instance.IsGameOver)
         {
-            var cam = Camera.main;
-            if (cam != null)
+            var cam = cachedCamera;
+            if (cam == null || cam.Equals(null))
+            {
+                CacheCamera();
+                cam = cachedCamera;
+            }
+
+            if (cam != null && !cam.Equals(null))
             {
                 Vector3 vp = cam.WorldToViewportPoint(transform.position);
                 if (vp.x < 0f || vp.x > 1f || vp.y < 0f || vp.y > 1f)
@@ -118,6 +138,17 @@ public class Player : MonoBehaviour
     {
         externalScaleMultiplier = Mathf.Max(0.01f, multiplier);
         ApplyScale();
+    }
+
+    void HandleSceneLoaded(Scene scene, LoadSceneMode mode)
+    {
+        CacheCamera();
+    }
+
+    void CacheCamera()
+    {
+        if (cachedCamera == null || cachedCamera.Equals(null))
+            cachedCamera = Camera.main;
     }
 
     void OnDestroy()
