@@ -67,6 +67,8 @@ public class GameManager : MonoBehaviour
     {
         if (IsGameOver) return;
 
+        AudioManager.instance.PlayBGM(false);
+        AudioManager.instance.PlaySfx(AudioManager.Sfx.Dead);
         IsGameOver = true;
         IsCleared = false;
         isGameplayActive = false;
@@ -113,6 +115,7 @@ public class GameManager : MonoBehaviour
         ResetPlayerState();
         StartNewSession();
         isGameplayActive = true;
+        AudioManager.instance?.PlayBGM(true);
     }
 
     public void LoadMainMenu()
@@ -187,6 +190,7 @@ public class GameManager : MonoBehaviour
             ResetCameraState();
             StartNewSession();
             isGameplayActive = true;
+            AudioManager.instance.PlayBGM(true);
         }
         else
         {

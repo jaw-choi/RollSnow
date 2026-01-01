@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 using UnityEngine.Audio;
 
@@ -11,31 +12,43 @@ public class AudioManager : MonoBehaviour
     [SerializeField] private AudioMixerGroup musicGroup;        // GameMixer/Music
     [SerializeField] private AudioMixerGroup sfxGroup;          // GameMixer/SFX
 
-    // Exposed parameter names (AudioMixerÀÇ Exposed¿Í Á¤È®È÷ ÀÏÄ¡)
+    // Exposed parameter names (AudioMixerï¿½ï¿½ Exposedï¿½ï¿½ ï¿½ï¿½È®ï¿½ï¿½ ï¿½ï¿½Ä¡)
     private const string PARAM_MASTER = "MasterVolume";
     private const string PARAM_MUSIC = "MusicVolume";
     private const string PARAM_SFX = "SFXVolume";
 
     [Header("#BGM")]
     public AudioClip bgmClip;
-    [Range(0f, 1f)] public float bgmVolume = 1f; // pre-mix gain (¼±ÅÃ)
+    [Range(0f, 1f)] public float bgmVolume = 1f; // pre-mix gain (ï¿½ï¿½ï¿½ï¿½)
     AudioSource bgmPlayer;
     AudioHighPassFilter bgmEffect;
 
     [Header("#SFX")]
     public AudioClip[] sfxClips;
-    [Range(0f, 1f)] public float sfxVolume = 1f; // pre-mix gain (¼±ÅÃ)
+    [Range(0f, 1f)] public float sfxVolume = 1f; // pre-mix gain (ï¿½ï¿½ï¿½ï¿½)
     public int channels = 8;
     AudioSource[] sfxPlayers;
+
+    [Header("#Debug")]
+    [SerializeField] private bool logBgmVolume = false;
+    [SerializeField] private float bgmLogInterval = 1f;
+    float bgmLogTimer = 0f;
+
     int channelIndex;
-    public enum Sfx { Dead, Hit, LevelUp = 3, Lose, Melee, Range = 7, Select, Win, GetItem}
+    public enum Sfx { Dead = 0, Hit, LevelUp = 3, Lose, Melee, Range = 7, Select, Win, GetItem }
 
 
     void Awake()
     {
+        if (instance != null)
+        {
+            Destroy(gameObject);
+            return;
+        }
         instance = this;
+        DontDestroyOnLoad(gameObject);
         Init();
-        // ÃÊ±â Mixer º¼·ý Àû¿ë(¿øÇÏ¸é PlayerPrefs¿¡¼­ ºÒ·¯¿Í Àû¿ë)
+        // ï¿½Ê±ï¿½ Mixer ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½(ï¿½ï¿½ï¿½Ï¸ï¿½ PlayerPrefsï¿½ï¿½ï¿½ï¿½ ï¿½Ò·ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½)
         if (audioDefaults != null)
         {
             SetMasterVolume01(audioDefaults.master);
@@ -43,7 +56,7 @@ public class AudioManager : MonoBehaviour
             SetSfxVolume01(audioDefaults.sfx);
         }
 
-        // 2) SettingsManager°¡ »ì¾Æ ÀÖÀ¸¸é(ºÎÆ®½ºÆ®·¦ ÀÌÈÄ) ÃÖÁ¾°ªÀ¸·Î µ¤¾î¾²±â
+        // 2) SettingsManagerï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½(ï¿½ï¿½Æ®ï¿½ï¿½Æ®ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½) ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½î¾²ï¿½ï¿½
         var sm = SettingsManager.Instance;
         if (sm != null)
         {
@@ -52,9 +65,26 @@ public class AudioManager : MonoBehaviour
             SetSfxVolume01(sm.Sfx);
         }
     }
+    void Update()
+    {
+        if (!logBgmVolume || bgmPlayer == null || bgmLogInterval <= 0f)
+            return;
+
+        bgmLogTimer -= Time.deltaTime;
+        if (bgmLogTimer <= 0f)
+        {
+            bgmLogTimer = bgmLogInterval;
+            float sourceVol = bgmPlayer.volume;
+            string mixerInfo = "N/A";
+            if (audioMixer != null && audioMixer.GetFloat(PARAM_MUSIC, out float dbValue))
+                mixerInfo = $"{dbValue:F1} dB";
+            Debug.Log($"[AudioManager] BGM volume src={sourceVol:F2}, mixer={mixerInfo}");
+        }
+    }
+
     void Init()
     {
-        // ¹è°æÀ½ ÇÃ·¹ÀÌ¾î ÃÊ±âÈ­
+        // ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ã·ï¿½ï¿½Ì¾ï¿½ ï¿½Ê±ï¿½È­
         GameObject bgmObject = new GameObject("BgmPlayer");
         bgmObject.transform.parent = transform;
         bgmPlayer = bgmObject.AddComponent<AudioSource>();
@@ -63,14 +93,14 @@ public class AudioManager : MonoBehaviour
         bgmPlayer.volume = bgmVolume;
         bgmPlayer.clip = bgmClip;
         bgmEffect = Camera.main.GetComponent<AudioHighPassFilter>();
-        // Mixer ¶ó¿ìÆÃ 
+        // Mixer ï¿½ï¿½ï¿½ï¿½ï¿½ 
         if (musicGroup != null) bgmPlayer.outputAudioMixerGroup = musicGroup;
 
-        // Ä«¸Þ¶ó¿¡ HighPassFilter°¡ ¾ø´Ù¸é nullÀÏ ¼ö ÀÖÀ½
+        // Ä«ï¿½Þ¶ï¿½ HighPassFilterï¿½ï¿½ ï¿½ï¿½ï¿½Ù¸ï¿½ nullï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
         var cam = Camera.main;
         if (cam != null) bgmEffect = cam.GetComponent<AudioHighPassFilter>();
 
-        // È¿°úÀ½ ÇÃ·¹ÀÌ¾î ÃÊ±âÈ­
+        // È¿ï¿½ï¿½ï¿½ï¿½ ï¿½Ã·ï¿½ï¿½Ì¾ï¿½ ï¿½Ê±ï¿½È­
         GameObject sfxObject = new GameObject("SfxPlayer");
         sfxObject.transform.parent = transform;
         sfxPlayers = new AudioSource[channels];
@@ -83,19 +113,31 @@ public class AudioManager : MonoBehaviour
             //sfxPlayers[index].volume = sfxVolume;
             var src = sfxObject.AddComponent<AudioSource>();
             src.playOnAwake = false;
-            src.bypassListenerEffects = true;  // ¸®½º³ÊÀÇ ÀÌÆåÆ® ¿µÇâ ¹èÁ¦ (¼±ÅÃ)
+            src.bypassListenerEffects = true;  // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½Æ® ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ (ï¿½ï¿½ï¿½ï¿½)
             src.volume = sfxVolume;            // pre-mix
-            if (sfxGroup != null) src.outputAudioMixerGroup = sfxGroup; // Mixer ¶ó¿ìÆÃ 
+            if (sfxGroup != null) src.outputAudioMixerGroup = sfxGroup; // Mixer ï¿½ï¿½ï¿½ï¿½ï¿½ 
             sfxPlayers[index] = src;
 
         }
     }
     public void PlayBGM(bool isPlay)
     {
+        if (bgmPlayer == null) return;
+
         if (isPlay)
-            bgmPlayer.Play();
+        {
+            if (!bgmPlayer.isPlaying)
+                bgmPlayer.Play();
+
+            if (bgmPlayer.isPlaying)
+                Debug.Log($"[AudioManager] BGM Playing: {bgmPlayer.clip?.name ?? "Unknown"}");
+        }
         else
+        {
+            if (bgmPlayer.isPlaying)
+                Debug.Log("[AudioManager] BGM Stopped");
             bgmPlayer.Stop();
+        }
     }
     public void EffectBGM(bool isPlay)
     {
@@ -120,7 +162,7 @@ public class AudioManager : MonoBehaviour
 
         }
     }
-    // === Volume via AudioMixer (½½¶óÀÌ´õ 0..1) ===
+    // === Volume via AudioMixer (ï¿½ï¿½ï¿½ï¿½ï¿½Ì´ï¿½ 0..1) ===
     public void SetMasterVolume01(float v01) => SetMixer01(PARAM_MASTER, v01);
     public void SetMusicVolume01(float v01) => SetMixer01(PARAM_MUSIC, v01);
     public void SetSfxVolume01(float v01) => SetMixer01(PARAM_SFX, v01);
@@ -132,14 +174,14 @@ public class AudioManager : MonoBehaviour
         audioMixer.SetFloat(param, dB);
     }
 
-    // 0..1 -> dB(·Î±× ½ºÄÉÀÏ). 0ÀÌ¸é -80dB·Î »ç½Ç»ó mute
+    // 0..1 -> dB(ï¿½Î±ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½). 0ï¿½Ì¸ï¿½ -80dBï¿½ï¿½ ï¿½ï¿½Ç»ï¿½ mute
     private float Linear01ToDecibel(float v)
     {
         if (v <= 0.0001f) return -80f;
         return Mathf.Log10(Mathf.Clamp01(v)) * 20f;
     }
 
-    // (¼±ÅÃ) pre-mix º¼·ýµµ ½½¶óÀÌ´õ·Î Á÷Á¢ ¸¸Áö°í ½Í´Ù¸é:
+    // (ï¿½ï¿½ï¿½ï¿½) pre-mix ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ì´ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Í´Ù¸ï¿½:
     public void SetPreMixBgm(float v01)
     {
         bgmVolume = Mathf.Clamp01(v01);
@@ -151,6 +193,22 @@ public class AudioManager : MonoBehaviour
         if (sfxPlayers != null)
             for (int i = 0; i < sfxPlayers.Length; i++)
                 if (sfxPlayers[i] != null) sfxPlayers[i].volume = sfxVolume;
+    }
+
+    public void BoostMusic(float extra01, float duration)
+    {
+        StartCoroutine(BoostMusicRoutine(extra01, duration));
+    }
+
+    IEnumerator BoostMusicRoutine(float extra01, float duration)
+    {
+        // SettingsManager ë“±ì—ì„œ í˜„ìž¬ 0~1 ê°’ì„ ê°€ì ¸ì˜¤ê±°ë‚˜ ìºì‹œí•´ ë‘¡ë‹ˆë‹¤.
+        float baseValue = SettingsManager.Instance?.Music ?? 1f;
+        float boostedValue = Mathf.Clamp(baseValue + extra01, 0f, 1.5f);
+
+        SetMixer01(PARAM_MUSIC, boostedValue);
+        yield return new WaitForSeconds(duration);
+        SetMixer01(PARAM_MUSIC, baseValue);
     }
 
 }

@@ -203,6 +203,7 @@ public class PlayerController : MonoBehaviour
         flipInProgress = true;
         flipTriggeredThisPress = true;
         EmitTurnBurst();
+        AudioManager.instance.BoostMusic(0.4f, 0.2f);
     }
 
     void ApplyTransformMovement(float deltaTime)
