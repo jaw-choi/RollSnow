@@ -1,3 +1,4 @@
+using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -9,6 +10,10 @@ public class GameManager : MonoBehaviour
     public float score = 0f;
     [Tooltip("Points awarded per second while playing")]
     public float scoreRate = 1f;
+
+    [Header("UI")]
+    [SerializeField] private TextMeshProUGUI scoreLabel;
+    [SerializeField] private string scoreTextObjectName = "Score";
 
     [Header("Scenes")]
     [SerializeField] private string gameSceneName = "04_GameScene";
@@ -61,6 +66,9 @@ public class GameManager : MonoBehaviour
         if (!IsGameOver && isGameplayActive)
         {
             score += scoreRate * Time.deltaTime;
+            if (scoreLabel == null || scoreLabel.Equals(null))
+                CacheScoreLabel();
+            UpdateScoreLabel(score);
         }
     }
 
@@ -68,6 +76,7 @@ public class GameManager : MonoBehaviour
     {
         if (IsGameOver) return;
 
+        Haptics.Tap(0.2f);
         AudioManager.instance.PlayBGM(false);
         AudioManager.instance.PlaySfx(AudioManager.Sfx.Dead);
         IsGameOver = true;
@@ -172,6 +181,7 @@ public class GameManager : MonoBehaviour
         score = 0f;
         IsGameOver = false;
         IsCleared = false;
+        UpdateScoreLabel(score);
     }
 
     void HandleSceneLoaded(Scene scene, LoadSceneMode mode)
@@ -189,11 +199,14 @@ public class GameManager : MonoBehaviour
             CacheSceneManagerReferences();
             CachePlayerReferences(true);
             CacheCameraReferences(true);
+            CacheScoreLabel();
             ResetPlayerState();
             ResetCameraState();
             StartNewSession();
             isGameplayActive = true;
             AudioManager.instance.PlayBGM(true);
+            score = 0f;
+            UpdateScoreLabel(score);
         }
         else
         {
@@ -202,6 +215,7 @@ public class GameManager : MonoBehaviour
             cameraFollow = null;
             gameplayCamera = null;
             cameraStartCaptured = false;
+            scoreLabel = null;
             gameSceneManager = null;
             isGameplayActive = false;
         }
@@ -333,6 +347,47 @@ public class GameManager : MonoBehaviour
             cameraStartRotation = camTransform.rotation;
             cameraStartCaptured = true;
         }
+    }
+
+    void CacheScoreLabel()
+    {
+        if (scoreLabel != null && !scoreLabel.Equals(null))
+            return;
+        if (!IsInGameScene())
+            return;
+
+        TextMeshProUGUI found = null;
+        var scoreObject = GameObject.Find(scoreTextObjectName);
+        if (scoreObject != null)
+        {
+            found = scoreObject.GetComponent<TextMeshProUGUI>();
+        }
+
+        if (found == null)
+        {
+            var labels = FindObjectsOfType<TextMeshProUGUI>(true);
+            for (int i = 0; i < labels.Length; i++)
+            {
+                var label = labels[i];
+                if (label != null && label.name == scoreTextObjectName)
+                {
+                    found = label;
+                    break;
+                }
+            }
+        }
+
+        if (found != null)
+            scoreLabel = found;
+    }
+
+    void UpdateScoreLabel(float score)
+    {
+        if (scoreLabel == null || scoreLabel.Equals(null))
+            return;
+
+        int displayScore = Mathf.FloorToInt(score) * 5;
+        scoreLabel.text = displayScore.ToString();
     }
 
     void StartNewSession()
