@@ -47,6 +47,10 @@ public class MenuManager : MonoBehaviour
         }
         else
         {
+            var system = HeartSystem.GetOrCreate();
+            if (system != null && !system.TryConsumeHeart())
+                return;
+
             SceneManager.LoadScene(gameSceneName);
         }
     }

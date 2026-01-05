@@ -105,6 +105,9 @@ public class GameManager : MonoBehaviour
 
     public void Restart()
     {
+        if (!TryConsumeHeartForRun())
+            return;
+
         Time.timeScale = 1f;
         AudioListener.pause = false;
         ResetCoreState();
@@ -393,6 +396,15 @@ public class GameManager : MonoBehaviour
     void StartNewSession()
     {
         playSessionStartTime = Time.time;
+    }
+
+    bool TryConsumeHeartForRun()
+    {
+        var system = HeartSystem.GetOrCreate();
+        if (system == null)
+            return true;
+
+        return system.TryConsumeHeart();
     }
 
     float GetSessionElapsedTime()

@@ -16,9 +16,9 @@ MonoBehaviour:
   - key: background
     prefab: {fileID: 5858317702881368146, guid: 2d5e79f992550b743a35d535e9d5ffd8, type: 3}
   - key: tree 1
-    prefab: {fileID: 5797807750809674799, guid: 9fb9e90f9e283af4895ecf5fb6bc960b, type: 3}
+    prefab: {fileID: 1209916499739982548, guid: f255fb333c7e71146b7427ad1140fda9, type: 3}
   - key: tree 2
-    prefab: {fileID: 5797807750809674799, guid: 9fb9e90f9e283af4895ecf5fb6bc960b, type: 3}
+    prefab: {fileID: 643272273847513250, guid: 92a53a77e3eb7494f96fa66f56daf08d, type: 3}
   - key: tree 3
     prefab: {fileID: 9144328159469077398, guid: cf35f76edccf8964d9653d338ec7dfc5, type: 3}
   - key: tree 4
