@@ -36,6 +36,7 @@ public class GameManager : MonoBehaviour
     float playSessionStartTime;
     bool isGameplayActive = false;
     bool gameOverEffectsPlayed = false;
+    bool goldAwardedForRun = false;
 
     void Awake()
     {
@@ -78,6 +79,7 @@ public class GameManager : MonoBehaviour
         if (IsGameOver) return;
 
         PlayGameOverEffects();
+        AwardGoldForRun();
         IsGameOver = true;
         IsCleared = false;
         isGameplayActive = false;
@@ -113,6 +115,7 @@ public class GameManager : MonoBehaviour
     {
         if (IsGameOver) return;
 
+        AwardGoldForRun();
         IsGameOver = true;
         IsCleared = true;
         isGameplayActive = false;
@@ -208,6 +211,7 @@ public class GameManager : MonoBehaviour
         IsGameOver = false;
         IsCleared = false;
         gameOverEffectsPlayed = false;
+        goldAwardedForRun = false;
         UpdateScoreLabel(score);
     }
 
@@ -420,6 +424,21 @@ public class GameManager : MonoBehaviour
     void StartNewSession()
     {
         playSessionStartTime = Time.time;
+    }
+
+    void AwardGoldForRun()
+    {
+        if (goldAwardedForRun)
+            return;
+
+        goldAwardedForRun = true;
+        int award = Mathf.FloorToInt(score) * 5;
+        if (award <= 0)
+            return;
+
+        var gold = GoldSystem.GetOrCreate();
+        if (gold != null)
+            gold.AddGold(award);
     }
 
     bool TryConsumeHeartForRun()
