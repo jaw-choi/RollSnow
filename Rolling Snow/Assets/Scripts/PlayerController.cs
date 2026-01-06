@@ -51,6 +51,7 @@ public class PlayerController : MonoBehaviour
     float currentFlipDuration = 0.6f;
     float currentMoveSpeed;
     float baseMoveSpeed;
+    float initialMoveSpeed;
     Vector3 currentVelocity;
 
     Rigidbody rb;
@@ -71,6 +72,11 @@ public class PlayerController : MonoBehaviour
         TouchSimulation.Disable();
     }
 #endif
+
+    void Awake()
+    {
+        initialMoveSpeed = moveSpeed;
+    }
 
     void Start()
     {
@@ -291,6 +297,8 @@ public class PlayerController : MonoBehaviour
         flipInProgress = false;
         flipTriggeredThisPress = false;
         pressStartTime = 0f;
+        moveSpeed = initialMoveSpeed;
+        baseMoveSpeed = Mathf.Max(0f, moveSpeed);
         currentMoveSpeed = baseMoveSpeed;
         currentVelocity = new Vector3(dirValue * currentMoveSpeed, GetDownhillSpeed(), 0f);
 

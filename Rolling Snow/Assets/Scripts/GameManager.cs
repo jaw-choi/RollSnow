@@ -189,7 +189,10 @@ public class GameManager : MonoBehaviour
     {
         var panel = GetOrFindResultPanel();
         if (panel != null)
+        {
             panel.Show(elapsedTime, state);
+            panel.SetNoHeartsAlert(IsOutOfHearts());
+        }
     }
 
     void HideResultPanel()
@@ -426,6 +429,15 @@ public class GameManager : MonoBehaviour
             return true;
 
         return system.TryConsumeHeart();
+    }
+
+    bool IsOutOfHearts()
+    {
+        var system = HeartSystem.GetOrCreate();
+        if (system == null)
+            return false;
+
+        return system.GetStatus().Current <= 0;
     }
 
     float GetSessionElapsedTime()

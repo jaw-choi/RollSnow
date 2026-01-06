@@ -104,6 +104,7 @@ public class Player : MonoBehaviour
         ClearTrails();
         ResetDeathState();
         SetSpriteRenderersEnabled(true);
+        ResetControllerState();
     }
 
     void OnTriggerEnter2D(Collider2D other)
@@ -226,6 +227,16 @@ public class Player : MonoBehaviour
         ApplyScale();
     }
 
+    void ResetControllerState()
+    {
+        var controller = GetComponent<PlayerController>();
+        if (controller == null)
+            controller = GetComponentInChildren<PlayerController>();
+
+        if (controller != null)
+            controller.ResetControllerState(transform.position, transform.rotation);
+    }
+
     IEnumerator DeathSequence()
     {
         float waitTime = Mathf.Max(0f, deathAnimationSeconds);
@@ -237,7 +248,7 @@ public class Player : MonoBehaviour
             {
                 LogDeathAnimationProgress(elapsed, waitTime);
                 float step = Mathf.Min(logInterval, waitTime - elapsed);
-                yield return new WaitForSeconds(step);
+                yield return new WaitForSecondsRealtime(step);
                 elapsed += step;
             }
         }

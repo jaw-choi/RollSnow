@@ -15,6 +15,7 @@ public class ResultPanelUI : MonoBehaviour
     [SerializeField] private TextMeshProUGUI scoreLabel;
     [SerializeField] private Button restartButton;
     [SerializeField] private Button mainMenuButton;
+    [SerializeField] private GameObject noHeartsAlertRoot;
 
     [Header("Scenes")]
     [SerializeField] private string mainMenuSceneName = "01_MainMenu";
@@ -31,13 +32,32 @@ public class ResultPanelUI : MonoBehaviour
         if (panelRoot == null)
             panelRoot = gameObject;
 
+        RegisterWithGameManager();
         HookButtons(true);
         HideImmediate();
     }
 
+    void OnEnable()
+    {
+        RegisterWithGameManager();
+    }
+
     void OnDestroy()
     {
+        UnregisterFromGameManager();
         HookButtons(false);
+    }
+
+    void RegisterWithGameManager()
+    {
+        if (GameManager.Instance != null)
+            GameManager.Instance.RegisterResultPanel(this);
+    }
+
+    void UnregisterFromGameManager()
+    {
+        if (GameManager.Instance != null)
+            GameManager.Instance.UnregisterResultPanel(this);
     }
 
     void HookButtons(bool on)
@@ -67,6 +87,8 @@ public class ResultPanelUI : MonoBehaviour
         if (panelRoot != null && !panelRoot.activeSelf)
             panelRoot.SetActive(true);
 
+        SetNoHeartsAlert(false);
+
         if (titleLabel != null)
             titleLabel.text = state == ResultState.Clear ? clearTitle : gameOverTitle;
         if (scoreLabel != null)
@@ -82,6 +104,12 @@ public class ResultPanelUI : MonoBehaviour
     {
         if (panelRoot != null && panelRoot.activeSelf)
             panelRoot.SetActive(false);
+    }
+
+    public void SetNoHeartsAlert(bool show)
+    {
+        if (noHeartsAlertRoot != null)
+            noHeartsAlertRoot.SetActive(show);
     }
 
     static string FormatTime(float seconds)
