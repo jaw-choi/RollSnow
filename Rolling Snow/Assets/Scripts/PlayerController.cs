@@ -17,12 +17,15 @@ public class PlayerController : MonoBehaviour
     public float descentSpeed = 2f;
     [Tooltip("Lowest Y position the player can reach")]
     public float groundY = 1.2f;
+    [SerializeField] private float downhillSteepnessMultiplier = 1.5f;
     private int moveDir = 1; // start heading right; -1 = left, +1 = right
     int startingMoveDir = 1;
 
     [Header("Turn Settings")]
     public float tapThreshold = 0.18f; // seconds to consider a tap (quick flip)
     public float slowFlipDuration = 0.3f; // duration of slow flip when long-press
+    [SerializeField] private float highSpeedTurnAccelerationMultiplier = 1.6f;
+    [SerializeField] private float highSpeedFlipDurationMultiplier = 0.75f;
     // quickFlipDuration removed — short taps now use slowFlipDuration (curved behavior)
 
     // continuous direction value used for movement (-1..1)
@@ -79,7 +82,7 @@ public class PlayerController : MonoBehaviour
         dirValue = moveDir;
         baseMoveSpeed = Mathf.Max(0f, moveSpeed);
         currentMoveSpeed = baseMoveSpeed;
-        currentVelocity = new Vector3(dirValue * currentMoveSpeed, -Mathf.Abs(descentSpeed), 0f);
+        currentVelocity = new Vector3(dirValue * currentMoveSpeed, GetDownhillSpeed(), 0f);
     }
 
     void Update()
@@ -219,7 +222,8 @@ public class PlayerController : MonoBehaviour
         moveDir = -moveDir;
         flipTargetValue = moveDir;
         flipProgress = 0f;
-        currentFlipDuration = duration;
+        float durationMultiplier = Mathf.Lerp(1f, highSpeedFlipDurationMultiplier, GetSpeedNormalized());
+        currentFlipDuration = Mathf.Max(0.0001f, duration * Mathf.Max(0.01f, durationMultiplier));
         flipInProgress = true;
         flipTriggeredThisPress = true;
         EmitTurnBurst();
@@ -267,11 +271,12 @@ public class PlayerController : MonoBehaviour
 
     void UpdateSkiVelocity(float deltaTime)
     {
-        float targetDownhill = -Mathf.Abs(descentSpeed);
+        float targetDownhill = GetDownhillSpeed();
         currentVelocity.y = Mathf.MoveTowards(currentVelocity.y, targetDownhill, downhillAcceleration * deltaTime);
 
         float targetLateral = dirValue * currentMoveSpeed;
-        currentVelocity.x = Mathf.MoveTowards(currentVelocity.x, targetLateral, horizontalAcceleration * deltaTime);
+        float turnAccelMultiplier = Mathf.Lerp(1f, highSpeedTurnAccelerationMultiplier, GetSpeedNormalized());
+        currentVelocity.x = Mathf.MoveTowards(currentVelocity.x, targetLateral, horizontalAcceleration * turnAccelMultiplier * deltaTime);
     }
 
     public void ResetControllerState(Vector3 position, Quaternion rotation)
@@ -287,7 +292,7 @@ public class PlayerController : MonoBehaviour
         flipTriggeredThisPress = false;
         pressStartTime = 0f;
         currentMoveSpeed = baseMoveSpeed;
-        currentVelocity = new Vector3(dirValue * currentMoveSpeed, -Mathf.Abs(descentSpeed), 0f);
+        currentVelocity = new Vector3(dirValue * currentMoveSpeed, GetDownhillSpeed(), 0f);
 
         if (rb != null)
         {
@@ -316,6 +321,20 @@ public class PlayerController : MonoBehaviour
 
         float targetMax = Mathf.Max(baseMoveSpeed, maxMoveSpeed);
         currentMoveSpeed = Mathf.MoveTowards(currentMoveSpeed, targetMax, moveSpeedIncreasePerSecond * deltaTime);
+    }
+
+    float GetDownhillSpeed()
+    {
+        return -Mathf.Abs(descentSpeed) * Mathf.Max(0.01f, downhillSteepnessMultiplier);
+    }
+
+    float GetSpeedNormalized()
+    {
+        float maxSpeed = Mathf.Max(baseMoveSpeed, maxMoveSpeed);
+        if (maxSpeed <= 0f || Mathf.Approximately(maxSpeed, baseMoveSpeed))
+            return 0f;
+
+        return Mathf.InverseLerp(baseMoveSpeed, maxSpeed, currentMoveSpeed);
     }
 
     bool IsGameplayActive()

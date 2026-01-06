@@ -35,6 +35,7 @@ public class GameManager : MonoBehaviour
     bool cameraStartCaptured = false;
     float playSessionStartTime;
     bool isGameplayActive = false;
+    bool gameOverEffectsPlayed = false;
 
     void Awake()
     {
@@ -76,9 +77,7 @@ public class GameManager : MonoBehaviour
     {
         if (IsGameOver) return;
 
-        Haptics.Tap(0.2f);
-        AudioManager.instance.PlayBGM(false);
-        AudioManager.instance.PlaySfx(AudioManager.Sfx.Dead);
+        PlayGameOverEffects();
         IsGameOver = true;
         IsCleared = false;
         isGameplayActive = false;
@@ -87,6 +86,27 @@ public class GameManager : MonoBehaviour
 
         Debug.Log("GAME OVER - Score: " + Mathf.FloorToInt(score));
         ShowResultPanel(ResultPanelUI.ResultState.GameOver, elapsedTime);
+    }
+
+    public void BeginGameOver()
+    {
+        if (IsGameOver) return;
+
+        isGameplayActive = false;
+    }
+
+    public void PlayGameOverEffects()
+    {
+        if (gameOverEffectsPlayed)
+            return;
+
+        gameOverEffectsPlayed = true;
+        Haptics.Tap(0.2f);
+        if (AudioManager.instance != null)
+        {
+            AudioManager.instance.PlayBGM(false);
+            AudioManager.instance.PlaySfx(AudioManager.Sfx.Dead);
+        }
     }
 
     public void LevelClear()
@@ -184,6 +204,7 @@ public class GameManager : MonoBehaviour
         score = 0f;
         IsGameOver = false;
         IsCleared = false;
+        gameOverEffectsPlayed = false;
         UpdateScoreLabel(score);
     }
 
