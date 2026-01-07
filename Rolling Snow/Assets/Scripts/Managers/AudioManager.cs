@@ -78,7 +78,7 @@ public class AudioManager : MonoBehaviour
             string mixerInfo = "N/A";
             if (audioMixer != null && audioMixer.GetFloat(PARAM_MUSIC, out float dbValue))
                 mixerInfo = $"{dbValue:F1} dB";
-            Debug.Log($"[AudioManager] BGM volume src={sourceVol:F2}, mixer={mixerInfo}");
+            //Debug.Log($"[AudioManager] BGM volume src={sourceVol:F2}, mixer={mixerInfo}");
         }
     }
 
