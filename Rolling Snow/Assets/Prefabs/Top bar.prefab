@@ -150,7 +150,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::HeartStatusUI
   heartCountLabel: {fileID: 0}
-  timerLabel: {fileID: 0}
+  timerLabel: {fileID: 2500439074315245939}
   timerRoot: {fileID: 6281568563199940844}
   heartsRoot: {fileID: 6684431319038053341}
   fullHeartPrefab: {fileID: 1091188744111390103, guid: 6241c80bde7067f4f963e595c7ea0d54, type: 3}
