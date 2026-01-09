@@ -7,6 +7,8 @@ public class RewardedAdManager : MonoBehaviour
     public static RewardedAdManager Instance { get; private set; }
 
     [SerializeField] private string adUnitId = "ca-app-pub-3940256099942544/5224354917"; // test id
+    //[SerializeField] private string adUnitId = "ca-app-pub-8502618733998421/2441408968"; // my id
+
     [SerializeField] private bool persistBetweenScenes = true;
     private RewardedAd rewardedAd;
     private float retryDelay = 2f;

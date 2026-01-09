@@ -12,6 +12,7 @@ public class HeartRewardSample : MonoBehaviour
 
     public void OnAdRewardButtonClicked()
     {
+        AudioManager.instance?.PlaySfx(AudioManager.Sfx.Select);
         var manager = rewardedAdManager;
         if (manager == null)
             manager = RewardedAdManager.Instance ?? FindObjectOfType<RewardedAdManager>();
@@ -34,6 +35,7 @@ public class HeartRewardSample : MonoBehaviour
 
     public void OnGemUseButtonClicked()
     {
+        AudioManager.instance?.PlaySfx(AudioManager.Sfx.Select);
         var system = HeartSystem.GetOrCreate();
         if (system == null)
             return;

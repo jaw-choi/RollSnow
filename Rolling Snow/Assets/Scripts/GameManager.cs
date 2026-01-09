@@ -103,7 +103,9 @@ public class GameManager : MonoBehaviour
             return;
 
         gameOverEffectsPlayed = true;
-        Haptics.Tap(0.2f);
+        var settings = SettingsManager.Instance;
+        if (settings != null && settings.Haptics)
+            Haptics.Tap(0.2f);
         if (AudioManager.instance != null)
         {
             AudioManager.instance.PlayBGM(false);
@@ -129,7 +131,10 @@ public class GameManager : MonoBehaviour
     public void Restart()
     {
         if (!TryConsumeHeartForRun())
+        {
+            AudioManager.instance?.PlaySfx(AudioManager.Sfx.No);
             return;
+        }
 
         Time.timeScale = 1f;
         AudioListener.pause = false;
@@ -419,6 +424,17 @@ public class GameManager : MonoBehaviour
 
         int displayScore = Mathf.FloorToInt(score) * 5;
         scoreLabel.text = displayScore.ToString();
+    }
+
+    public void AddScore(float delta)
+    {
+        if (Mathf.Approximately(delta, 0f))
+            return;
+
+        score = Mathf.Max(0f, score + delta);
+        if (scoreLabel == null || scoreLabel.Equals(null))
+            CacheScoreLabel();
+        UpdateScoreLabel(score);
     }
 
     void StartNewSession()

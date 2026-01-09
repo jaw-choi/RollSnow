@@ -523,6 +523,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::HeartRewardSample
   adRewardHearts: 1
+  rewardedAdManager: {fileID: 0}
   gemCost: 10
   gemKey: Sample.Gems
 --- !u!1 &854693953
@@ -561,9 +562,14 @@ MonoBehaviour:
   bgmClip: {fileID: 8300000, guid: 1aa548353168b6b45b8dbb30004fdc33, type: 3}
   bgmVolume: 1
   sfxClips:
-  - {fileID: 8300000, guid: 5fe331054cbb5ed45ac6bf7ac504922f, type: 3}
+  - {fileID: 8300000, guid: a0baeb8ec6f44cd4bb291bc1faa02348, type: 3}
+  - {fileID: 8300000, guid: dcdebc6ab94cd4d4d92c12e1661a4e35, type: 3}
+  - {fileID: 8300000, guid: 25311b18fcc7c154e9fe215e1cc000d0, type: 3}
+  - {fileID: 8300000, guid: 4c30264a34bb81b48a75d61cea8fd7a5, type: 3}
+  - {fileID: 8300000, guid: d23f8e2688d435948b04b407253eba5b, type: 3}
+  - {fileID: 8300000, guid: 40e5bd318c726334fa057644685c06b2, type: 3}
   sfxVolume: 1
-  channels: 1
+  channels: 6
   logBgmVolume: 1
   bgmLogInterval: 1
 --- !u!4 &854693955
@@ -1068,6 +1074,10 @@ PrefabInstance:
     - target: {fileID: 5397347691859588761, guid: e164e31140dd70041af02ce85ad214c0, type: 3}
       propertyPath: m_Name
       value: MAIN HOME_1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5397347691859588761, guid: e164e31140dd70041af02ce85ad214c0, type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 5624963012677548257, guid: e164e31140dd70041af02ce85ad214c0, type: 3}
       propertyPath: m_Pivot.x

@@ -27,6 +27,7 @@ public class MenuManager : MonoBehaviour
 
     public void LoadMainMenu()
     {
+        AudioManager.instance?.PlaySfx(AudioManager.Sfx.Select);
         Resume();
         if (GameManager.Instance != null)
         {
@@ -49,14 +50,19 @@ public class MenuManager : MonoBehaviour
         {
             var system = HeartSystem.GetOrCreate();
             if (system != null && !system.TryConsumeHeart())
+            {
+                AudioManager.instance?.PlaySfx(AudioManager.Sfx.No);
                 return;
+            }
 
+            AudioManager.instance?.PlaySfx(AudioManager.Sfx.Select);
             SceneManager.LoadScene(gameSceneName);
         }
     }
 
     public void RestartGame()
     {
+        AudioManager.instance?.PlaySfx(AudioManager.Sfx.Select);
         Resume();
         if (GameManager.Instance != null)
         {
@@ -90,12 +96,14 @@ public class MenuManager : MonoBehaviour
 
     public void TogglePause()
     {
+        AudioManager.instance?.PlaySfx(AudioManager.Sfx.Select);
         if (IsPaused) Resume();
         else Pause();
     }
 
     public void QuitGame()
     {
+        AudioManager.instance?.PlaySfx(AudioManager.Sfx.Select);
         Application.Quit();
     }
 }

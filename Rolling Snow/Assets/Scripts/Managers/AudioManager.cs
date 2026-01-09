@@ -35,7 +35,15 @@ public class AudioManager : MonoBehaviour
     float bgmLogTimer = 0f;
 
     int channelIndex;
-    public enum Sfx { Dead = 0, Hit, LevelUp = 3, Lose, Melee, Range = 7, Select, Win, GetItem }
+    public enum Sfx
+    {
+        Dead = 0,
+        Select,
+        GetItem,
+        Curve,
+        Gacha,
+        No
+    }
 
 
     void Awake()
@@ -145,6 +153,20 @@ public class AudioManager : MonoBehaviour
     }
     public void PlaySfx(Sfx sfx)
     {
+        if (sfxPlayers == null || sfxPlayers.Length == 0)
+            return;
+        if (sfxClips == null || sfxClips.Length == 0)
+            return;
+
+        int clipIndex = (int)sfx;
+        if (clipIndex < 0 || clipIndex >= sfxClips.Length)
+            return;
+
+        var clip = sfxClips[clipIndex];
+        if (clip == null)
+            return;
+
+        bool played = false;
         for (int index = 0; index < sfxPlayers.Length; index++)
         {
             int loopIndex = (index + channelIndex) % sfxPlayers.Length;
@@ -152,14 +174,19 @@ public class AudioManager : MonoBehaviour
             var src = sfxPlayers[loopIndex];
             if (src.isPlaying) continue;
 
-            int ranIndex = 0;
-            if (sfx == Sfx.Hit || sfx == Sfx.Melee) ranIndex = Random.Range(0, 2);
-
             channelIndex = loopIndex;
-            src.clip = sfxClips[(int)sfx + ranIndex];
+            src.clip = clip;
             src.Play();
+            played = true;
             break;
 
+        }
+
+        if (!played)
+        {
+            channelIndex = (channelIndex + 1) % sfxPlayers.Length;
+            var src = sfxPlayers[channelIndex];
+            src.PlayOneShot(clip);
         }
     }
     // === Volume via AudioMixer (�����̴� 0..1) ===

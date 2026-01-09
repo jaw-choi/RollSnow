@@ -70,6 +70,7 @@ public class TapToStartOverlay : MonoBehaviour, IPointerDownHandler
 
         if (!HasAvailableHearts())
         {
+            AudioManager.instance?.PlaySfx(AudioManager.Sfx.No);
             ShowNoHeartsMessage();
             return;
         }
@@ -93,6 +94,7 @@ public class TapToStartOverlay : MonoBehaviour, IPointerDownHandler
             if (system != null && !system.TryConsumeHeart())
             {
                 hasStarted = false;
+                AudioManager.instance?.PlaySfx(AudioManager.Sfx.No);
                 ShowNoHeartsMessage();
                 return;
             }

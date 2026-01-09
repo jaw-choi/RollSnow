@@ -424,7 +424,7 @@ MonoBehaviour:
   m_ScaleFactor: 1
   m_ReferenceResolution: {x: 1080, y: 1920}
   m_ScreenMatchMode: 0
-  m_MatchWidthOrHeight: 1
+  m_MatchWidthOrHeight: 0
   m_PhysicalUnit: 3
   m_FallbackScreenDPI: 96
   m_DefaultSpriteDPI: 96
@@ -867,6 +867,46 @@ PrefabInstance:
     - target: {fileID: 3151454568723444955, guid: ad71f7e2784147c4d9db57d1ea936d5d, type: 3}
       propertyPath: m_Name
       value: Background
+      objectReference: {fileID: 0}
+    - target: {fileID: 3647477091623804558, guid: ad71f7e2784147c4d9db57d1ea936d5d, type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 3647477091623804558, guid: ad71f7e2784147c4d9db57d1ea936d5d, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 3647477091623804558, guid: ad71f7e2784147c4d9db57d1ea936d5d, type: 3}
+      propertyPath: m_AnchorMin.x
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 3647477091623804558, guid: ad71f7e2784147c4d9db57d1ea936d5d, type: 3}
+      propertyPath: m_AnchorMin.y
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 3647477091623804558, guid: ad71f7e2784147c4d9db57d1ea936d5d, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 1.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 3647477091623804558, guid: ad71f7e2784147c4d9db57d1ea936d5d, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 1.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 3647477091623804558, guid: ad71f7e2784147c4d9db57d1ea936d5d, type: 3}
+      propertyPath: m_LocalScale.z
+      value: 1.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 3647477091623804558, guid: ad71f7e2784147c4d9db57d1ea936d5d, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3647477091623804558, guid: ad71f7e2784147c4d9db57d1ea936d5d, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3647477091623804558, guid: ad71f7e2784147c4d9db57d1ea936d5d, type: 3}
+      propertyPath: m_ConstrainProportionsScale
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 3849763777999371988, guid: ad71f7e2784147c4d9db57d1ea936d5d, type: 3}
       propertyPath: m_LocalScale.x

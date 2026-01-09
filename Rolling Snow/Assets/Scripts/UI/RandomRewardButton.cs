@@ -77,6 +77,8 @@ public class RandomRewardButton : MonoBehaviour
         if (!TrySpendGoldForReward())
             return;
 
+        AudioManager.instance?.PlaySfx(AudioManager.Sfx.Gacha);
+
         if (effectTarget == null)
             effectTarget = transform;
 

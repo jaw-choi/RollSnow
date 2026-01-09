@@ -18,7 +18,7 @@ public class HeartSystem : MonoBehaviour
 
     [Header("Config")]
     [SerializeField] private int maxHearts = 5;
-    [SerializeField] private int recoveryMinutes = 30;
+    [SerializeField] private int recoveryMinutes = 10;
 
     [Header("Storage Keys")]
     [SerializeField] private string heartsKey = "HeartSystem.Hearts";

@@ -51,7 +51,12 @@ public class PlayButton : MonoBehaviour
     {
         var system = HeartSystem.GetOrCreate();
         if (system != null && !system.TryConsumeHeart())
+        {
+            AudioManager.instance?.PlaySfx(AudioManager.Sfx.No);
             return;
+        }
+
+        AudioManager.instance?.PlaySfx(AudioManager.Sfx.Select);
 
         SceneManager.LoadScene(nextSceneName);
     }

@@ -75,6 +75,7 @@ public class SceneNavigationButton : MonoBehaviour
             return;
         }
 
+        AudioManager.instance?.PlaySfx(AudioManager.Sfx.Select);
         SceneManager.LoadScene(targetScene);
     }
 

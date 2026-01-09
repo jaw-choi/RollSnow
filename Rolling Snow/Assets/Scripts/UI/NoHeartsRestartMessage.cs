@@ -55,6 +55,7 @@ public class NoHeartsRestartMessage : MonoBehaviour
 
     void HandleRestartClicked()
     {
+        AudioManager.instance?.PlaySfx(AudioManager.Sfx.Select);
         if (HasAvailableHearts())
             return;
 

@@ -121,6 +121,7 @@ public class ResultPanelUI : MonoBehaviour
 
     void OnRestart()
     {
+        AudioManager.instance?.PlaySfx(AudioManager.Sfx.Select);
         if (GameManager.Instance != null)
             GameManager.Instance.Restart();
         else
@@ -132,6 +133,7 @@ public class ResultPanelUI : MonoBehaviour
 
     void OnMainMenu()
     {
+        AudioManager.instance?.PlaySfx(AudioManager.Sfx.Select);
         if (GameManager.Instance != null)
             GameManager.Instance.LoadMainMenu();
         else

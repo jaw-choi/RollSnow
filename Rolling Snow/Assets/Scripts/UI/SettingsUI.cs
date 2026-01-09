@@ -78,6 +78,8 @@ public class SettingsUI : MonoBehaviour
     void OnHaptics(bool value)
     {
         SettingsManager.Instance.SetHaptics(value);
+        if (value)
+            Haptics.Tap();
     }
 
     public void SetMode(SettingsMode newMode)

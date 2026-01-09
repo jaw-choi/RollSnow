@@ -149,7 +149,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::HeartSystem
   maxHearts: 5
-  recoveryMinutes: 30
+  recoveryMinutes: 10
   heartsKey: HeartSystem.Hearts
   timestampKey: HeartSystem.LastTimestamp
 --- !u!4 &172527851

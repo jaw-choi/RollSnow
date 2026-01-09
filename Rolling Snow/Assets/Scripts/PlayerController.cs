@@ -18,6 +18,7 @@ public class PlayerController : MonoBehaviour
     [Tooltip("Lowest Y position the player can reach")]
     public float groundY = 1.2f;
     [SerializeField] private float downhillSteepnessMultiplier = 1.5f;
+    [SerializeField] private float maxDownhillSpeedMultiplier = 1.6f;
     private int moveDir = 1; // start heading right; -1 = left, +1 = right
     int startingMoveDir = 1;
 
@@ -53,6 +54,8 @@ public class PlayerController : MonoBehaviour
     float baseMoveSpeed;
     float initialMoveSpeed;
     Vector3 currentVelocity;
+    float speedMultiplier = 1f;
+    Coroutine speedEffectRoutine;
 
     Rigidbody rb;
     bool inputModeLogged;
@@ -87,7 +90,7 @@ public class PlayerController : MonoBehaviour
         moveDir = startingMoveDir;
         dirValue = moveDir;
         baseMoveSpeed = Mathf.Max(0f, moveSpeed);
-        currentMoveSpeed = baseMoveSpeed;
+        currentMoveSpeed = GetEffectiveBaseSpeed();
         currentVelocity = new Vector3(dirValue * currentMoveSpeed, GetDownhillSpeed(), 0f);
     }
 
@@ -104,9 +107,9 @@ public class PlayerController : MonoBehaviour
 
         if (!inputModeLogged)
         {
-            #if UNITY_EDITOR || DEVELOPMENT_BUILD
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
             Debug.Log("PlayerController input mode init: detecting Mouse/Touch availability.");
-            #endif
+#endif
             inputModeLogged = true;
         }
 
@@ -116,23 +119,23 @@ public class PlayerController : MonoBehaviour
             if (mouse.leftButton.wasPressedThisFrame)
             {
                 pressedDown = true;
-                #if UNITY_EDITOR || DEVELOPMENT_BUILD
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
                 Debug.Log($"Input detected: Mouse Down @ {Time.time:F2}");
-                #endif
+#endif
             }
             if (mouse.leftButton.wasReleasedThisFrame)
             {
                 released = true;
-                #if UNITY_EDITOR || DEVELOPMENT_BUILD
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
                 Debug.Log($"Input detected: Mouse Up @ {Time.time:F2}");
-                #endif
+#endif
             }
         }
         else if (!mouseUnavailableLogged)
         {
-            #if UNITY_EDITOR || DEVELOPMENT_BUILD
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
             Debug.LogWarning("Mouse device not found.");
-            #endif
+#endif
             mouseUnavailableLogged = true;
         }
 
@@ -143,23 +146,23 @@ public class PlayerController : MonoBehaviour
             if (primary.press.wasPressedThisFrame)
             {
                 pressedDown = true;
-                #if UNITY_EDITOR || DEVELOPMENT_BUILD
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
                 Debug.Log($"Input detected: Touch Down @ {Time.time:F2}");
-                #endif
+#endif
             }
             if (primary.press.wasReleasedThisFrame)
             {
                 released = true;
-                #if UNITY_EDITOR || DEVELOPMENT_BUILD
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
                 Debug.Log($"Input detected: Touch Up @ {Time.time:F2}");
-                #endif
+#endif
             }
         }
         else if (!touchUnavailableLogged)
         {
-            #if UNITY_EDITOR || DEVELOPMENT_BUILD
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
             Debug.LogWarning("Touchscreen device not found.");
-            #endif
+#endif
             touchUnavailableLogged = true;
         }
 
@@ -233,7 +236,8 @@ public class PlayerController : MonoBehaviour
         flipInProgress = true;
         flipTriggeredThisPress = true;
         EmitTurnBurst();
-        AudioManager.instance.BoostMusic(0.4f, 0.2f);
+        AudioManager.instance?.PlaySfx(AudioManager.Sfx.Curve);
+        //AudioManager.instance.BoostMusic(0.4f, 0.2f);
     }
 
     void ApplyTransformMovement(float deltaTime)
@@ -297,9 +301,15 @@ public class PlayerController : MonoBehaviour
         flipInProgress = false;
         flipTriggeredThisPress = false;
         pressStartTime = 0f;
+        if (speedEffectRoutine != null)
+        {
+            StopCoroutine(speedEffectRoutine);
+            speedEffectRoutine = null;
+        }
+        speedMultiplier = 1f;
         moveSpeed = initialMoveSpeed;
         baseMoveSpeed = Mathf.Max(0f, moveSpeed);
-        currentMoveSpeed = baseMoveSpeed;
+        currentMoveSpeed = GetEffectiveBaseSpeed();
         currentVelocity = new Vector3(dirValue * currentMoveSpeed, GetDownhillSpeed(), 0f);
 
         if (rb != null)
@@ -323,26 +333,77 @@ public class PlayerController : MonoBehaviour
     {
         if (moveSpeedIncreasePerSecond <= 0f)
         {
-            currentMoveSpeed = Mathf.Max(0f, baseMoveSpeed);
+            currentMoveSpeed = Mathf.Max(0f, GetEffectiveBaseSpeed());
             return;
         }
 
-        float targetMax = Mathf.Max(baseMoveSpeed, maxMoveSpeed);
-        currentMoveSpeed = Mathf.MoveTowards(currentMoveSpeed, targetMax, moveSpeedIncreasePerSecond * deltaTime);
+        float targetMax = GetEffectiveMaxSpeed();
+        float accel = moveSpeedIncreasePerSecond * Mathf.Max(0.01f, speedMultiplier);
+        currentMoveSpeed = Mathf.MoveTowards(currentMoveSpeed, targetMax, accel * deltaTime);
     }
 
     float GetDownhillSpeed()
     {
-        return -Mathf.Abs(descentSpeed) * Mathf.Max(0.01f, downhillSteepnessMultiplier);
+        float baseDownhill = -Mathf.Abs(descentSpeed) * Mathf.Max(0.01f, downhillSteepnessMultiplier);
+        float speedT = GetSpeedNormalized();
+        float speedMultiplier = Mathf.Lerp(1f, Mathf.Max(1f, maxDownhillSpeedMultiplier), speedT);
+        return baseDownhill * speedMultiplier;
     }
 
     float GetSpeedNormalized()
     {
-        float maxSpeed = Mathf.Max(baseMoveSpeed, maxMoveSpeed);
-        if (maxSpeed <= 0f || Mathf.Approximately(maxSpeed, baseMoveSpeed))
+        float baseSpeed = GetEffectiveBaseSpeed();
+        float maxSpeed = GetEffectiveMaxSpeed();
+        if (maxSpeed <= 0f || Mathf.Approximately(maxSpeed, baseSpeed))
             return 0f;
 
-        return Mathf.InverseLerp(baseMoveSpeed, maxSpeed, currentMoveSpeed);
+        return Mathf.InverseLerp(baseSpeed, maxSpeed, currentMoveSpeed);
+    }
+
+    public void ApplySpeedMultiplier(float multiplier, float duration)
+    {
+        multiplier = Mathf.Clamp(multiplier, 0.1f, 5f);
+        if (speedEffectRoutine != null)
+        {
+            StopCoroutine(speedEffectRoutine);
+            speedEffectRoutine = null;
+        }
+
+        SetSpeedMultiplier(multiplier);
+
+        if (duration > 0f)
+            speedEffectRoutine = StartCoroutine(ResetSpeedAfter(duration));
+    }
+
+    float GetEffectiveBaseSpeed()
+    {
+        return baseMoveSpeed * speedMultiplier;
+    }
+
+    float GetEffectiveMaxSpeed()
+    {
+        float baseSpeed = GetEffectiveBaseSpeed();
+        return Mathf.Max(baseSpeed, maxMoveSpeed * speedMultiplier);
+    }
+
+    void SetSpeedMultiplier(float multiplier)
+    {
+        if (Mathf.Approximately(speedMultiplier, multiplier))
+            return;
+
+        float ratio = multiplier / Mathf.Max(0.01f, speedMultiplier);
+        speedMultiplier = multiplier;
+        currentMoveSpeed = Mathf.Max(0f, currentMoveSpeed * ratio);
+        float maxSpeed = GetEffectiveMaxSpeed();
+        if (currentMoveSpeed > maxSpeed)
+            currentMoveSpeed = maxSpeed;
+    }
+
+    System.Collections.IEnumerator ResetSpeedAfter(float duration)
+    {
+        yield return new WaitForSeconds(duration);
+        SetSpeedMultiplier(1f);
+        speedEffectRoutine = null;
     }
 
     bool IsGameplayActive()
