@@ -15,6 +15,16 @@ public class GameManager : MonoBehaviour
     [SerializeField] private TextMeshProUGUI scoreLabel;
     [SerializeField] private string scoreTextObjectName = "Score";
 
+    [Header("Scoring")]
+    [SerializeField] private int scoreDisplayMultiplier = 5;
+    [SerializeField] private int scoreToGoldMultiplier = 5;
+    [SerializeField] private float finalScoreMultiplier = 1f;
+    [SerializeField] private float speedScoreBonus = 0f;
+    [SerializeField] private float sizeScoreBonus = 0f;
+    [SerializeField] private float finalGoldMultiplier = 1f;
+    [SerializeField] private float speedGoldBonus = 0f;
+    [SerializeField] private float sizeGoldBonus = 0f;
+
     [Header("Scenes")]
     [SerializeField] private string gameSceneName = "04_GameScene";
     [SerializeField] private string mainMenuSceneName = "01_MainMenu";
@@ -24,6 +34,7 @@ public class GameManager : MonoBehaviour
 
     ResultPanelUI resultPanel;
     [SerializeField] private Player player;
+    [SerializeField] private PlayerController playerController;
     [SerializeField] private ScoreBasedCameraFollow cameraFollow;
     [SerializeField] private Camera gameplayCamera;
     GameSceneManager gameSceneManager;
@@ -37,6 +48,21 @@ public class GameManager : MonoBehaviour
     bool isGameplayActive = false;
     bool gameOverEffectsPlayed = false;
     bool goldAwardedForRun = false;
+    int runGoldStart = 0;
+    bool runResultsCaptured = false;
+    RunResults lastRunResults;
+
+    public struct RunResults
+    {
+        public int BaseScore;
+        public int FinalScore;
+        public int BaseGold;
+        public int FinalGold;
+        public int FinalGoldEarned;
+        public int RunGoldEarned;
+        public float Speed;
+        public float Size;
+    }
 
     void Awake()
     {
@@ -217,6 +243,7 @@ public class GameManager : MonoBehaviour
         IsCleared = false;
         gameOverEffectsPlayed = false;
         goldAwardedForRun = false;
+        runResultsCaptured = false;
         UpdateScoreLabel(score);
     }
 
@@ -274,6 +301,13 @@ public class GameManager : MonoBehaviour
             player = FindObjectOfType<Player>(true);
         }
 
+        if ((playerController == null || playerController.Equals(null)) && player != null && !player.Equals(null))
+        {
+            playerController = player.GetComponent<PlayerController>();
+            if (playerController == null)
+                playerController = player.GetComponentInChildren<PlayerController>(true);
+        }
+
         if (player != null && (refreshStartValues || !playerStartCaptured))
         {
             playerStartPosition = player.transform.position;
@@ -286,6 +320,8 @@ public class GameManager : MonoBehaviour
     {
         player = target;
         playerStartCaptured = false;
+        if (playerController == null || playerController.Equals(null))
+            playerController = target != null ? target.GetComponent<PlayerController>() : null;
         CachePlayerReferences(true);
     }
 
@@ -422,7 +458,7 @@ public class GameManager : MonoBehaviour
         if (scoreLabel == null || scoreLabel.Equals(null))
             return;
 
-        int displayScore = Mathf.FloorToInt(score) * 5;
+        int displayScore = GetDisplayScore();
         scoreLabel.text = displayScore.ToString();
     }
 
@@ -440,6 +476,8 @@ public class GameManager : MonoBehaviour
     void StartNewSession()
     {
         playSessionStartTime = Time.time;
+        runGoldStart = GetCurrentGold();
+        runResultsCaptured = false;
     }
 
     void AwardGoldForRun()
@@ -448,13 +486,14 @@ public class GameManager : MonoBehaviour
             return;
 
         goldAwardedForRun = true;
-        int award = Mathf.FloorToInt(score) * 5;
-        if (award <= 0)
-            return;
-
-        var gold = GoldSystem.GetOrCreate();
-        if (gold != null)
-            gold.AddGold(award);
+        CaptureRunResults();
+        int award = Mathf.Max(0, lastRunResults.FinalGoldEarned - lastRunResults.RunGoldEarned);
+        if (award > 0)
+        {
+            var gold = GoldSystem.GetOrCreate();
+            if (gold != null)
+                gold.AddGold(award);
+        }
     }
 
     bool TryConsumeHeartForRun()
@@ -478,5 +517,86 @@ public class GameManager : MonoBehaviour
     float GetSessionElapsedTime()
     {
         return Mathf.Max(0f, Time.time - playSessionStartTime);
+    }
+
+    public int GetDisplayScore()
+    {
+        return Mathf.FloorToInt(score) * Mathf.Max(1, scoreDisplayMultiplier);
+    }
+
+    public int GetRunGoldEarned()
+    {
+        return Mathf.Max(0, GetCurrentGold() - runGoldStart);
+    }
+
+    public float GetCurrentSpeed()
+    {
+        if (playerController == null || playerController.Equals(null))
+            CachePlayerReferences(false);
+        if (playerController == null || playerController.Equals(null))
+            return 0f;
+
+        return playerController.CurrentSpeed;
+    }
+
+    public float GetCurrentSize()
+    {
+        if (player == null || player.Equals(null))
+            CachePlayerReferences(false);
+        if (player == null || player.Equals(null))
+            return 0f;
+
+        return player.transform.localScale.x;
+    }
+
+    public RunResults GetLastRunResults()
+    {
+        CaptureRunResults();
+        return lastRunResults;
+    }
+
+    void CaptureRunResults()
+    {
+        if (runResultsCaptured)
+            return;
+
+        int runGoldEarned = GetRunGoldEarned();
+        int baseScore = GetDisplayScore();
+        int baseGoldFromScore = Mathf.FloorToInt(score) * Mathf.Max(1, scoreToGoldMultiplier);
+        int baseGold = runGoldEarned;
+
+        float speed = GetCurrentSpeed();
+        float size = GetCurrentSize();
+
+        int finalScore = Mathf.RoundToInt(baseScore * Mathf.Max(0f, finalScoreMultiplier) + speed * speedScoreBonus + size * sizeScoreBonus);
+        finalScore = Mathf.Max(0, finalScore);
+
+        int baseGoldTotal = baseGold + Mathf.Max(0, baseGoldFromScore);
+        int finalGoldEarned = Mathf.RoundToInt(baseGoldTotal * Mathf.Max(0f, finalGoldMultiplier) + speed * speedGoldBonus + size * sizeGoldBonus);
+        finalGoldEarned = Mathf.Max(baseGoldTotal, finalGoldEarned);
+        int finalGold = runGoldStart + finalGoldEarned;
+
+        lastRunResults = new RunResults
+        {
+            BaseScore = baseScore,
+            FinalScore = finalScore,
+            BaseGold = baseGold,
+            FinalGold = finalGold,
+            FinalGoldEarned = finalGoldEarned,
+            RunGoldEarned = runGoldEarned,
+            Speed = speed,
+            Size = size
+        };
+
+        runResultsCaptured = true;
+    }
+
+    int GetCurrentGold()
+    {
+        var system = GoldSystem.GetOrCreate();
+        if (system == null)
+            return 0;
+
+        return system.GetGold();
     }
 }

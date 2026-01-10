@@ -62,6 +62,8 @@ public class PlayerController : MonoBehaviour
     bool mouseUnavailableLogged;
     bool touchUnavailableLogged;
 
+    public float CurrentSpeed => currentVelocity.magnitude;
+
 #if UNITY_EDITOR
     void OnEnable()
     {
