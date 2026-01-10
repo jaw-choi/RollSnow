@@ -559,7 +559,9 @@ MonoBehaviour:
   audioMixer: {fileID: 24100000, guid: f72ead20339d3da4b814fa9be7f16b5a, type: 2}
   musicGroup: {fileID: 6988533748845657610, guid: f72ead20339d3da4b814fa9be7f16b5a, type: 2}
   sfxGroup: {fileID: -5606104216596328156, guid: f72ead20339d3da4b814fa9be7f16b5a, type: 2}
-  bgmClip: {fileID: 8300000, guid: 1aa548353168b6b45b8dbb30004fdc33, type: 3}
+  menuBgmClip: {fileID: 8300000, guid: 221ef67fb324bbf42b338e5fc1468bb2, type: 3}
+  gameBgmClip: {fileID: 8300000, guid: 1aa548353168b6b45b8dbb30004fdc33, type: 3}
+  bgmFadeSeconds: 0.5
   bgmVolume: 1
   sfxClips:
   - {fileID: 8300000, guid: a0baeb8ec6f44cd4bb291bc1faa02348, type: 3}
@@ -570,6 +572,14 @@ MonoBehaviour:
   - {fileID: 8300000, guid: 40e5bd318c726334fa057644685c06b2, type: 3}
   sfxVolume: 1
   channels: 6
+  logoSceneName: 00_Logo
+  gameSceneName: 04_GameScene
+  menuSceneNames:
+  - 01_MainMenu
+  - 02_Achievement
+  - 03_Shop
+  - 05_Inventory
+  - 06_Settings
   logBgmVolume: 1
   bgmLogInterval: 1
 --- !u!4 &854693955
