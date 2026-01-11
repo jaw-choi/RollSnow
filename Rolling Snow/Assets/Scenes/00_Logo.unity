@@ -335,9 +335,18 @@ MonoBehaviour:
   scoreRate: 1
   scoreLabel: {fileID: 0}
   scoreTextObjectName: Score
+  scoreDisplayMultiplier: 5
+  scoreToGoldMultiplier: 5
+  finalScoreMultiplier: 1
+  speedScoreBonus: 0
+  sizeScoreBonus: 0
+  finalGoldMultiplier: 0.01
+  speedGoldBonus: 0
+  sizeGoldBonus: 0
   gameSceneName: 04_GameScene
   mainMenuSceneName: 01_MainMenu
   player: {fileID: 0}
+  playerController: {fileID: 0}
   cameraFollow: {fileID: 0}
   gameplayCamera: {fileID: 0}
 --- !u!4 &1584719638

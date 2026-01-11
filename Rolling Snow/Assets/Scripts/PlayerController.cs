@@ -27,7 +27,9 @@ public class PlayerController : MonoBehaviour
     public float slowFlipDuration = 0.3f; // duration of slow flip when long-press
     [SerializeField] private float highSpeedTurnAccelerationMultiplier = 1.6f;
     [SerializeField] private float highSpeedFlipDurationMultiplier = 0.75f;
-    // quickFlipDuration removed — short taps now use slowFlipDuration (curved behavior)
+    [SerializeField] private bool preserveSpeedWhileTurning = true;
+    [SerializeField] private bool preserveHorizontalSpeedWhileTurning = true;
+    // quickFlipDuration removed ??short taps now use slowFlipDuration (curved behavior)
 
     // continuous direction value used for movement (-1..1)
     float dirValue = 0f;
@@ -283,10 +285,19 @@ public class PlayerController : MonoBehaviour
 
     void UpdateSkiVelocity(float deltaTime)
     {
+        float targetLateral = dirValue * currentMoveSpeed;
         float targetDownhill = GetDownhillSpeed();
+        if (preserveSpeedWhileTurning && currentMoveSpeed > 0f)
+        {
+            float baseSpeed = Mathf.Sqrt(targetDownhill * targetDownhill + currentMoveSpeed * currentMoveSpeed);
+            float totalSpeed = Mathf.Max(baseSpeed, currentVelocity.magnitude);
+            float downhillAbs = Mathf.Sqrt(Mathf.Max(0f, totalSpeed * totalSpeed - targetLateral * targetLateral));
+            float downhillSign = targetDownhill >= 0f ? 1f : -1f;
+            targetDownhill = downhillSign * downhillAbs;
+        }
+
         currentVelocity.y = Mathf.MoveTowards(currentVelocity.y, targetDownhill, downhillAcceleration * deltaTime);
 
-        float targetLateral = dirValue * currentMoveSpeed;
         float turnAccelMultiplier = Mathf.Lerp(1f, highSpeedTurnAccelerationMultiplier, GetSpeedNormalized());
         currentVelocity.x = Mathf.MoveTowards(currentVelocity.x, targetLateral, horizontalAcceleration * turnAccelMultiplier * deltaTime);
     }

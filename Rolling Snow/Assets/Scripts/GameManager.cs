@@ -56,12 +56,13 @@ public class GameManager : MonoBehaviour
     {
         public int BaseScore;
         public int FinalScore;
-        public int BaseGold;
-        public int FinalGold;
-        public int FinalGoldEarned;
-        public int RunGoldEarned;
+        public float BaseGold;
+        public float FinalGold;
+        public float FinalGoldEarned;
+        public float RunGoldEarned;
         public float Speed;
         public float Size;
+        public float Distance;
     }
 
     void Awake()
@@ -487,12 +488,13 @@ public class GameManager : MonoBehaviour
 
         goldAwardedForRun = true;
         CaptureRunResults();
-        int award = Mathf.Max(0, lastRunResults.FinalGoldEarned - lastRunResults.RunGoldEarned);
-        if (award > 0)
+
+        float award = Mathf.Max(0f, lastRunResults.FinalGoldEarned - lastRunResults.RunGoldEarned);
+        if (award > 0f)
         {
             var gold = GoldSystem.GetOrCreate();
             if (gold != null)
-                gold.AddGold(award);
+                gold.AddGold((int)award);
         }
     }
 
@@ -521,7 +523,8 @@ public class GameManager : MonoBehaviour
 
     public int GetDisplayScore()
     {
-        return Mathf.FloorToInt(score) * Mathf.Max(1, scoreDisplayMultiplier);
+        float distance = GetDistanceDescended();
+        return Mathf.FloorToInt(distance) * Mathf.Max(1, scoreDisplayMultiplier);
     }
 
     public int GetRunGoldEarned()
@@ -549,6 +552,18 @@ public class GameManager : MonoBehaviour
         return player.transform.localScale.x;
     }
 
+    public float GetDistanceDescended()
+    {
+        if (player == null || player.Equals(null))
+            CachePlayerReferences(false);
+        if (player == null || player.Equals(null))
+            return 0f;
+
+        float startY = playerStartCaptured ? playerStartPosition.y : player.transform.position.y;
+        float delta = startY - player.transform.position.y;
+        return Mathf.Max(0f, delta);
+    }
+
     public RunResults GetLastRunResults()
     {
         CaptureRunResults();
@@ -561,21 +576,22 @@ public class GameManager : MonoBehaviour
             return;
 
         int runGoldEarned = GetRunGoldEarned();
-        int baseScore = GetDisplayScore();
-        int baseGoldFromScore = Mathf.FloorToInt(score) * Mathf.Max(1, scoreToGoldMultiplier);
+        float distance = GetDistanceDescended();
+        int baseScore = Mathf.FloorToInt(distance) * Mathf.Max(1, scoreDisplayMultiplier);
+        int baseGoldFromScore = baseScore * Mathf.Max(1, scoreToGoldMultiplier);
         int baseGold = runGoldEarned;
 
         float speed = GetCurrentSpeed();
         float size = GetCurrentSize();
 
-        int finalScore = Mathf.RoundToInt(baseScore * Mathf.Max(0f, finalScoreMultiplier) + speed * speedScoreBonus + size * sizeScoreBonus);
+        int finalScore = Mathf.RoundToInt(baseScore * Mathf.Max(0f, finalScoreMultiplier));
         finalScore = Mathf.Max(0, finalScore);
 
-        int baseGoldTotal = baseGold + Mathf.Max(0, baseGoldFromScore);
-        int finalGoldEarned = Mathf.RoundToInt(baseGoldTotal * Mathf.Max(0f, finalGoldMultiplier) + speed * speedGoldBonus + size * sizeGoldBonus);
+        float baseGoldTotal = baseGold + Mathf.Max(0f, baseGoldFromScore);
+        baseGoldTotal = (float)baseGoldTotal * finalGoldMultiplier;
+        float finalGoldEarned = Mathf.Max(0f, finalGoldMultiplier);
         finalGoldEarned = Mathf.Max(baseGoldTotal, finalGoldEarned);
-        int finalGold = runGoldStart + finalGoldEarned;
-
+        float finalGold = runGoldStart + finalGoldEarned;
         lastRunResults = new RunResults
         {
             BaseScore = baseScore,
@@ -585,7 +601,8 @@ public class GameManager : MonoBehaviour
             FinalGoldEarned = finalGoldEarned,
             RunGoldEarned = runGoldEarned,
             Speed = speed,
-            Size = size
+            Size = size,
+            Distance = distance
         };
 
         runResultsCaptured = true;

@@ -15,6 +15,7 @@ public class ResultPanelUI : MonoBehaviour
     [SerializeField] private TextMeshProUGUI timeLabel;
     [SerializeField] private TextMeshProUGUI scoreLabel;
     [SerializeField] private TextMeshProUGUI speedLabel;
+    [SerializeField] private TextMeshProUGUI distanceLabel;
     [SerializeField] private TextMeshProUGUI sizeLabel;
     [SerializeField] private TextMeshProUGUI baseScoreLabel;
     [SerializeField] private TextMeshProUGUI finalScoreLabel;
@@ -34,6 +35,7 @@ public class ResultPanelUI : MonoBehaviour
 
     [Header("Formats")]
     [SerializeField] private string speedFormat = "Speed : {0:F1}";
+    [SerializeField] private string distanceFormat = "Distance : {0:F1}m";
     [SerializeField] private string sizeFormat = "Size : {0:F2}";
     [SerializeField] private string baseScoreFormat = "Base Score : {0}";
     [SerializeField] private string finalScoreFormat = "Final Score : {0}";
@@ -162,6 +164,8 @@ public class ResultPanelUI : MonoBehaviour
             scoreLabel.text = $"{results.FinalScore}";
         if (speedLabel != null)
             speedLabel.text = string.Format(speedFormat, results.Speed);
+        if (distanceLabel != null)
+            distanceLabel.text = string.Format(distanceFormat, results.Distance);
         if (sizeLabel != null)
             sizeLabel.text = string.Format(sizeFormat, results.Size);
         if (baseScoreLabel != null)
@@ -233,16 +237,14 @@ public class ResultPanelUI : MonoBehaviour
             elapsed += dt;
             float t = duration > 0f ? Mathf.Clamp01(elapsed / duration) : 1f;
 
-            float speed = Mathf.Lerp(results.Speed, 0f, t);
-            float size = Mathf.Lerp(results.Size, 0f, t);
+            float distance = Mathf.Lerp(0f, results.Distance, t);
             int finalScore = Mathf.RoundToInt(Mathf.Lerp(results.BaseScore, results.FinalScore, t));
-            int finalGold = Mathf.RoundToInt(Mathf.Lerp(results.BaseGold, results.FinalGold, t));
 
-            ApplyAnimatedResults(speed, size, finalScore, finalGold);
+            ApplyAnimatedResults(distance, finalScore);
             yield return null;
         }
 
-        ApplyAnimatedResults(0f, 0f, results.FinalScore, results.FinalGold);
+        ApplyAnimatedResults(results.Distance, results.FinalScore);
         resultRoutine = null;
     }
 
@@ -250,6 +252,8 @@ public class ResultPanelUI : MonoBehaviour
     {
         if (speedLabel != null)
             speedLabel.text = string.Format(speedFormat, results.Speed);
+        if (distanceLabel != null)
+            distanceLabel.text = string.Format(distanceFormat, 0f);
         if (sizeLabel != null)
             sizeLabel.text = string.Format(sizeFormat, results.Size);
         if (baseScoreLabel != null)
@@ -258,26 +262,21 @@ public class ResultPanelUI : MonoBehaviour
             baseGoldLabel.text = string.Format(baseGoldFormat, results.BaseGold);
 
         int initialScore = results.BaseScore;
-        int initialGold = results.BaseGold;
         if (scoreLabel != null)
             scoreLabel.text = $"{initialScore}";
         if (finalScoreLabel != null)
             finalScoreLabel.text = string.Format(finalScoreFormat, initialScore);
         if (finalGoldLabel != null)
-            finalGoldLabel.text = string.Format(finalGoldFormat, initialGold);
+            finalGoldLabel.text = string.Format(finalGoldFormat, results.FinalGold);
     }
 
-    void ApplyAnimatedResults(float speed, float size, int finalScore, int finalGold)
+    void ApplyAnimatedResults(float distance, int finalScore)
     {
-        if (speedLabel != null)
-            speedLabel.text = string.Format(speedFormat, speed);
-        if (sizeLabel != null)
-            sizeLabel.text = string.Format(sizeFormat, size);
+        if (distanceLabel != null)
+            distanceLabel.text = string.Format(distanceFormat, distance);
         if (scoreLabel != null)
             scoreLabel.text = $"{finalScore}";
         if (finalScoreLabel != null)
             finalScoreLabel.text = string.Format(finalScoreFormat, finalScore);
-        if (finalGoldLabel != null)
-            finalGoldLabel.text = string.Format(finalGoldFormat, finalGold);
     }
 }
