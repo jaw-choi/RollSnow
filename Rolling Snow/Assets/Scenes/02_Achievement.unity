@@ -1850,7 +1850,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: achievement name
+  m_text: "300\uC810 \uB2EC\uC131"
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: b026115afec1dae40b6051aca2fe2aad, type: 2}
   m_sharedMaterial: {fileID: 2349348576927202959, guid: b026115afec1dae40b6051aca2fe2aad, type: 2}
@@ -2371,7 +2371,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: achievement name
+  m_text: "100\uC810 \uB2EC\uC131"
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: b026115afec1dae40b6051aca2fe2aad, type: 2}
   m_sharedMaterial: {fileID: 2349348576927202959, guid: b026115afec1dae40b6051aca2fe2aad, type: 2}
@@ -2631,7 +2631,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: achievement name
+  m_text: "500\uC810 \uB2EC\uC131"
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: b026115afec1dae40b6051aca2fe2aad, type: 2}
   m_sharedMaterial: {fileID: 2349348576927202959, guid: b026115afec1dae40b6051aca2fe2aad, type: 2}
