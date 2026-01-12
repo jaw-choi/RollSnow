@@ -70,13 +70,23 @@ public class ItemPickup : MonoBehaviour
             {
                 var gold = GoldSystem.GetOrCreate();
                 if (gold != null)
-                    gold.AddGold(Mathf.Max(0, goldAmount));
+                {
+                    var gm = GameManager.Instance ?? FindObjectOfType<GameManager>();
+                    float multiplier = gm != null ? gm.GetGoldResultMultiplier() : 10f;
+                    int amount = Mathf.RoundToInt(Mathf.Max(0, goldAmount) * multiplier);
+                    gold.AddGold(Mathf.Max(0, amount));
+                    if (gm != null)
+                        gm.RegisterGoldItemPickup(goldAmount, amount, 1);
+                }
                 break;
             }
             case ItemType.Point:
             {
                 if (GameManager.Instance != null)
+                {
                     GameManager.Instance.AddScore(scoreAmount);
+                    GameManager.Instance.RegisterScoreItemPickup(1);
+                }
                 break;
             }
             case ItemType.SpeedUp:

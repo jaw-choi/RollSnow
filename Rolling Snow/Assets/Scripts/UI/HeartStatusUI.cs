@@ -19,6 +19,7 @@ public class HeartStatusUI : MonoBehaviour
     [SerializeField] private bool hideTimerWhenFull = true;
     [SerializeField] private string fullText = "FULL";
     [SerializeField] private float refreshIntervalSeconds = 1f;
+    [SerializeField] private int heartRemainVisibleThreshold = 5;
 
     Coroutine refreshRoutine;
     readonly List<GameObject> heartInstances = new List<GameObject>();
@@ -71,7 +72,13 @@ public class HeartStatusUI : MonoBehaviour
 
         var status = system.GetStatus();
         if (heartCountLabel != null)
-            heartCountLabel.text = status.Current.ToString();
+        {
+            int threshold = Mathf.Max(0, heartRemainVisibleThreshold);
+            bool showHeartRemain = status.Current >= threshold;
+            heartCountLabel.gameObject.SetActive(showHeartRemain);
+            if (showHeartRemain)
+                heartCountLabel.text = FormatHeartCount(status);
+        }
 
         UpdateHeartIcons(status);
 
@@ -163,5 +170,13 @@ public class HeartStatusUI : MonoBehaviour
         int minutes = seconds / 60;
         int secs = seconds % 60;
         return $"{minutes:00}:{secs:00}";
+    }
+
+    static string FormatHeartCount(HeartSystem.HeartStatus status)
+    {
+        if (status.Extra > 0)
+            return $"+{status.Extra}";
+
+        return status.Current.ToString();
     }
 }

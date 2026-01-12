@@ -1,0 +1,36 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5893450fb2350e34fa0c5c740d8b0625, type: 3}
+  m_Name: AchievementCatalog
+  m_EditorClassIdentifier: Assembly-CSharp::AchievementCatalog
+  prefsPrefix: Achievement.Completed.
+  achievements:
+  - id: distance_100
+    condition: 0
+    distanceThreshold: 100
+    countThreshold: 0
+  - id: distance_500
+    condition: 0
+    distanceThreshold: 500
+    countThreshold: 0
+  - id: distance_1000
+    condition: 0
+    distanceThreshold: 1000
+    countThreshold: 0
+  - id: coin_item_3
+    condition: 2
+    distanceThreshold: 0
+    countThreshold: 3
+  - id: score_item_3
+    condition: 1
+    distanceThreshold: 0
+    countThreshold: 3

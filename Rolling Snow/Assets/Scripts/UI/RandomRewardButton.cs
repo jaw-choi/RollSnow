@@ -42,6 +42,17 @@ public class RandomRewardButton : MonoBehaviour
     [Header("Skin Reward (PlayerPrefs)")]
     [SerializeField] private string skinKey = "Reward.SkinCount";
     [SerializeField] private int skinAmount = 1;
+    [SerializeField] private string defaultSkinId = "skin_0";
+    [SerializeField] private int duplicateSkinGold = 150;
+    [SerializeField] private bool showDuplicateGoldUi = true;
+    [SerializeField] private GameObject duplicateGoldRoot;
+    [SerializeField] private TMPro.TextMeshProUGUI duplicateGoldLabel;
+    [SerializeField] private CanvasGroup duplicateGoldCanvasGroup;
+    [SerializeField] private string duplicateGoldFormat = "+{0} G";
+    [SerializeField] private float duplicateGoldHold = 0.6f;
+    [SerializeField] private float duplicateGoldFadeOut = 0.2f;
+    [SerializeField] private bool hideDuplicateGoldOnAwake = true;
+    [SerializeField] private bool keepDuplicateGoldVisible = true;
 
     [Header("Hearts")]
     [SerializeField] private int heart1Amount = 1;
@@ -93,6 +104,7 @@ public class RandomRewardButton : MonoBehaviour
     [SerializeField] private float skinResultFadeOut = 0.2f;
 
     [Header("Skin Result Content")]
+    [SerializeField] private SkinCatalog skinCatalog;
     [SerializeField] private SkinResultEntry[] skinResultEntries;
     [SerializeField] private Sprite[] skinResultSprites;
     [SerializeField] private bool preferUnownedSkins = true;
@@ -121,6 +133,7 @@ public class RandomRewardButton : MonoBehaviour
     [SerializeField] private float legendaryRarityPulseScale = 1.2f;
     [SerializeField] private float rarityPulseDuration = 0.35f;
     [SerializeField] private float rarityGlowAlpha = 0.6f;
+    [SerializeField] private bool continuousRarityPulse = true;
 
     [Header("Debug")]
     [SerializeField] private bool logReward = true;
@@ -134,10 +147,15 @@ public class RandomRewardButton : MonoBehaviour
     SkinResultEntry pendingSkinResult;
     string pendingSkinId;
     SkinResultEntry lastSkinResult;
+    bool lastSkinWasDuplicate;
+    int lastDuplicateGold;
     bool hasCachedSkinResult;
     Vector3 skinResultBaseScale = Vector3.one;
     RectTransform skinResultGlowRect;
     Vector3 skinResultGlowBaseScale = Vector3.one;
+    Coroutine rarityPulseRoutine;
+    bool rarityPulseActive;
+    Coroutine duplicateGoldRoutine;
 
     void Awake()
     {
@@ -145,11 +163,16 @@ public class RandomRewardButton : MonoBehaviour
         CacheSkinResultTargets();
         if (hideSkinResultOnAwake)
             HideSkinResult(true);
+        CacheDuplicateGoldTargets();
+        if (hideDuplicateGoldOnAwake)
+            HideDuplicateGold(true);
     }
 
     void OnDisable()
     {
         StopNoGoldRoutine();
+        StopRarityPulseLoop();
+        StopDuplicateGoldRoutine();
     }
 
     void Update()
@@ -242,12 +265,22 @@ public class RandomRewardButton : MonoBehaviour
 
     void GrantSkin(SkinResultEntry entry, string skinId)
     {
+        bool wasUnlocked = !string.IsNullOrEmpty(skinId) && SkinStorage.IsUnlocked(skinId, GetDefaultSkinId(), GetUnlockPrefix());
         int current = PlayerPrefs.GetInt(skinKey, 0);
         current = Mathf.Max(0, current) + Mathf.Max(1, skinAmount);
         PlayerPrefs.SetInt(skinKey, current);
         if (!string.IsNullOrEmpty(skinId))
-            PlayerPrefs.SetInt($"{skinUnlockPrefix}{skinId}", 1);
+            SkinStorage.Unlock(skinId, GetUnlockPrefix());
         PlayerPrefs.Save();
+
+        lastSkinWasDuplicate = wasUnlocked && duplicateSkinGold > 0;
+        lastDuplicateGold = lastSkinWasDuplicate ? duplicateSkinGold : 0;
+        if (lastSkinWasDuplicate)
+        {
+            var gold = GoldSystem.GetOrCreate();
+            if (gold != null)
+                gold.AddGold(duplicateSkinGold);
+        }
 
         lastSkinResult = entry;
     }
@@ -397,6 +430,29 @@ public class RandomRewardButton : MonoBehaviour
         if (entry != null)
             ApplySkinResultText(entry);
 
+        // if (reward == RewardType.Skin)
+        // {
+        //     if (lastSkinWasDuplicate)
+        //         TryShowDuplicateGold();
+        //     else if (!keepDuplicateGoldVisible)
+        //         HideDuplicateGold(false);
+        // }
+        // else if (!keepDuplicateGoldVisible)
+        // {
+        //     HideDuplicateGold(false);
+        // }
+
+        if (reward == RewardType.Skin)
+        {
+            if (lastSkinWasDuplicate)
+                TryShowDuplicateGold();
+            else if (!keepDuplicateGoldVisible)
+                HideDuplicateGold(false);
+        }
+        else if (!keepDuplicateGoldVisible)
+        {
+            HideDuplicateGold(false);
+        }
         SetSkinResultAlpha(0f);
 
         RectTransform rect = skinResultRect != null ? skinResultRect : (hasImageTarget ? skinResultImage.rectTransform : null);
@@ -425,7 +481,12 @@ public class RandomRewardButton : MonoBehaviour
             rect.localScale = popScale;
 
         if (entry != null)
-            yield return PlayRarityPulse(entry.rarity, rect);
+        {
+            if (continuousRarityPulse)
+                StartRarityPulseLoop(entry.rarity, rect);
+            else
+                yield return PlayRarityPulse(entry.rarity, rect);
+        }
 
         if (keepSkinResultVisible)
         {
@@ -456,6 +517,9 @@ public class RandomRewardButton : MonoBehaviour
         if (rect != null)
             rect.localScale = startScale;
 
+        if (continuousRarityPulse)
+            StopRarityPulseLoop();
+
         if (skinResultRoot != null)
             skinResultRoot.SetActive(false);
     }
@@ -465,6 +529,9 @@ public class RandomRewardButton : MonoBehaviour
         entry = null;
         skinId = null;
 
+        if (skinCatalog != null && skinCatalog.skins != null && skinCatalog.skins.Length > 0)
+            return TrySelectFromCatalog(skinCatalog, out entry, out skinId);
+
         if (skinResultEntries != null && skinResultEntries.Length > 0)
             return TrySelectFromEntries(skinResultEntries, out entry, out skinId);
 
@@ -472,6 +539,57 @@ public class RandomRewardButton : MonoBehaviour
             return TrySelectFromSprites(skinResultSprites, out entry, out skinId);
 
         return false;
+    }
+
+    bool TrySelectFromCatalog(SkinCatalog catalog, out SkinResultEntry entry, out string skinId)
+    {
+        entry = null;
+        skinId = null;
+
+        var skins = catalog.skins;
+        if (skins == null || skins.Length == 0)
+            return false;
+
+        int count = skins.Length;
+        int[] all = new int[count];
+        int[] unowned = new int[count];
+        int allCount = 0;
+        int unownedCount = 0;
+        string defaultId = catalog.GetDefaultSkinId();
+
+        for (int i = 0; i < count; i++)
+        {
+            SkinEntry candidate = skins[i];
+            if (candidate == null || candidate.sprite == null)
+                continue;
+
+            string candidateId = SkinStorage.GetSkinId(candidate, i);
+            if (!string.IsNullOrEmpty(defaultId) && candidateId == defaultId)
+                continue;
+
+            all[allCount++] = i;
+            if (preferUnownedSkins && !SkinStorage.IsUnlocked(candidateId, defaultId, catalog.unlockPrefix))
+                unowned[unownedCount++] = i;
+        }
+
+        if (allCount == 0)
+            return false;
+
+        int selectedIndex = (preferUnownedSkins && unownedCount > 0)
+            ? unowned[UnityEngine.Random.Range(0, unownedCount)]
+            : all[UnityEngine.Random.Range(0, allCount)];
+
+        SkinEntry selected = skins[selectedIndex];
+        skinId = SkinStorage.GetSkinId(selected, selectedIndex);
+        entry = new SkinResultEntry
+        {
+            id = skinId,
+            displayName = SkinStorage.GetSkinDisplayName(selected),
+            rarity = selected != null ? selected.rarity : SkinRarity.Common,
+            sprite = selected != null ? selected.sprite : null
+        };
+
+        return entry != null && entry.sprite != null;
     }
 
     SkinResultEntry BuildHeartResult(RewardType reward)
@@ -501,6 +619,7 @@ public class RandomRewardButton : MonoBehaviour
         int[] unowned = new int[count];
         int allCount = 0;
         int unownedCount = 0;
+        string defaultId = GetDefaultSkinId();
 
         for (int i = 0; i < count; i++)
         {
@@ -508,8 +627,12 @@ public class RandomRewardButton : MonoBehaviour
             if (candidate == null || candidate.sprite == null)
                 continue;
 
+            string candidateId = GetSkinId(candidate, i);
+            if (!string.IsNullOrEmpty(defaultId) && candidateId == defaultId)
+                continue;
+
             all[allCount++] = i;
-            if (preferUnownedSkins && !IsSkinUnlocked(candidate, i))
+            if (preferUnownedSkins && !IsSkinUnlocked(candidateId))
                 unowned[unownedCount++] = i;
         }
 
@@ -535,6 +658,7 @@ public class RandomRewardButton : MonoBehaviour
         int[] unowned = new int[count];
         int allCount = 0;
         int unownedCount = 0;
+        string defaultId = GetDefaultSkinId();
 
         for (int i = 0; i < count; i++)
         {
@@ -542,8 +666,12 @@ public class RandomRewardButton : MonoBehaviour
             if (sprite == null)
                 continue;
 
+            string candidateId = GetSkinId(sprite, i);
+            if (!string.IsNullOrEmpty(defaultId) && candidateId == defaultId)
+                continue;
+
             all[allCount++] = i;
-            if (preferUnownedSkins && !IsSkinUnlocked(sprite, i))
+            if (preferUnownedSkins && !IsSkinUnlocked(candidateId))
                 unowned[unownedCount++] = i;
         }
 
@@ -584,7 +712,32 @@ public class RandomRewardButton : MonoBehaviour
         if (string.IsNullOrEmpty(skinId))
             return false;
 
-        return PlayerPrefs.GetInt($"{skinUnlockPrefix}{skinId}", 0) > 0;
+        return SkinStorage.IsUnlocked(skinId, GetDefaultSkinId(), GetUnlockPrefix());
+    }
+
+    string GetDefaultSkinId()
+    {
+        if (skinCatalog != null)
+            return skinCatalog.GetDefaultSkinId();
+
+        if (!string.IsNullOrEmpty(defaultSkinId))
+            return defaultSkinId;
+
+        if (skinResultEntries != null && skinResultEntries.Length > 0)
+            return GetSkinId(skinResultEntries[0], 0);
+
+        if (skinResultSprites != null && skinResultSprites.Length > 0)
+            return GetSkinId(skinResultSprites[0], 0);
+
+        return "skin_0";
+    }
+
+    string GetUnlockPrefix()
+    {
+        if (skinCatalog != null && !string.IsNullOrEmpty(skinCatalog.unlockPrefix))
+            return skinCatalog.unlockPrefix;
+
+        return skinUnlockPrefix;
     }
 
     string GetSkinId(SkinResultEntry entry, int index)
@@ -740,6 +893,72 @@ public class RandomRewardButton : MonoBehaviour
         }
     }
 
+    void StartRarityPulseLoop(SkinRarity rarity, RectTransform targetRect)
+    {
+        StopRarityPulseLoop();
+        rarityPulseRoutine = StartCoroutine(LoopRarityPulse(rarity, targetRect));
+    }
+
+    void StopRarityPulseLoop()
+    {
+        if (rarityPulseRoutine == null)
+            return;
+
+        StopCoroutine(rarityPulseRoutine);
+        rarityPulseRoutine = null;
+        rarityPulseActive = false;
+
+        if (skinResultRarityGlow != null)
+        {
+            Color c = skinResultRarityGlow.color;
+            c.a = 0f;
+            skinResultRarityGlow.color = c;
+        }
+
+        if (skinResultGlowRect != null)
+            skinResultGlowRect.localScale = skinResultGlowBaseScale;
+    }
+
+    IEnumerator LoopRarityPulse(SkinRarity rarity, RectTransform targetRect)
+    {
+        float duration = Mathf.Max(0.01f, rarityPulseDuration);
+        float scale = Mathf.Max(1f, GetRarityPulseScale(rarity));
+        if (duration <= 0f)
+            yield break;
+
+        RectTransform pulseRect = skinResultRarityGlow != null ? skinResultRarityGlow.rectTransform : targetRect;
+        if (pulseRect == null)
+            yield break;
+
+        Vector3 baseScale = pulseRect.localScale;
+        if (skinResultRarityGlow != null && skinResultGlowRect != null)
+            baseScale = skinResultGlowBaseScale;
+
+        Vector3 targetScale = baseScale * scale;
+        Color glowColor = GetRarityColor(rarity);
+
+        rarityPulseActive = true;
+        float elapsed = 0f;
+        while (rarityPulseActive)
+        {
+            float dt = useUnscaledTime ? Time.unscaledDeltaTime : Time.deltaTime;
+            elapsed += dt;
+            float t = duration > 0f ? Mathf.Repeat(elapsed, duration) / duration : 1f;
+            float pulseT = t < 0.5f ? t / 0.5f : (1f - t) / 0.5f;
+
+            pulseRect.localScale = Vector3.Lerp(baseScale, targetScale, pulseT);
+
+            if (skinResultRarityGlow != null)
+            {
+                Color c = glowColor;
+                c.a = rarityGlowAlpha * pulseT;
+                skinResultRarityGlow.color = c;
+            }
+
+            yield return null;
+        }
+    }
+
     IEnumerator PlaySkinResultSettle(RectTransform rect, Vector3 fromScale, Vector3 toScale)
     {
         float duration = Mathf.Max(0f, skinResultSettleDuration);
@@ -796,6 +1015,9 @@ public class RandomRewardButton : MonoBehaviour
     {
         if (!force && !showSkinResult)
             return;
+
+        if (continuousRarityPulse)
+            StopRarityPulseLoop();
 
         isSkinResultVisible = false;
         if (skinResultRoot != null)
@@ -861,6 +1083,85 @@ public class RandomRewardButton : MonoBehaviour
         Color color = skinResultImage.color;
         color.a = alpha;
         skinResultImage.color = color;
+    }
+
+    void TryShowDuplicateGold()
+    {
+        if (!showDuplicateGoldUi || !lastSkinWasDuplicate || lastDuplicateGold <= 0)
+            return;
+
+        CacheDuplicateGoldTargets();
+        if (duplicateGoldLabel != null)
+            duplicateGoldLabel.text = string.Format(duplicateGoldFormat, lastDuplicateGold);
+
+        if (duplicateGoldCanvasGroup != null)
+            duplicateGoldCanvasGroup.alpha = 1f;
+
+        if (duplicateGoldRoot != null)
+            duplicateGoldRoot.SetActive(true);
+
+        StopDuplicateGoldRoutine();
+        if (duplicateGoldHold > 0f || duplicateGoldFadeOut > 0f)
+            duplicateGoldRoutine = StartCoroutine(PlayDuplicateGoldEffect());
+    }
+
+    IEnumerator PlayDuplicateGoldEffect()
+    {
+        float hold = Mathf.Max(0f, duplicateGoldHold);
+        if (hold > 0f)
+            yield return useUnscaledTime ? new WaitForSecondsRealtime(hold) : new WaitForSeconds(hold);
+
+        float fadeOut = Mathf.Max(0f, duplicateGoldFadeOut);
+        if (duplicateGoldCanvasGroup == null || fadeOut <= 0f)
+        {
+            HideDuplicateGold(true);
+            yield break;
+        }
+
+        float elapsed = 0f;
+        while (elapsed < fadeOut)
+        {
+            float dt = useUnscaledTime ? Time.unscaledDeltaTime : Time.deltaTime;
+            elapsed += dt;
+            float t = Mathf.Clamp01(elapsed / fadeOut);
+            duplicateGoldCanvasGroup.alpha = Mathf.Lerp(1f, 0f, t);
+            yield return null;
+        }
+
+        HideDuplicateGold(true);
+    }
+
+    void HideDuplicateGold(bool force)
+    {
+        if (!force && !showDuplicateGoldUi)
+            return;
+
+        if (duplicateGoldRoot != null)
+            duplicateGoldRoot.SetActive(false);
+
+        if (duplicateGoldCanvasGroup != null)
+            duplicateGoldCanvasGroup.alpha = 0f;
+    }
+
+    void StopDuplicateGoldRoutine()
+    {
+        if (duplicateGoldRoutine == null)
+            return;
+
+        StopCoroutine(duplicateGoldRoutine);
+        duplicateGoldRoutine = null;
+    }
+
+    void CacheDuplicateGoldTargets()
+    {
+        if (duplicateGoldRoot != null && duplicateGoldCanvasGroup == null)
+            duplicateGoldCanvasGroup = duplicateGoldRoot.GetComponent<CanvasGroup>();
+
+        if (duplicateGoldCanvasGroup == null && duplicateGoldLabel != null)
+            duplicateGoldCanvasGroup = duplicateGoldLabel.GetComponent<CanvasGroup>();
+
+        if (duplicateGoldCanvasGroup == null && duplicateGoldRoot != null)
+            duplicateGoldCanvasGroup = duplicateGoldRoot.AddComponent<CanvasGroup>();
     }
 
     void ShowNoGoldMessage()

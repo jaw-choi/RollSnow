@@ -9,6 +9,7 @@ public class HeartSystem : MonoBehaviour
         public int Max;
         public int SecondsToNext;
         public bool IsFull;
+        public int Extra;
     }
 
     private static HeartSystem instance;
@@ -143,7 +144,7 @@ public class HeartSystem : MonoBehaviour
         Refresh(false);
 
         int before = currentHearts;
-        currentHearts = Mathf.Clamp(currentHearts + amount, 0, maxHearts);
+        currentHearts = Mathf.Max(0, currentHearts + amount);
         if (currentHearts >= maxHearts)
             lastTimestampSeconds = GetUtcNowSeconds();
 
@@ -158,7 +159,7 @@ public class HeartSystem : MonoBehaviour
     {
         Initialize();
 
-        currentHearts = Mathf.Clamp(hearts, 0, maxHearts);
+        currentHearts = Mathf.Max(0, hearts);
         lastTimestampSeconds = unixTimestampSeconds > 0 ? unixTimestampSeconds : GetUtcNowSeconds();
         SaveState();
         NotifyStatus();
@@ -200,7 +201,7 @@ public class HeartSystem : MonoBehaviour
 
     void ApplyRecovery()
     {
-        currentHearts = Mathf.Clamp(currentHearts, 0, maxHearts);
+        currentHearts = Mathf.Max(0, currentHearts);
         if (currentHearts >= maxHearts)
             return;
 
@@ -243,7 +244,8 @@ public class HeartSystem : MonoBehaviour
             Current = currentHearts,
             Max = maxHearts,
             IsFull = currentHearts >= maxHearts,
-            SecondsToNext = 0
+            SecondsToNext = 0,
+            Extra = Mathf.Max(0, currentHearts - maxHearts)
         };
 
         if (status.IsFull)
@@ -270,8 +272,7 @@ public class HeartSystem : MonoBehaviour
 
     void LoadState()
     {
-        currentHearts = PlayerPrefs.GetInt(heartsKey, maxHearts);
-        currentHearts = Mathf.Clamp(currentHearts, 0, maxHearts);
+        currentHearts = Mathf.Max(0, PlayerPrefs.GetInt(heartsKey, maxHearts));
 
         string ts = PlayerPrefs.GetString(timestampKey, string.Empty);
         if (!long.TryParse(ts, out lastTimestampSeconds) || lastTimestampSeconds <= 0)

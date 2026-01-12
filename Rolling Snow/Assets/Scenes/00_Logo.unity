@@ -336,19 +336,24 @@ MonoBehaviour:
   scoreLabel: {fileID: 0}
   scoreTextObjectName: Score
   scoreDisplayMultiplier: 5
-  scoreToGoldMultiplier: 5
+  scoreItemScoreValue: 15
+  scoreToGoldMultiplier: 0.1
   finalScoreMultiplier: 1
   speedScoreBonus: 0
   sizeScoreBonus: 0
-  finalGoldMultiplier: 0.01
+  finalGoldMultiplier: 1
   speedGoldBonus: 0
   sizeGoldBonus: 0
+  goldUiAndAwardMultiplier: 10
   gameSceneName: 04_GameScene
   mainMenuSceneName: 01_MainMenu
   player: {fileID: 0}
   playerController: {fileID: 0}
   cameraFollow: {fileID: 0}
   gameplayCamera: {fileID: 0}
+  enableAchievements: 1
+  achievementCatalog: {fileID: 11400000, guid: 5d24bb61aa93f5e4c8a4411290146f74, type: 2}
+  achievementPrefsPrefix: Achievement.Completed.
 --- !u!4 &1584719638
 Transform:
   m_ObjectHideFlags: 0
@@ -454,8 +459,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::LogoIntro
   nextSceneName: 01_MainMenu
-  holdDuration: 0.1
-  fadeDuration: 0.1
+  holdDuration: 1
+  fadeDuration: 0.2
 --- !u!225 &1785799654
 CanvasGroup:
   m_ObjectHideFlags: 0
@@ -504,8 +509,8 @@ Camera:
   m_GameObject: {fileID: 1981063399}
   m_Enabled: 1
   serializedVersion: 2
-  m_ClearFlags: 1
-  m_BackGroundColor: {r: 0.19215687, g: 0.3019608, b: 0.4745098, a: 0}
+  m_ClearFlags: 2
+  m_BackGroundColor: {r: 0, g: 0.21960786, b: 0.5882353, a: 0}
   m_projectionMatrixMode: 1
   m_GateFitMode: 2
   m_FOVAxisMode: 0
@@ -707,6 +712,52 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0, y: 0}
+--- !u!1 &2141497546
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2141497549}
+  - component: {fileID: 2141497548}
+  m_Layer: 0
+  m_Name: AdManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &2141497548
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2141497546}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7e05433d4b3a53848a99e78afba0bb17, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::RewardedAdManager
+  adUnitId: ca-app-pub-8502618733998421/2441408968
+  persistBetweenScenes: 1
+--- !u!4 &2141497549
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2141497546}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 571.5306, y: 1451.3148, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
@@ -717,3 +768,4 @@ SceneRoots:
   - {fileID: 1584719638}
   - {fileID: 1023380280}
   - {fileID: 172527851}
+  - {fileID: 2141497549}

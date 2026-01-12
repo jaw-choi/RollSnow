@@ -17,17 +17,22 @@ public class ResultPanelUI : MonoBehaviour
     [SerializeField] private TextMeshProUGUI speedLabel;
     [SerializeField] private TextMeshProUGUI distanceLabel;
     [SerializeField] private TextMeshProUGUI sizeLabel;
+    [SerializeField] private TextMeshProUGUI scoreItemCountLabel;
     [SerializeField] private TextMeshProUGUI baseScoreLabel;
     [SerializeField] private TextMeshProUGUI finalScoreLabel;
+    [SerializeField] private TextMeshProUGUI highScoreLabel;
     [SerializeField] private TextMeshProUGUI baseGoldLabel;
     [SerializeField] private TextMeshProUGUI finalGoldLabel;
     [SerializeField] private Button restartButton;
     [SerializeField] private Button mainMenuButton;
+    [SerializeField] private Button achievementButton;
     [SerializeField] private GameObject noHeartsAlertRoot;
+    [SerializeField] private float noHeartsAlertDuration = 0.5f;
 
     [Header("Scenes")]
     [SerializeField] private string mainMenuSceneName = "01_MainMenu";
     [SerializeField] private string gameSceneName = "04_GameScene";
+    [SerializeField] private string achievementSceneName = "02_Achievement";
 
     [Header("Titles")]
     [SerializeField] private string gameOverTitle = "Game Over!";
@@ -35,10 +40,12 @@ public class ResultPanelUI : MonoBehaviour
 
     [Header("Formats")]
     [SerializeField] private string speedFormat = "Speed : {0:F1}";
-    [SerializeField] private string distanceFormat = "Distance : {0:F1}m";
+    [SerializeField] private string distanceFormat = "Distance : {0}m";
     [SerializeField] private string sizeFormat = "Size : {0:F2}";
+    [SerializeField] private string scoreItemCountFormat = "Score Items : {0}";
     [SerializeField] private string baseScoreFormat = "Base Score : {0}";
     [SerializeField] private string finalScoreFormat = "Final Score : {0}";
+    [SerializeField] private string highScoreFormat = "High Score : {0}";
     [SerializeField] private string baseGoldFormat = "Base Gold : {0}";
     [SerializeField] private string finalGoldFormat = "Final Gold : {0}";
     [SerializeField] private bool animateFinalResults = true;
@@ -47,6 +54,7 @@ public class ResultPanelUI : MonoBehaviour
     [SerializeField] private bool useUnscaledTime = true;
 
     Coroutine resultRoutine;
+    Coroutine noHeartsAlertRoutine;
 
     public enum ResultState { GameOver, Clear }
 
@@ -89,6 +97,7 @@ public class ResultPanelUI : MonoBehaviour
         {
             if (restartButton != null) restartButton.onClick.RemoveListener(OnRestart);
             if (mainMenuButton != null) mainMenuButton.onClick.RemoveListener(OnMainMenu);
+            if (achievementButton != null) achievementButton.onClick.RemoveListener(OnAchievement);
             return;
         }
 
@@ -102,6 +111,12 @@ public class ResultPanelUI : MonoBehaviour
         {
             mainMenuButton.onClick.RemoveAllListeners();
             mainMenuButton.onClick.AddListener(OnMainMenu);
+        }
+
+        if (achievementButton != null)
+        {
+            achievementButton.onClick.RemoveAllListeners();
+            achievementButton.onClick.AddListener(OnAchievement);
         }
     }
 
@@ -130,6 +145,8 @@ public class ResultPanelUI : MonoBehaviour
     public void HideImmediate()
     {
         StopResultRoutine();
+        StopNoHeartsAlertRoutine();
+        SetNoHeartsAlert(false);
         if (panelRoot != null && panelRoot.activeSelf)
             panelRoot.SetActive(false);
     }
@@ -156,6 +173,10 @@ public class ResultPanelUI : MonoBehaviour
                 scoreLabel.text = $"{displayScore}";
             if (finalScoreLabel != null)
                 finalScoreLabel.text = string.Format(finalScoreFormat, displayScore);
+            if (scoreItemCountLabel != null)
+                scoreItemCountLabel.text = string.Format(scoreItemCountFormat, 0);
+            if (highScoreLabel != null)
+                highScoreLabel.text = string.Format(highScoreFormat, 0);
             return;
         }
 
@@ -165,21 +186,31 @@ public class ResultPanelUI : MonoBehaviour
         if (speedLabel != null)
             speedLabel.text = string.Format(speedFormat, results.Speed);
         if (distanceLabel != null)
-            distanceLabel.text = string.Format(distanceFormat, results.Distance);
+            distanceLabel.text = string.Format(distanceFormat, Mathf.FloorToInt(results.Distance));
         if (sizeLabel != null)
             sizeLabel.text = string.Format(sizeFormat, results.Size);
+        if (scoreItemCountLabel != null)
+            scoreItemCountLabel.text = string.Format(scoreItemCountFormat, results.ScoreItemCount);
         if (baseScoreLabel != null)
             baseScoreLabel.text = string.Format(baseScoreFormat, results.BaseScore);
         if (finalScoreLabel != null)
             finalScoreLabel.text = string.Format(finalScoreFormat, results.FinalScore);
+        if (highScoreLabel != null)
+            highScoreLabel.text = string.Format(highScoreFormat, GameManager.Instance.GetHighScore());
         if (baseGoldLabel != null)
-            baseGoldLabel.text = string.Format(baseGoldFormat, results.BaseGold);
+            baseGoldLabel.text = string.Format(baseGoldFormat, Mathf.RoundToInt(results.RunGoldEarned));
         if (finalGoldLabel != null)
-            finalGoldLabel.text = string.Format(finalGoldFormat, results.FinalGold);
+            finalGoldLabel.text = string.Format(finalGoldFormat, Mathf.RoundToInt(results.FinalGoldEarned));
     }
 
     void OnRestart()
     {
+        if (GameManager.Instance != null && !HasAvailableHearts())
+        {
+            AudioManager.instance?.PlaySfx(AudioManager.Sfx.No);
+            ShowNoHeartsAlertBrief();
+            return;
+        }
         AudioManager.instance?.PlaySfx(AudioManager.Sfx.Select);
         if (GameManager.Instance != null)
             GameManager.Instance.Restart();
@@ -202,6 +233,45 @@ public class ResultPanelUI : MonoBehaviour
         }
     }
 
+    void OnAchievement()
+    {
+        AudioManager.instance?.PlaySfx(AudioManager.Sfx.Select);
+        Time.timeScale = 1f;
+        AudioListener.pause = false;
+        SceneManager.LoadScene(achievementSceneName);
+    }
+
+    bool HasAvailableHearts()
+    {
+        var system = HeartSystem.GetOrCreate();
+        if (system == null)
+            return true;
+
+        return system.GetStatus().Current > 0;
+    }
+
+    void ShowNoHeartsAlertBrief()
+    {
+        if (noHeartsAlertRoot == null)
+            return;
+
+        StopNoHeartsAlertRoutine();
+        SetNoHeartsAlert(true);
+        noHeartsAlertRoutine = StartCoroutine(HideNoHeartsAlertAfterDelay());
+    }
+
+    IEnumerator HideNoHeartsAlertAfterDelay()
+    {
+        float duration = Mathf.Max(0.01f, noHeartsAlertDuration);
+        if (useUnscaledTime)
+            yield return new WaitForSecondsRealtime(duration);
+        else
+            yield return new WaitForSeconds(duration);
+
+        SetNoHeartsAlert(false);
+        noHeartsAlertRoutine = null;
+    }
+
     void StopResultRoutine()
     {
         if (resultRoutine == null)
@@ -211,6 +281,15 @@ public class ResultPanelUI : MonoBehaviour
         resultRoutine = null;
     }
 
+    void StopNoHeartsAlertRoutine()
+    {
+        if (noHeartsAlertRoutine == null)
+            return;
+
+        StopCoroutine(noHeartsAlertRoutine);
+        noHeartsAlertRoutine = null;
+    }
+
     IEnumerator AnimateFinalResults()
     {
         var gm = GameManager.Instance;
@@ -218,6 +297,8 @@ public class ResultPanelUI : MonoBehaviour
             yield break;
 
         var results = gm.GetLastRunResults();
+        float runGold = results.RunGoldEarned;
+        float finalGold = results.FinalGoldEarned;
         ApplyBaseResults(results);
 
         float hold = Mathf.Max(0f, resultsHoldSeconds);
@@ -239,27 +320,33 @@ public class ResultPanelUI : MonoBehaviour
 
             float distance = Mathf.Lerp(0f, results.Distance, t);
             int finalScore = Mathf.RoundToInt(Mathf.Lerp(results.BaseScore, results.FinalScore, t));
+            int finalGoldValue = Mathf.RoundToInt(Mathf.Lerp(runGold, finalGold, t));
 
-            ApplyAnimatedResults(distance, finalScore);
+            ApplyAnimatedResults(distance, finalScore, finalGoldValue);
             yield return null;
         }
 
-        ApplyAnimatedResults(results.Distance, results.FinalScore);
+        ApplyAnimatedResults(results.Distance, results.FinalScore, Mathf.RoundToInt(finalGold));
         resultRoutine = null;
     }
 
     void ApplyBaseResults(GameManager.RunResults results)
     {
+        float runGold = results.RunGoldEarned;
         if (speedLabel != null)
             speedLabel.text = string.Format(speedFormat, results.Speed);
         if (distanceLabel != null)
-            distanceLabel.text = string.Format(distanceFormat, 0f);
+            distanceLabel.text = string.Format(distanceFormat, 0);
         if (sizeLabel != null)
             sizeLabel.text = string.Format(sizeFormat, results.Size);
+        if (scoreItemCountLabel != null)
+            scoreItemCountLabel.text = string.Format(scoreItemCountFormat, results.ScoreItemCount);
         if (baseScoreLabel != null)
             baseScoreLabel.text = string.Format(baseScoreFormat, results.BaseScore);
+        if (highScoreLabel != null && GameManager.Instance != null)
+            highScoreLabel.text = string.Format(highScoreFormat, GameManager.Instance.GetHighScore());
         if (baseGoldLabel != null)
-            baseGoldLabel.text = string.Format(baseGoldFormat, results.BaseGold);
+            baseGoldLabel.text = string.Format(baseGoldFormat, Mathf.RoundToInt(runGold));
 
         int initialScore = results.BaseScore;
         if (scoreLabel != null)
@@ -267,16 +354,18 @@ public class ResultPanelUI : MonoBehaviour
         if (finalScoreLabel != null)
             finalScoreLabel.text = string.Format(finalScoreFormat, initialScore);
         if (finalGoldLabel != null)
-            finalGoldLabel.text = string.Format(finalGoldFormat, results.FinalGold);
+            finalGoldLabel.text = string.Format(finalGoldFormat, Mathf.RoundToInt(runGold));
     }
 
-    void ApplyAnimatedResults(float distance, int finalScore)
+    void ApplyAnimatedResults(float distance, int finalScore, int finalGold)
     {
         if (distanceLabel != null)
-            distanceLabel.text = string.Format(distanceFormat, distance);
+            distanceLabel.text = string.Format(distanceFormat, Mathf.FloorToInt(distance));
         if (scoreLabel != null)
             scoreLabel.text = $"{finalScore}";
         if (finalScoreLabel != null)
             finalScoreLabel.text = string.Format(finalScoreFormat, finalScore);
+        if (finalGoldLabel != null)
+            finalGoldLabel.text = string.Format(finalGoldFormat, finalGold);
     }
 }

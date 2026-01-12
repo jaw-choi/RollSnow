@@ -5,6 +5,7 @@ using UnityEngine.SceneManagement;
 public class GameManager : MonoBehaviour
 {
     public static GameManager Instance { get; private set; }
+    const string HighScoreKey = "HighScore";
 
     [Tooltip("Current score (in seconds * scoreRate)")]
     public float score = 0f;
@@ -17,13 +18,15 @@ public class GameManager : MonoBehaviour
 
     [Header("Scoring")]
     [SerializeField] private int scoreDisplayMultiplier = 5;
-    [SerializeField] private int scoreToGoldMultiplier = 5;
+    [SerializeField] private int scoreItemScoreValue = 15;
+    [SerializeField] private float scoreToGoldMultiplier = 0.1f;
     [SerializeField] private float finalScoreMultiplier = 1f;
     [SerializeField] private float speedScoreBonus = 0f;
     [SerializeField] private float sizeScoreBonus = 0f;
     [SerializeField] private float finalGoldMultiplier = 1f;
     [SerializeField] private float speedGoldBonus = 0f;
     [SerializeField] private float sizeGoldBonus = 0f;
+    [SerializeField] private float goldUiAndAwardMultiplier = 10f;
 
     [Header("Scenes")]
     [SerializeField] private string gameSceneName = "04_GameScene";
@@ -49,8 +52,17 @@ public class GameManager : MonoBehaviour
     bool gameOverEffectsPlayed = false;
     bool goldAwardedForRun = false;
     int runGoldStart = 0;
+    int runGoldItemRaw = 0;
+    int runGoldItemAdded = 0;
+    int runGoldItemCount = 0;
+    int runScoreItemCount = 0;
     bool runResultsCaptured = false;
     RunResults lastRunResults;
+
+    [Header("Achievements")]
+    [SerializeField] private bool enableAchievements = true;
+    [SerializeField] private AchievementCatalog achievementCatalog;
+    [SerializeField] private string achievementPrefsPrefix = "Achievement.Completed.";
 
     public struct RunResults
     {
@@ -63,6 +75,7 @@ public class GameManager : MonoBehaviour
         public float Speed;
         public float Size;
         public float Distance;
+        public int ScoreItemCount;
     }
 
     void Awake()
@@ -98,6 +111,7 @@ public class GameManager : MonoBehaviour
             if (scoreLabel == null || scoreLabel.Equals(null))
                 CacheScoreLabel();
             UpdateScoreLabel(score);
+            CheckAchievements();
         }
     }
 
@@ -226,7 +240,7 @@ public class GameManager : MonoBehaviour
         if (panel != null)
         {
             panel.Show(elapsedTime, state);
-            panel.SetNoHeartsAlert(IsOutOfHearts());
+            panel.SetNoHeartsAlert(false);
         }
     }
 
@@ -244,6 +258,7 @@ public class GameManager : MonoBehaviour
         IsCleared = false;
         gameOverEffectsPlayed = false;
         goldAwardedForRun = false;
+        runScoreItemCount = 0;
         runResultsCaptured = false;
         UpdateScoreLabel(score);
     }
@@ -474,10 +489,36 @@ public class GameManager : MonoBehaviour
         UpdateScoreLabel(score);
     }
 
+    public void RegisterScoreItemPickup(int count = 1)
+    {
+        if (count <= 0)
+            return;
+
+        runScoreItemCount += count;
+        runResultsCaptured = false;
+        CheckAchievements();
+    }
+
+    public void RegisterGoldItemPickup(int rawAmount, int addedAmount, int itemCount = 1)
+    {
+        if (rawAmount <= 0 && addedAmount <= 0 && itemCount <= 0)
+            return;
+
+        runGoldItemRaw += Mathf.Max(0, rawAmount);
+        runGoldItemAdded += Mathf.Max(0, addedAmount);
+        runGoldItemCount += Mathf.Max(0, itemCount);
+        runResultsCaptured = false;
+        CheckAchievements();
+    }
+
     void StartNewSession()
     {
         playSessionStartTime = Time.time;
         runGoldStart = GetCurrentGold();
+        runGoldItemRaw = 0;
+        runGoldItemAdded = 0;
+        runGoldItemCount = 0;
+        runScoreItemCount = 0;
         runResultsCaptured = false;
     }
 
@@ -523,13 +564,19 @@ public class GameManager : MonoBehaviour
 
     public int GetDisplayScore()
     {
-        float distance = GetDistanceDescended();
-        return Mathf.FloorToInt(distance) * Mathf.Max(1, scoreDisplayMultiplier);
+        int distanceScore = Mathf.FloorToInt(GetDistanceDescended()) * Mathf.Max(1, scoreDisplayMultiplier);
+        int itemScore = runScoreItemCount * Mathf.Max(0, scoreItemScoreValue);
+        return distanceScore + itemScore;
     }
 
     public int GetRunGoldEarned()
     {
         return Mathf.Max(0, GetCurrentGold() - runGoldStart);
+    }
+
+    public float GetGoldResultMultiplier()
+    {
+        return Mathf.Max(10f, goldUiAndAwardMultiplier);
     }
 
     public float GetCurrentSpeed()
@@ -570,22 +617,30 @@ public class GameManager : MonoBehaviour
         return lastRunResults;
     }
 
+    public int GetHighScore()
+    {
+        return PlayerPrefs.GetInt(HighScoreKey, 0);
+    }
+
     void CaptureRunResults()
     {
         if (runResultsCaptured)
             return;
 
         int runGoldEarned = GetRunGoldEarned();
+        float itemGoldAdjusted = runGoldItemRaw * GetGoldResultMultiplier();
         float distance = GetDistanceDescended();
         int baseScore = Mathf.FloorToInt(distance) * Mathf.Max(1, scoreDisplayMultiplier);
-        int baseGoldFromScore = baseScore * Mathf.Max(1, scoreToGoldMultiplier);
-        int baseGold = runGoldEarned;
+        int itemScore = runScoreItemCount * Mathf.Max(0, scoreItemScoreValue);
+        float baseGoldFromScore = baseScore * Mathf.Max(0f, scoreToGoldMultiplier);
+        float baseGold = runGoldEarned - runGoldItemAdded + itemGoldAdjusted;
+        baseGold = Mathf.Max(0f, baseGold);
 
         float speed = GetCurrentSpeed();
         float size = GetCurrentSize();
 
-        int finalScore = Mathf.RoundToInt(baseScore * Mathf.Max(0f, finalScoreMultiplier));
-        finalScore = Mathf.Max(0, finalScore);
+        int finalScore = Mathf.Max(0, baseScore + itemScore);
+        UpdateHighScore(finalScore);
 
         float baseGoldTotal = baseGold + Mathf.Max(0f, baseGoldFromScore);
         baseGoldTotal = (float)baseGoldTotal * finalGoldMultiplier;
@@ -602,10 +657,21 @@ public class GameManager : MonoBehaviour
             RunGoldEarned = runGoldEarned,
             Speed = speed,
             Size = size,
-            Distance = distance
+            Distance = distance,
+            ScoreItemCount = runScoreItemCount
         };
 
         runResultsCaptured = true;
+    }
+
+    void UpdateHighScore(int finalScore)
+    {
+        int best = PlayerPrefs.GetInt(HighScoreKey, 0);
+        if (finalScore <= best)
+            return;
+
+        PlayerPrefs.SetInt(HighScoreKey, finalScore);
+        PlayerPrefs.Save();
     }
 
     int GetCurrentGold()
@@ -615,5 +681,59 @@ public class GameManager : MonoBehaviour
             return 0;
 
         return system.GetGold();
+    }
+
+    void CheckAchievements()
+    {
+        if (!enableAchievements)
+            return;
+
+        if (achievementCatalog == null || achievementCatalog.achievements == null)
+            return;
+
+        float distance = GetDistanceDescended();
+        foreach (var achievement in achievementCatalog.achievements)
+        {
+            if (achievement == null || string.IsNullOrEmpty(achievement.id))
+                continue;
+
+            bool complete = false;
+            switch (achievement.condition)
+            {
+                case AchievementConditionType.Distance:
+                    complete = distance >= Mathf.Max(0f, achievement.distanceThreshold);
+                    break;
+                case AchievementConditionType.ScoreItemCount:
+                    complete = runScoreItemCount >= Mathf.Max(0, achievement.countThreshold);
+                    break;
+                case AchievementConditionType.GoldItemCount:
+                    complete = runGoldItemCount >= Mathf.Max(0, achievement.countThreshold);
+                    break;
+            }
+
+            TryCompleteAchievement(achievement.id, complete);
+        }
+    }
+
+    void TryCompleteAchievement(string id, bool condition)
+    {
+        if (!condition || string.IsNullOrEmpty(id))
+            return;
+
+        string key = GetAchievementKey(id);
+        if (PlayerPrefs.GetInt(key, 0) > 0)
+            return;
+
+        PlayerPrefs.SetInt(key, 1);
+        PlayerPrefs.Save();
+    }
+
+    string GetAchievementKey(string id)
+    {
+        string prefix = achievementCatalog != null ? achievementCatalog.prefsPrefix : achievementPrefsPrefix;
+        if (string.IsNullOrEmpty(prefix))
+            return id;
+
+        return $"{prefix}{id}";
     }
 }

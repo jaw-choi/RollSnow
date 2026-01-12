@@ -17,6 +17,16 @@ public class Player : MonoBehaviour
     [SerializeField] private float deathAnimationSeconds = 0.8f;
     [SerializeField] private float deathAnimationLogInterval = 0.2f;
     [SerializeField] private bool disableSpriteOnGameOver = true;
+    [Header("Skin Effects")]
+    [SerializeField] private SkinCatalog skinCatalog;
+    [SerializeField] private SkinDeathEffect[] skinDeathEffects;
+
+    [System.Serializable]
+    private class SkinDeathEffect
+    {
+        public string skinId;
+        public Animator animator;
+    }
 
     Vector3 baseScale;
     Vector3 initialBaseScale;
@@ -25,6 +35,7 @@ public class Player : MonoBehaviour
     bool isDying = false;
     Coroutine deathRoutine;
     Animator activeDeathAnimator;
+    Animator defaultDeathEffectAnimator;
 
     void Awake()
     {
@@ -38,6 +49,8 @@ public class Player : MonoBehaviour
             deathAnimator = GetComponentInChildren<Animator>();
 
         CacheCamera();
+        defaultDeathEffectAnimator = deathEffectAnimator;
+        RefreshSkinDeathEffect();
 
         if (GameManager.Instance != null)
         {
@@ -235,6 +248,36 @@ public class Player : MonoBehaviour
 
         if (controller != null)
             controller.ResetControllerState(transform.position, transform.rotation);
+    }
+
+    void RefreshSkinDeathEffect()
+    {
+        if (skinCatalog == null || skinDeathEffects == null || skinDeathEffects.Length == 0)
+        {
+            deathEffectAnimator = defaultDeathEffectAnimator;
+            return;
+        }
+
+        string defaultId = skinCatalog.GetDefaultSkinId();
+        string equippedId = SkinStorage.GetEquippedSkinId(defaultId, skinCatalog.equippedKey);
+        if (!SkinStorage.IsUnlocked(equippedId, defaultId, skinCatalog.unlockPrefix))
+            equippedId = defaultId;
+
+        Animator selected = null;
+        for (int i = 0; i < skinDeathEffects.Length; i++)
+        {
+            var entry = skinDeathEffects[i];
+            if (entry == null || entry.animator == null)
+                continue;
+
+            if (entry.skinId == equippedId)
+            {
+                selected = entry.animator;
+                break;
+            }
+        }
+
+        deathEffectAnimator = selected != null ? selected : defaultDeathEffectAnimator;
     }
 
     IEnumerator DeathSequence()
