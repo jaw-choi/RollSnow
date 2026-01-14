@@ -87,9 +87,17 @@ MonoBehaviour:
   speedMultiplier: 1.2
   speedDuration: 2
   playSfx: 1
-  pickupSfx: 10
   useHaptics: 1
   hapticCooldown: 0.12
+  pickupEffectPrefab: {fileID: 3297442128536207765, guid: 83e14d7c35c9c514a9b8ef87e76c0bf5, type: 3}
+  pickupEffectAnchor: {fileID: 0}
+  spawnEffectOnPlayer: 1
+  pickupEffectOffset: {x: 0, y: 2, z: 0}
+  parentEffectToAnchor: 0
+  pickupEffectLifetime: 1.2
+  onPickedUp:
+    m_PersistentCalls:
+      m_Calls: []
   disableOnPickup: 1
 --- !u!58 &278488696945916740
 CircleCollider2D:

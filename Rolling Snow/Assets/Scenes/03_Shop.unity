@@ -2236,7 +2236,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: + 20
+  m_text: + 50
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 7a6f6b21db58cd84f8558552b62e6616, type: 2}
   m_sharedMaterial: {fileID: -5486197563047753553, guid: 7a6f6b21db58cd84f8558552b62e6616, type: 2}
@@ -5256,7 +5256,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::HeartRewardSample
   adRewardHearts: 1
   rewardedAdManager: {fileID: 0}
-  adRewardGold: 20
+  adRewardGold: 50
   gemCost: 10
   gemKey: Sample.Gems
   goldCost: 50

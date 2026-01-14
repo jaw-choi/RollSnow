@@ -3631,6 +3631,14 @@ PrefabInstance:
       propertyPath: m_Name
       value: coin item
       objectReference: {fileID: 0}
+    - target: {fileID: 7910083703416077003, guid: 10992c4027570164786833ed1936f847, type: 3}
+      propertyPath: pickupEffectAnchor
+      value: 
+      objectReference: {fileID: 0}
+    - target: {fileID: 7910083703416077003, guid: 10992c4027570164786833ed1936f847, type: 3}
+      propertyPath: pickupEffectPrefab
+      value: 
+      objectReference: {fileID: 3297442128536207765, guid: 83e14d7c35c9c514a9b8ef87e76c0bf5, type: 3}
     - target: {fileID: 8168980755772227095, guid: 10992c4027570164786833ed1936f847, type: 3}
       propertyPath: m_LocalPosition.x
       value: 9.81
