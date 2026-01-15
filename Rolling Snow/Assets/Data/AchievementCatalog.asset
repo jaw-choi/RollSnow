@@ -26,11 +26,11 @@ MonoBehaviour:
     condition: 0
     distanceThreshold: 1000
     countThreshold: 0
-  - id: coin_item_3
-    condition: 2
-    distanceThreshold: 0
-    countThreshold: 3
   - id: score_item_3
     condition: 1
+    distanceThreshold: 0
+    countThreshold: 3
+  - id: coin_item_3
+    condition: 2
     distanceThreshold: 0
     countThreshold: 3

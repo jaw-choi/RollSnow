@@ -49,6 +49,7 @@ public class RandomRewardButton : MonoBehaviour
     [SerializeField] private TMPro.TextMeshProUGUI duplicateGoldLabel;
     [SerializeField] private CanvasGroup duplicateGoldCanvasGroup;
     [SerializeField] private string duplicateGoldFormat = "+{0} G";
+    [SerializeField] private LocalizedString duplicateGoldFormatLocalized;
     [SerializeField] private float duplicateGoldHold = 0.6f;
     [SerializeField] private float duplicateGoldFadeOut = 0.2f;
     [SerializeField] private bool hideDuplicateGoldOnAwake = true;
@@ -66,6 +67,7 @@ public class RandomRewardButton : MonoBehaviour
     [SerializeField] private GameObject noGoldRoot;
     [SerializeField] private TMPro.TextMeshProUGUI noGoldLabel;
     [SerializeField] private string noGoldMessage = "Not enough gold";
+    [SerializeField] private LocalizedString noGoldMessageLocalized;
     [SerializeField] private float noGoldMessageDuration = 1.2f;
     [SerializeField] private float noGoldMoveUp = 40f;
     [SerializeField] private CanvasGroup noGoldCanvasGroup;
@@ -113,6 +115,8 @@ public class RandomRewardButton : MonoBehaviour
     [Header("Heart Result Content")]
     [SerializeField] private string heart1ResultName = "Heart +1";
     [SerializeField] private string heart3ResultName = "Heart +3";
+    [SerializeField] private LocalizedString heart1ResultNameLocalized;
+    [SerializeField] private LocalizedString heart3ResultNameLocalized;
     [SerializeField] private Sprite heart1ResultSprite;
     [SerializeField] private Sprite heart3ResultSprite;
     [SerializeField] private SkinRarity heart1Rarity = SkinRarity.Common;
@@ -123,6 +127,10 @@ public class RandomRewardButton : MonoBehaviour
     [SerializeField] private string rareRarityText = "Rare";
     [SerializeField] private string epicRarityText = "Epic";
     [SerializeField] private string legendaryRarityText = "Legendary";
+    [SerializeField] private LocalizedString commonRarityTextLocalized;
+    [SerializeField] private LocalizedString rareRarityTextLocalized;
+    [SerializeField] private LocalizedString epicRarityTextLocalized;
+    [SerializeField] private LocalizedString legendaryRarityTextLocalized;
     [SerializeField] private Color commonRarityColor = Color.white;
     [SerializeField] private Color rareRarityColor = new Color(0.35f, 0.8f, 1f, 1f);
     [SerializeField] private Color epicRarityColor = new Color(1f, 0.6f, 0.3f, 1f);
@@ -597,7 +605,9 @@ public class RandomRewardButton : MonoBehaviour
         if (reward != RewardType.Heart1 && reward != RewardType.Heart3)
             return null;
 
-        string name = reward == RewardType.Heart1 ? heart1ResultName : heart3ResultName;
+        string name = reward == RewardType.Heart1
+            ? LocalizationUtility.Resolve(heart1ResultNameLocalized, heart1ResultName)
+            : LocalizationUtility.Resolve(heart3ResultNameLocalized, heart3ResultName);
         Sprite sprite = reward == RewardType.Heart1 ? heart1ResultSprite : heart3ResultSprite;
         SkinRarity rarity = reward == RewardType.Heart1 ? heart1Rarity : heart3Rarity;
 
@@ -805,13 +815,13 @@ public class RandomRewardButton : MonoBehaviour
         switch (rarity)
         {
             case SkinRarity.Rare:
-                return rareRarityText;
+                return LocalizationUtility.Resolve(rareRarityTextLocalized, rareRarityText);
             case SkinRarity.Epic:
-                return epicRarityText;
+                return LocalizationUtility.Resolve(epicRarityTextLocalized, epicRarityText);
             case SkinRarity.Legendary:
-                return legendaryRarityText;
+                return LocalizationUtility.Resolve(legendaryRarityTextLocalized, legendaryRarityText);
             default:
-                return commonRarityText;
+                return LocalizationUtility.Resolve(commonRarityTextLocalized, commonRarityText);
         }
     }
 
@@ -1092,7 +1102,10 @@ public class RandomRewardButton : MonoBehaviour
 
         CacheDuplicateGoldTargets();
         if (duplicateGoldLabel != null)
-            duplicateGoldLabel.text = string.Format(duplicateGoldFormat, lastDuplicateGold);
+            duplicateGoldLabel.text = string.Format(
+                LocalizationUtility.Resolve(duplicateGoldFormatLocalized, duplicateGoldFormat),
+                lastDuplicateGold
+            );
 
         if (duplicateGoldCanvasGroup != null)
             duplicateGoldCanvasGroup.alpha = 1f;
@@ -1181,7 +1194,7 @@ public class RandomRewardButton : MonoBehaviour
             noGoldRoot.SetActive(show);
 
         if (show && noGoldLabel != null)
-            noGoldLabel.text = noGoldMessage;
+            noGoldLabel.text = LocalizationUtility.Resolve(noGoldMessageLocalized, noGoldMessage);
     }
 
     IEnumerator AnimateNoGoldMessage()

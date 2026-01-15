@@ -150,6 +150,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SettingsManager
   defaults: {fileID: 11400000, guid: 46c43bcdca8f0414c8eed77c5902da40, type: 2}
   audioMixer: {fileID: 24100000, guid: f72ead20339d3da4b814fa9be7f16b5a, type: 2}
+  defaultLanguage: 0
+  useSystemLanguage: 1
 --- !u!4 &527315260
 Transform:
   m_ObjectHideFlags: 0
@@ -310,6 +312,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 2919535673426183478}
     m_Modifications:
+    - target: {fileID: 2185767130459612022, guid: fa8d2fa028b7dc04d81684dde932bb6a, type: 3}
+      propertyPath: adConfirmParent
+      value: 
+      objectReference: {fileID: 1526921923}
     - target: {fileID: 4451454041815217415, guid: fa8d2fa028b7dc04d81684dde932bb6a, type: 3}
       propertyPath: m_Name
       value: Top bar
@@ -347,6 +353,18 @@ PrefabInstance:
       value: 105
       objectReference: {fileID: 0}
     - target: {fileID: 5757872452882874326, guid: fa8d2fa028b7dc04d81684dde932bb6a, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 0.7
+      objectReference: {fileID: 0}
+    - target: {fileID: 5757872452882874326, guid: fa8d2fa028b7dc04d81684dde932bb6a, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 0.7
+      objectReference: {fileID: 0}
+    - target: {fileID: 5757872452882874326, guid: fa8d2fa028b7dc04d81684dde932bb6a, type: 3}
+      propertyPath: m_LocalScale.z
+      value: 0.7
+      objectReference: {fileID: 0}
+    - target: {fileID: 5757872452882874326, guid: fa8d2fa028b7dc04d81684dde932bb6a, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
       objectReference: {fileID: 0}
@@ -380,7 +398,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5757872452882874326, guid: fa8d2fa028b7dc04d81684dde932bb6a, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: -100
+      value: -83
       objectReference: {fileID: 0}
     - target: {fileID: 5757872452882874326, guid: fa8d2fa028b7dc04d81684dde932bb6a, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
@@ -394,6 +412,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 5757872452882874326, guid: fa8d2fa028b7dc04d81684dde932bb6a, type: 3}
+      propertyPath: m_ConstrainProportionsScale
+      value: 1
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -402,6 +424,17 @@ PrefabInstance:
       insertIndex: -1
       addedObject: {fileID: 737708759}
   m_SourcePrefab: {fileID: 100100000, guid: fa8d2fa028b7dc04d81684dde932bb6a, type: 3}
+--- !u!114 &672621137 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 2185767130459612022, guid: fa8d2fa028b7dc04d81684dde932bb6a, type: 3}
+  m_PrefabInstance: {fileID: 672621136}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7f069f0b2bdc95a4fb0dde64114e384a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::HeartRewardSample
 --- !u!1 &737708754 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 7562480676231250285, guid: fa8d2fa028b7dc04d81684dde932bb6a, type: 3}
@@ -462,7 +495,7 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 822617349}
+      - m_Target: {fileID: 672621137}
         m_TargetAssemblyTypeName: HeartRewardSample, Assembly-CSharp
         m_MethodName: OnAdRewardButtonClicked
         m_Mode: 1
@@ -474,61 +507,6 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 0
         m_CallState: 2
---- !u!1 &822617347
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 822617348}
-  - component: {fileID: 822617349}
-  m_Layer: 5
-  m_Name: HeartRewardsScript
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!224 &822617348
-RectTransform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 822617347}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 1526921923}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.5, y: 0.5}
-  m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 100, y: 100}
-  m_Pivot: {x: 0.5, y: 0.5}
---- !u!114 &822617349
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 822617347}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7f069f0b2bdc95a4fb0dde64114e384a, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::HeartRewardSample
-  adRewardHearts: 1
-  rewardedAdManager: {fileID: 0}
-  adRewardGold: 20
-  gemCost: 10
-  gemKey: Sample.Gems
-  goldCost: 50
-  goldRewardHearts: 1
 --- !u!1 &854693953
 GameObject:
   m_ObjectHideFlags: 0
@@ -575,8 +553,10 @@ MonoBehaviour:
   - {fileID: 8300000, guid: 9be81d31e7db7f7449763e43e0ce8c15, type: 3}
   - {fileID: 8300000, guid: d23f8e2688d435948b04b407253eba5b, type: 3}
   - {fileID: 8300000, guid: 40e5bd318c726334fa057644685c06b2, type: 3}
+  - {fileID: 8300000, guid: 40e5bd318c726334fa057644685c06b2, type: 3}
+  - {fileID: 8300000, guid: 40e5bd318c726334fa057644685c06b2, type: 3}
   sfxVolume: 1
-  channels: 6
+  channels: 8
   logoSceneName: 00_Logo
   gameSceneName: 04_GameScene
   menuSceneNames:
@@ -585,8 +565,6 @@ MonoBehaviour:
   - 03_Shop
   - 05_Inventory
   - 06_Settings
-  logBgmVolume: 1
-  bgmLogInterval: 1
 --- !u!4 &854693955
 Transform:
   m_ObjectHideFlags: 0
@@ -703,7 +681,6 @@ RectTransform:
   m_Children:
   - {fileID: 2919535673426183478}
   - {fileID: 1531975867}
-  - {fileID: 822617348}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}

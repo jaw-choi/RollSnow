@@ -17,6 +17,7 @@ public class WorldScroller : MonoBehaviour
     [SerializeField] private float firstSegmentTopX = 0f;
     [SerializeField] private float firstSegmentTopY = 0f;
     [SerializeField] private float cameraPassThreshold = 0.25f;
+    [SerializeField] private float segmentOverlap = 0.1f;
 
     readonly List<SegmentInfo> orderedSegments = new List<SegmentInfo>();
 
@@ -62,6 +63,7 @@ public class WorldScroller : MonoBehaviour
             if (segment == null) continue;
             var info = new SegmentInfo(segment);
             info.CacheBounds();
+            info.CacheResettable();
             orderedSegments.Add(info);
         }
     }
@@ -92,7 +94,8 @@ public class WorldScroller : MonoBehaviour
         {
             info.MoveTopTo(currentTop);
             info.AlignX(currentTopX);
-            currentTop = info.GetWorldBottomY();
+            info.ResetContents();
+            currentTop = info.GetWorldBottomY() + segmentOverlap;
         }
     }
 
@@ -105,11 +108,12 @@ public class WorldScroller : MonoBehaviour
         orderedSegments.RemoveAt(0);
 
         float anchorTop = orderedSegments.Count > 0
-            ? orderedSegments[orderedSegments.Count - 1].GetWorldBottomY()
+            ? orderedSegments[orderedSegments.Count - 1].GetWorldBottomY() + segmentOverlap
             : passedSegment.GetWorldBottomY() - passedSegment.GetHeight();
 
         passedSegment.MoveTopTo(anchorTop);
         passedSegment.AlignX(firstSegmentTopX);
+        passedSegment.ResetContents();
         orderedSegments.Add(passedSegment);
     }
 
@@ -199,6 +203,8 @@ public class WorldScroller : MonoBehaviour
         Vector3 localRight;
         float cachedHeight = 1f;
         bool hasBounds;
+        readonly List<SegmentResetEntry> resetEntries = new List<SegmentResetEntry>();
+        readonly HashSet<Transform> resetEntryLookup = new HashSet<Transform>();
 
         public SegmentInfo(Transform transform)
         {
@@ -270,6 +276,95 @@ public class WorldScroller : MonoBehaviour
             return Mathf.Max(0.01f, cachedHeight);
         }
 
+        public void CacheResettable()
+        {
+            resetEntries.Clear();
+            resetEntryLookup.Clear();
+
+            if (transform == null)
+                return;
+
+            var pickups = transform.GetComponentsInChildren<ItemPickup>(true);
+            for (int i = 0; i < pickups.Length; i++)
+            {
+                var pickup = pickups[i];
+                if (pickup != null)
+                    AddResetEntry(pickup.transform, pickup);
+            }
+
+            var allTransforms = transform.GetComponentsInChildren<Transform>(true);
+            for (int i = 0; i < allTransforms.Length; i++)
+            {
+                var child = allTransforms[i];
+                if (child == null || child == transform)
+                    continue;
+                if (child.CompareTag("Obstacle"))
+                    AddResetEntry(child, null);
+            }
+        }
+
+        public void ResetContents()
+        {
+            for (int i = 0; i < resetEntries.Count; i++)
+            {
+                var entry = resetEntries[i];
+                if (entry.transform == null)
+                    continue;
+
+                entry.transform.localPosition = entry.localPosition;
+                entry.transform.localRotation = entry.localRotation;
+                entry.transform.localScale = entry.localScale;
+
+                if (entry.pickup != null)
+                    entry.pickup.ResetPickup(entry.wasActive);
+                else
+                    entry.transform.gameObject.SetActive(entry.wasActive);
+
+                var colliders3d = entry.transform.GetComponentsInChildren<Collider>(true);
+                for (int c = 0; c < colliders3d.Length; c++)
+                    colliders3d[c].enabled = true;
+
+                var colliders2d = entry.transform.GetComponentsInChildren<Collider2D>(true);
+                for (int c = 0; c < colliders2d.Length; c++)
+                    colliders2d[c].enabled = true;
+
+                if (entry.rb3d != null)
+                {
+                    entry.rb3d.linearVelocity = Vector3.zero;
+                    entry.rb3d.angularVelocity = Vector3.zero;
+                    entry.rb3d.position = entry.transform.position;
+                    entry.rb3d.rotation = entry.transform.rotation;
+                }
+
+                if (entry.rb2d != null)
+                {
+                    entry.rb2d.linearVelocity = Vector2.zero;
+                    entry.rb2d.angularVelocity = 0f;
+                    entry.rb2d.position = entry.transform.position;
+                    entry.rb2d.rotation = entry.transform.eulerAngles.z;
+                }
+            }
+        }
+
+        void AddResetEntry(Transform target, ItemPickup pickup)
+        {
+            if (target == null || resetEntryLookup.Contains(target))
+                return;
+
+            resetEntryLookup.Add(target);
+            resetEntries.Add(new SegmentResetEntry
+            {
+                transform = target,
+                localPosition = target.localPosition,
+                localRotation = target.localRotation,
+                localScale = target.localScale,
+                wasActive = target.gameObject.activeSelf,
+                pickup = pickup,
+                rb3d = target.GetComponent<Rigidbody>(),
+                rb2d = target.GetComponent<Rigidbody2D>()
+            });
+        }
+
         public void MoveTopTo(float targetTopY)
         {
             if (!hasBounds)
@@ -285,6 +380,18 @@ public class WorldScroller : MonoBehaviour
             Vector3 pos = transform.position;
             pos.x = targetX;
             transform.position = pos;
+        }
+
+        class SegmentResetEntry
+        {
+            public Transform transform;
+            public Vector3 localPosition;
+            public Quaternion localRotation;
+            public Vector3 localScale;
+            public bool wasActive;
+            public ItemPickup pickup;
+            public Rigidbody rb3d;
+            public Rigidbody2D rb2d;
         }
 
         static bool TryBuildBounds(Transform root, out Bounds bounds)

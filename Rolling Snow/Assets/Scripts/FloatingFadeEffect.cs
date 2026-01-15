@@ -17,12 +17,13 @@ public class FloatingFadeEffect : MonoBehaviour
     [SerializeField] private string textOverride;
 
     RectTransform rectTransform;
-    CanvasGroup canvasGroup;
-    SpriteRenderer spriteRenderer;
-    Graphic uiGraphic;
-    Color tmpBaseColor;
-    Color spriteBaseColor;
-    Color graphicBaseColor;
+    CanvasGroup[] canvasGroups;
+    TMP_Text[] tmpTexts;
+    SpriteRenderer[] spriteRenderers;
+    Graphic[] uiGraphics;
+    Color[] tmpBaseColors;
+    Color[] spriteBaseColors;
+    Color[] graphicBaseColors;
     Vector3 startLocalPosition;
     Vector3 startAnchoredPosition;
     float elapsed;
@@ -32,25 +33,69 @@ public class FloatingFadeEffect : MonoBehaviour
         rectTransform = GetComponent<RectTransform>();
         if (tmpText == null)
             tmpText = GetComponentInChildren<TMP_Text>(true);
+        tmpTexts = GetComponentsInChildren<TMP_Text>(true);
 
-        if (tmpText != null && !string.IsNullOrEmpty(textOverride))
-            tmpText.text = textOverride;
+        if (!string.IsNullOrEmpty(textOverride) && tmpTexts != null)
+        {
+            foreach (var text in tmpTexts)
+                text.text = textOverride;
+        }
 
-        canvasGroup = GetComponentInChildren<CanvasGroup>(true);
-        spriteRenderer = GetComponentInChildren<SpriteRenderer>(true);
+        canvasGroups = GetComponentsInChildren<CanvasGroup>(true);
+        spriteRenderers = GetComponentsInChildren<SpriteRenderer>(true);
+        uiGraphics = GetComponentsInChildren<Graphic>(true);
 
-        if (tmpText == null)
-            uiGraphic = GetComponentInChildren<Graphic>(true);
+        if (tmpTexts != null && tmpTexts.Length > 0 && uiGraphics != null && uiGraphics.Length > 0)
+        {
+            int count = 0;
+            foreach (var graphic in uiGraphics)
+            {
+                if (!(graphic is TMP_Text))
+                    count++;
+            }
 
-        if (tmpText != null)
-            tmpBaseColor = tmpText.color;
-        if (spriteRenderer != null)
-            spriteBaseColor = spriteRenderer.color;
-        if (uiGraphic != null)
-            graphicBaseColor = uiGraphic.color;
+            if (count != uiGraphics.Length)
+            {
+                var filtered = new Graphic[count];
+                int index = 0;
+                foreach (var graphic in uiGraphics)
+                {
+                    if (graphic is TMP_Text)
+                        continue;
+                    filtered[index++] = graphic;
+                }
+                uiGraphics = filtered;
+            }
+        }
+
+        if (tmpTexts != null)
+        {
+            tmpBaseColors = new Color[tmpTexts.Length];
+            for (int i = 0; i < tmpTexts.Length; i++)
+                tmpBaseColors[i] = tmpTexts[i].color;
+        }
+
+        if (spriteRenderers != null)
+        {
+            spriteBaseColors = new Color[spriteRenderers.Length];
+            for (int i = 0; i < spriteRenderers.Length; i++)
+                spriteBaseColors[i] = spriteRenderers[i].color;
+        }
+
+        if (uiGraphics != null)
+        {
+            graphicBaseColors = new Color[uiGraphics.Length];
+            for (int i = 0; i < uiGraphics.Length; i++)
+                graphicBaseColors[i] = uiGraphics[i].color;
+        }
     }
 
     void OnEnable()
+    {
+        ResetState();
+    }
+
+    void ResetState()
     {
         elapsed = 0f;
         if (rectTransform != null)
@@ -83,38 +128,61 @@ public class FloatingFadeEffect : MonoBehaviour
 
     void ApplyAlpha(float alpha)
     {
-        if (canvasGroup != null)
+        if (canvasGroups != null)
         {
-            canvasGroup.alpha = alpha;
-            return;
+            for (int i = 0; i < canvasGroups.Length; i++)
+                canvasGroups[i].alpha = alpha;
         }
 
-        if (tmpText != null)
+        if (tmpTexts != null && tmpBaseColors != null)
         {
-            var c = tmpBaseColor;
-            c.a *= alpha;
-            tmpText.color = c;
+            for (int i = 0; i < tmpTexts.Length; i++)
+            {
+                var c = tmpBaseColors[i];
+                c.a *= alpha;
+                tmpTexts[i].color = c;
+            }
         }
 
-        if (spriteRenderer != null)
+        if (spriteRenderers != null && spriteBaseColors != null)
         {
-            var c = spriteBaseColor;
-            c.a *= alpha;
-            spriteRenderer.color = c;
+            for (int i = 0; i < spriteRenderers.Length; i++)
+            {
+                var c = spriteBaseColors[i];
+                c.a *= alpha;
+                spriteRenderers[i].color = c;
+            }
         }
 
-        if (uiGraphic != null)
+        if (uiGraphics != null && graphicBaseColors != null)
         {
-            var c = graphicBaseColor;
-            c.a *= alpha;
-            uiGraphic.color = c;
+            for (int i = 0; i < uiGraphics.Length; i++)
+            {
+                var c = graphicBaseColors[i];
+                c.a *= alpha;
+                uiGraphics[i].color = c;
+            }
         }
     }
 
     public void SetText(string value)
     {
         textOverride = value;
-        if (tmpText != null)
-            tmpText.text = value;
+        if (tmpTexts != null)
+        {
+            foreach (var text in tmpTexts)
+                text.text = value;
+        }
+    }
+
+    public void Configure(Vector3 moveOffset, float duration, bool useUnscaledTime, bool destroyOnComplete)
+    {
+        this.moveOffset = moveOffset;
+        this.duration = duration;
+        this.useUnscaledTime = useUnscaledTime;
+        this.destroyOnComplete = destroyOnComplete;
+
+        if (isActiveAndEnabled)
+            ResetState();
     }
 }

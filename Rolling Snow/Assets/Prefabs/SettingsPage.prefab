@@ -432,6 +432,7 @@ MonoBehaviour:
   musicSlider: {fileID: 6020837142174125510}
   sfxSlider: {fileID: 7669899505798447999}
   hapticsToggle: {fileID: 723063549311104319}
+  languageButton: {fileID: 9083874004129915385}
   mainMenuButton: {fileID: 0}
   backButton: {fileID: 0}
   restartButton: {fileID: 0}

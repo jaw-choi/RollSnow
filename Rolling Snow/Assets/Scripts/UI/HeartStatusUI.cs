@@ -18,6 +18,7 @@ public class HeartStatusUI : MonoBehaviour
     [Header("Behavior")]
     [SerializeField] private bool hideTimerWhenFull = true;
     [SerializeField] private string fullText = "FULL";
+    [SerializeField] private LocalizedString fullTextLocalized;
     [SerializeField] private float refreshIntervalSeconds = 1f;
     [SerializeField] private int heartRemainVisibleThreshold = 5;
 
@@ -96,7 +97,7 @@ public class HeartStatusUI : MonoBehaviour
             {
                 if (timerRoot != null)
                     timerRoot.SetActive(true);
-                timerLabel.text = fullText;
+                timerLabel.text = LocalizationUtility.Resolve(fullTextLocalized, fullText);
             }
 
             return;

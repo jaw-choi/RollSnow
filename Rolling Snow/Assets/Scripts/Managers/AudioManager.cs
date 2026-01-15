@@ -50,11 +50,6 @@ public class AudioManager : MonoBehaviour
         "06_Settings"
     };
 
-    [Header("Debug")]
-    [SerializeField] private bool logBgmVolume = false;
-    [SerializeField] private float bgmLogInterval = 1f;
-    float bgmLogTimer = 0f;
-
     int channelIndex;
     public enum Sfx
     {
@@ -63,7 +58,9 @@ public class AudioManager : MonoBehaviour
         GetItem,
         Curve,
         Gacha,
-        No
+        No,
+        SpeedUp,
+        ObstacleHit
     }
 
     enum BgmMode
@@ -96,20 +93,6 @@ public class AudioManager : MonoBehaviour
     {
         if (instance == this)
             SceneManager.sceneLoaded -= HandleSceneLoaded;
-    }
-
-    void Update()
-    {
-        if (!logBgmVolume || bgmPlayer == null || bgmLogInterval <= 0f)
-            return;
-
-        bgmLogTimer -= Time.unscaledDeltaTime;
-        if (bgmLogTimer <= 0f)
-        {
-            bgmLogTimer = bgmLogInterval;
-            float sourceVol = bgmPlayer.volume;
-            Debug.Log($"[AudioManager] BGM volume src={sourceVol:F2}");
-        }
     }
 
     void Init()

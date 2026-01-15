@@ -154,6 +154,12 @@ MonoBehaviour:
   previewSprites:
   - {fileID: 1907223233804215990, guid: c9fb058f2c3bafa48afa5b8543221990, type: 3}
   - {fileID: 1411878301838807770, guid: 6f2d0bc855dd5cf498ff5dd5cd87d911, type: 3}
+  previewSpritesKorean:
+  - {fileID: 1907223233804215990, guid: c9fb058f2c3bafa48afa5b8543221990, type: 3}
+  - {fileID: 1411878301838807770, guid: 6f2d0bc855dd5cf498ff5dd5cd87d911, type: 3}
+  previewSpritesEnglish:
+  - {fileID: -1343122435662655086, guid: d740867c6b4d29847852560264e65b31, type: 3}
+  - {fileID: 3594756967235886965, guid: 3371e5119ecee9a4ba9d7b83c3d2ed19, type: 3}
   statusLabel: {fileID: 0}
   statusImage: {fileID: 0}
   lockedSprite: {fileID: 1411878301838807770, guid: 6f2d0bc855dd5cf498ff5dd5cd87d911, type: 3}
@@ -161,6 +167,10 @@ MonoBehaviour:
   equippedSprite: {fileID: 1411878301838807770, guid: 6f2d0bc855dd5cf498ff5dd5cd87d911, type: 3}
   hideStatusTextWhenSprite: 1
   useLockedRoot: 0
+  tintPreviewWhenLocked: 1
+  lockedPreviewTint:
+    serializedVersion: 2
+    rgba: 4283124555
   lockedRoot: {fileID: 1344234836}
   applyButton: {fileID: 1741299868}
   applyButtonLabel: {fileID: 0}
@@ -173,6 +183,18 @@ MonoBehaviour:
   equippedText: Equipped
   lockedText: Locked
   ownedText: Owned
+  applyTextLocalized:
+    korean: 
+    english: 
+  equippedTextLocalized:
+    korean: 
+    english: 
+  lockedTextLocalized:
+    korean: 
+    english: 
+  ownedTextLocalized:
+    korean: 
+    english: 
   leftButton: {fileID: 1538211249}
   rightButton: {fileID: 52465669}
 --- !u!4 &16273729
@@ -318,6 +340,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 1644968916}
     m_Modifications:
+    - target: {fileID: 2185767130459612022, guid: fa8d2fa028b7dc04d81684dde932bb6a, type: 3}
+      propertyPath: adConfirmParent
+      value: 
+      objectReference: {fileID: 665380192}
     - target: {fileID: 4451454041815217415, guid: fa8d2fa028b7dc04d81684dde932bb6a, type: 3}
       propertyPath: m_Name
       value: Top bar
@@ -891,6 +917,7 @@ GameObject:
   - component: {fileID: 1344234837}
   - component: {fileID: 1344234839}
   - component: {fileID: 1344234838}
+  - component: {fileID: 1344234840}
   m_Layer: 0
   m_Name: HoneySkinImage
   m_TagString: Untagged
@@ -955,6 +982,21 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1344234836}
   m_CullTransparentMesh: 1
+--- !u!114 &1344234840
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1344234836}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8835aa8d855de794c8da0d04f8d07ca8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::LocalizedImage
+  target: {fileID: 1344234838}
+  koreanSprite: {fileID: 1411878301838807770, guid: 6f2d0bc855dd5cf498ff5dd5cd87d911, type: 3}
+  englishSprite: {fileID: 3594756967235886965, guid: 3371e5119ecee9a4ba9d7b83c3d2ed19, type: 3}
 --- !u!1 &1538211245
 GameObject:
   m_ObjectHideFlags: 0

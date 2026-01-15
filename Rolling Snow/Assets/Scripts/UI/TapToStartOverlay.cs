@@ -13,6 +13,7 @@ public class TapToStartOverlay : MonoBehaviour, IPointerDownHandler
     [SerializeField] private GameObject noHeartsRoot;
     [SerializeField] private TextMeshProUGUI noHeartsLabel;
     [SerializeField] private string noHeartsMessage = "No Hearts";
+    [SerializeField] private LocalizedString noHeartsMessageLocalized;
     [SerializeField] private float noHeartsMessageDuration = 1.2f;
     [SerializeField] private float noHeartsMoveUp = 40f;
     [SerializeField] private CanvasGroup noHeartsCanvasGroup;
@@ -143,7 +144,7 @@ public class TapToStartOverlay : MonoBehaviour, IPointerDownHandler
             noHeartsRoot.SetActive(show);
 
         if (show && noHeartsLabel != null)
-            noHeartsLabel.text = noHeartsMessage;
+            noHeartsLabel.text = LocalizationUtility.Resolve(noHeartsMessageLocalized, noHeartsMessage);
     }
 
     private IEnumerator AnimateNoHeartsMessage()

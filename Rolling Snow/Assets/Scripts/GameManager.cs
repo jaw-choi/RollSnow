@@ -56,6 +56,7 @@ public class GameManager : MonoBehaviour
     int runGoldItemAdded = 0;
     int runGoldItemCount = 0;
     int runScoreItemCount = 0;
+    int runBonusScore = 0;
     bool runResultsCaptured = false;
     RunResults lastRunResults;
 
@@ -76,6 +77,7 @@ public class GameManager : MonoBehaviour
         public float Size;
         public float Distance;
         public int ScoreItemCount;
+        public int BonusScore;
     }
 
     void Awake()
@@ -259,6 +261,7 @@ public class GameManager : MonoBehaviour
         gameOverEffectsPlayed = false;
         goldAwardedForRun = false;
         runScoreItemCount = 0;
+        runBonusScore = 0;
         runResultsCaptured = false;
         UpdateScoreLabel(score);
     }
@@ -499,6 +502,18 @@ public class GameManager : MonoBehaviour
         CheckAchievements();
     }
 
+    public void AddBonusScore(int amount)
+    {
+        if (amount <= 0)
+            return;
+
+        runBonusScore += amount;
+        runResultsCaptured = false;
+        if (scoreLabel == null || scoreLabel.Equals(null))
+            CacheScoreLabel();
+        UpdateScoreLabel(score);
+    }
+
     public void RegisterGoldItemPickup(int rawAmount, int addedAmount, int itemCount = 1)
     {
         if (rawAmount <= 0 && addedAmount <= 0 && itemCount <= 0)
@@ -519,6 +534,7 @@ public class GameManager : MonoBehaviour
         runGoldItemAdded = 0;
         runGoldItemCount = 0;
         runScoreItemCount = 0;
+        runBonusScore = 0;
         runResultsCaptured = false;
     }
 
@@ -566,7 +582,7 @@ public class GameManager : MonoBehaviour
     {
         int distanceScore = Mathf.FloorToInt(GetDistanceDescended()) * Mathf.Max(1, scoreDisplayMultiplier);
         int itemScore = runScoreItemCount * Mathf.Max(0, scoreItemScoreValue);
-        return distanceScore + itemScore;
+        return distanceScore + itemScore + Mathf.Max(0, runBonusScore);
     }
 
     public int GetRunGoldEarned()
@@ -630,8 +646,10 @@ public class GameManager : MonoBehaviour
         int runGoldEarned = GetRunGoldEarned();
         float itemGoldAdjusted = runGoldItemRaw * GetGoldResultMultiplier();
         float distance = GetDistanceDescended();
-        int baseScore = Mathf.FloorToInt(distance) * Mathf.Max(1, scoreDisplayMultiplier);
+        int baseDistanceScore = Mathf.FloorToInt(distance) * Mathf.Max(1, scoreDisplayMultiplier);
         int itemScore = runScoreItemCount * Mathf.Max(0, scoreItemScoreValue);
+        int bonusScore = Mathf.Max(0, runBonusScore);
+        int baseScore = baseDistanceScore + itemScore + bonusScore;
         float baseGoldFromScore = baseScore * Mathf.Max(0f, scoreToGoldMultiplier);
         float baseGold = runGoldEarned - runGoldItemAdded + itemGoldAdjusted;
         baseGold = Mathf.Max(0f, baseGold);
@@ -639,7 +657,7 @@ public class GameManager : MonoBehaviour
         float speed = GetCurrentSpeed();
         float size = GetCurrentSize();
 
-        int finalScore = Mathf.Max(0, baseScore + itemScore);
+        int finalScore = Mathf.Max(0, baseScore);
         UpdateHighScore(finalScore);
 
         float baseGoldTotal = baseGold + Mathf.Max(0f, baseGoldFromScore);
@@ -658,7 +676,8 @@ public class GameManager : MonoBehaviour
             Speed = speed,
             Size = size,
             Distance = distance,
-            ScoreItemCount = runScoreItemCount
+            ScoreItemCount = runScoreItemCount,
+            BonusScore = bonusScore
         };
 
         runResultsCaptured = true;

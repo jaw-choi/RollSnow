@@ -67,6 +67,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: -3888481672020999207, guid: 56628c91abe66e24b9df520132c30463, type: 3}
       insertIndex: -1
       addedObject: {fileID: 5722789816932916395}
+    - targetCorrespondingSourceObject: {fileID: -3888481672020999207, guid: 56628c91abe66e24b9df520132c30463, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: -2700447330701768476}
   m_SourcePrefab: {fileID: 7243324766535440047, guid: 56628c91abe66e24b9df520132c30463, type: 3}
 --- !u!1 &9144328159469077398 stripped
 GameObject:
@@ -125,3 +128,30 @@ PolygonCollider2D:
       - {x: 0.73626864, y: -0.6325867}
       - {x: 0.6046727, y: -0.010638118}
   m_UseDelaunayMesh: 1
+--- !u!50 &-2700447330701768476
+Rigidbody2D:
+  serializedVersion: 5
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9144328159469077398}
+  m_BodyType: 0
+  m_Simulated: 1
+  m_UseFullKinematicContacts: 0
+  m_UseAutoMass: 0
+  m_Mass: 1
+  m_LinearDamping: 0
+  m_AngularDamping: 0.05
+  m_GravityScale: 0
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_Interpolate: 0
+  m_SleepingMode: 1
+  m_CollisionDetection: 0
+  m_Constraints: 0

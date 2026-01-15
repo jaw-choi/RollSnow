@@ -87,9 +87,17 @@ MonoBehaviour:
   speedMultiplier: 1.2
   speedDuration: 2
   playSfx: 1
-  pickupSfx: 10
   useHaptics: 1
   hapticCooldown: 0.12
+  pickupEffectPrefab: {fileID: 4919855919629934319, guid: c81bc89241cbcd047867b328a9fbcdd4, type: 3}
+  pickupEffectAnchor: {fileID: 0}
+  spawnEffectOnPlayer: 1
+  pickupEffectOffset: {x: 0, y: 0, z: 0}
+  parentEffectToAnchor: 0
+  pickupEffectLifetime: 1.2
+  onPickedUp:
+    m_PersistentCalls:
+      m_Calls: []
   disableOnPickup: 1
 --- !u!61 &7790452579890046734
 BoxCollider2D:

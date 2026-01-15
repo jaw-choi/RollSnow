@@ -37,8 +37,11 @@ public class ResultPanelUI : MonoBehaviour
     [Header("Titles")]
     [SerializeField] private string gameOverTitle = "Game Over!";
     [SerializeField] private string clearTitle = "Stage Clear!";
+    [SerializeField] private LocalizedString gameOverTitleLocalized;
+    [SerializeField] private LocalizedString clearTitleLocalized;
 
     [Header("Formats")]
+    [SerializeField] private string timeFormat = "Time : {0}";
     [SerializeField] private string speedFormat = "Speed : {0:F1}";
     [SerializeField] private string distanceFormat = "Distance : {0}m";
     [SerializeField] private string sizeFormat = "Size : {0:F2}";
@@ -48,6 +51,16 @@ public class ResultPanelUI : MonoBehaviour
     [SerializeField] private string highScoreFormat = "High Score : {0}";
     [SerializeField] private string baseGoldFormat = "Base Gold : {0}";
     [SerializeField] private string finalGoldFormat = "Final Gold : {0}";
+    [SerializeField] private LocalizedString timeFormatLocalized;
+    [SerializeField] private LocalizedString speedFormatLocalized;
+    [SerializeField] private LocalizedString distanceFormatLocalized;
+    [SerializeField] private LocalizedString sizeFormatLocalized;
+    [SerializeField] private LocalizedString scoreItemCountFormatLocalized;
+    [SerializeField] private LocalizedString baseScoreFormatLocalized;
+    [SerializeField] private LocalizedString finalScoreFormatLocalized;
+    [SerializeField] private LocalizedString highScoreFormatLocalized;
+    [SerializeField] private LocalizedString baseGoldFormatLocalized;
+    [SerializeField] private LocalizedString finalGoldFormatLocalized;
     [SerializeField] private bool animateFinalResults = true;
     [SerializeField] private float resultsHoldSeconds = 0.6f;
     [SerializeField] private float resultsAnimateSeconds = 0.9f;
@@ -128,7 +141,7 @@ public class ResultPanelUI : MonoBehaviour
         SetNoHeartsAlert(false);
 
         if (titleLabel != null)
-            titleLabel.text = state == ResultState.Clear ? clearTitle : gameOverTitle;
+            titleLabel.text = state == ResultState.Clear ? GetClearTitle() : GetGameOverTitle();
         if (animateFinalResults && GameManager.Instance != null)
         {
             StopResultRoutine();
@@ -139,7 +152,7 @@ public class ResultPanelUI : MonoBehaviour
             ApplyRunResults(elapsedTime);
         }
         if (timeLabel != null)
-            timeLabel.text = $"Time : {FormatTime(elapsedTime)}";
+            timeLabel.text = string.Format(GetTimeFormat(), FormatTime(elapsedTime));
     }
 
     public void HideImmediate()
@@ -184,23 +197,23 @@ public class ResultPanelUI : MonoBehaviour
         if (scoreLabel != null)
             scoreLabel.text = $"{results.FinalScore}";
         if (speedLabel != null)
-            speedLabel.text = string.Format(speedFormat, results.Speed);
+            speedLabel.text = string.Format(GetSpeedFormat(), results.Speed);
         if (distanceLabel != null)
-            distanceLabel.text = string.Format(distanceFormat, Mathf.FloorToInt(results.Distance));
+            distanceLabel.text = string.Format(GetDistanceFormat(), Mathf.FloorToInt(results.Distance));
         if (sizeLabel != null)
-            sizeLabel.text = string.Format(sizeFormat, results.Size);
+            sizeLabel.text = string.Format(GetSizeFormat(), results.Size);
         if (scoreItemCountLabel != null)
-            scoreItemCountLabel.text = string.Format(scoreItemCountFormat, results.ScoreItemCount);
+            scoreItemCountLabel.text = string.Format(GetScoreItemCountFormat(), results.ScoreItemCount);
         if (baseScoreLabel != null)
-            baseScoreLabel.text = string.Format(baseScoreFormat, results.BaseScore);
+            baseScoreLabel.text = string.Format(GetBaseScoreFormat(), results.BaseScore);
         if (finalScoreLabel != null)
-            finalScoreLabel.text = string.Format(finalScoreFormat, results.FinalScore);
+            finalScoreLabel.text = string.Format(GetFinalScoreFormat(), results.FinalScore);
         if (highScoreLabel != null)
-            highScoreLabel.text = string.Format(highScoreFormat, GameManager.Instance.GetHighScore());
+            highScoreLabel.text = string.Format(GetHighScoreFormat(), GameManager.Instance.GetHighScore());
         if (baseGoldLabel != null)
-            baseGoldLabel.text = string.Format(baseGoldFormat, Mathf.RoundToInt(results.RunGoldEarned));
+            baseGoldLabel.text = string.Format(GetBaseGoldFormat(), Mathf.RoundToInt(results.RunGoldEarned));
         if (finalGoldLabel != null)
-            finalGoldLabel.text = string.Format(finalGoldFormat, Mathf.RoundToInt(results.FinalGoldEarned));
+            finalGoldLabel.text = string.Format(GetFinalGoldFormat(), Mathf.RoundToInt(results.FinalGoldEarned));
     }
 
     void OnRestart()
@@ -334,38 +347,98 @@ public class ResultPanelUI : MonoBehaviour
     {
         float runGold = results.RunGoldEarned;
         if (speedLabel != null)
-            speedLabel.text = string.Format(speedFormat, results.Speed);
+            speedLabel.text = string.Format(GetSpeedFormat(), results.Speed);
         if (distanceLabel != null)
-            distanceLabel.text = string.Format(distanceFormat, 0);
+            distanceLabel.text = string.Format(GetDistanceFormat(), 0);
         if (sizeLabel != null)
-            sizeLabel.text = string.Format(sizeFormat, results.Size);
+            sizeLabel.text = string.Format(GetSizeFormat(), results.Size);
         if (scoreItemCountLabel != null)
-            scoreItemCountLabel.text = string.Format(scoreItemCountFormat, results.ScoreItemCount);
+            scoreItemCountLabel.text = string.Format(GetScoreItemCountFormat(), results.ScoreItemCount);
         if (baseScoreLabel != null)
-            baseScoreLabel.text = string.Format(baseScoreFormat, results.BaseScore);
+            baseScoreLabel.text = string.Format(GetBaseScoreFormat(), results.BaseScore);
         if (highScoreLabel != null && GameManager.Instance != null)
-            highScoreLabel.text = string.Format(highScoreFormat, GameManager.Instance.GetHighScore());
+            highScoreLabel.text = string.Format(GetHighScoreFormat(), GameManager.Instance.GetHighScore());
         if (baseGoldLabel != null)
-            baseGoldLabel.text = string.Format(baseGoldFormat, Mathf.RoundToInt(runGold));
+            baseGoldLabel.text = string.Format(GetBaseGoldFormat(), Mathf.RoundToInt(runGold));
 
         int initialScore = results.BaseScore;
         if (scoreLabel != null)
             scoreLabel.text = $"{initialScore}";
         if (finalScoreLabel != null)
-            finalScoreLabel.text = string.Format(finalScoreFormat, initialScore);
+            finalScoreLabel.text = string.Format(GetFinalScoreFormat(), initialScore);
         if (finalGoldLabel != null)
-            finalGoldLabel.text = string.Format(finalGoldFormat, Mathf.RoundToInt(runGold));
+            finalGoldLabel.text = string.Format(GetFinalGoldFormat(), Mathf.RoundToInt(runGold));
     }
 
     void ApplyAnimatedResults(float distance, int finalScore, int finalGold)
     {
         if (distanceLabel != null)
-            distanceLabel.text = string.Format(distanceFormat, Mathf.FloorToInt(distance));
+            distanceLabel.text = string.Format(GetDistanceFormat(), Mathf.FloorToInt(distance));
         if (scoreLabel != null)
             scoreLabel.text = $"{finalScore}";
         if (finalScoreLabel != null)
-            finalScoreLabel.text = string.Format(finalScoreFormat, finalScore);
+            finalScoreLabel.text = string.Format(GetFinalScoreFormat(), finalScore);
         if (finalGoldLabel != null)
-            finalGoldLabel.text = string.Format(finalGoldFormat, finalGold);
+            finalGoldLabel.text = string.Format(GetFinalGoldFormat(), finalGold);
+    }
+
+    string GetGameOverTitle()
+    {
+        return LocalizationUtility.Resolve(gameOverTitleLocalized, gameOverTitle);
+    }
+
+    string GetClearTitle()
+    {
+        return LocalizationUtility.Resolve(clearTitleLocalized, clearTitle);
+    }
+
+    string GetTimeFormat()
+    {
+        return LocalizationUtility.Resolve(timeFormatLocalized, timeFormat);
+    }
+
+    string GetSpeedFormat()
+    {
+        return LocalizationUtility.Resolve(speedFormatLocalized, speedFormat);
+    }
+
+    string GetDistanceFormat()
+    {
+        return LocalizationUtility.Resolve(distanceFormatLocalized, distanceFormat);
+    }
+
+    string GetSizeFormat()
+    {
+        return LocalizationUtility.Resolve(sizeFormatLocalized, sizeFormat);
+    }
+
+    string GetScoreItemCountFormat()
+    {
+        return LocalizationUtility.Resolve(scoreItemCountFormatLocalized, scoreItemCountFormat);
+    }
+
+    string GetBaseScoreFormat()
+    {
+        return LocalizationUtility.Resolve(baseScoreFormatLocalized, baseScoreFormat);
+    }
+
+    string GetFinalScoreFormat()
+    {
+        return LocalizationUtility.Resolve(finalScoreFormatLocalized, finalScoreFormat);
+    }
+
+    string GetHighScoreFormat()
+    {
+        return LocalizationUtility.Resolve(highScoreFormatLocalized, highScoreFormat);
+    }
+
+    string GetBaseGoldFormat()
+    {
+        return LocalizationUtility.Resolve(baseGoldFormatLocalized, baseGoldFormat);
+    }
+
+    string GetFinalGoldFormat()
+    {
+        return LocalizationUtility.Resolve(finalGoldFormatLocalized, finalGoldFormat);
     }
 }

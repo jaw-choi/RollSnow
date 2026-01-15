@@ -119,6 +119,17 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
+--- !u!114 &227543367 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 266791261361687827, guid: 39ef43164a793b8408ea8d63f70f1724, type: 3}
+  m_PrefabInstance: {fileID: 1762006213}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
 --- !u!1001 &659555404
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -127,6 +138,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 1682495718}
     m_Modifications:
+    - target: {fileID: 2185767130459612022, guid: fa8d2fa028b7dc04d81684dde932bb6a, type: 3}
+      propertyPath: adConfirmParent
+      value: 
+      objectReference: {fileID: 1682495718}
     - target: {fileID: 4451454041815217415, guid: fa8d2fa028b7dc04d81684dde932bb6a, type: 3}
       propertyPath: m_Name
       value: Top bar
@@ -645,6 +660,14 @@ PrefabInstance:
       propertyPath: m_Sprite
       value: 
       objectReference: {fileID: 7576656404054081328, guid: 20c711f8251c0984eba334003c04e760, type: 3}
+    - target: {fileID: 3084683090529676130, guid: 39ef43164a793b8408ea8d63f70f1724, type: 3}
+      propertyPath: m_Name
+      value: Language Text
+      objectReference: {fileID: 0}
+    - target: {fileID: 3098581482418073161, guid: 39ef43164a793b8408ea8d63f70f1724, type: 3}
+      propertyPath: m_Name
+      value: Language Icon
+      objectReference: {fileID: 0}
     - target: {fileID: 4184773234904461687, guid: 39ef43164a793b8408ea8d63f70f1724, type: 3}
       propertyPath: m_AnchorMax.y
       value: 0
@@ -685,6 +708,26 @@ PrefabInstance:
       propertyPath: m_AnchoredPosition.y
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 8635382724218571381, guid: 39ef43164a793b8408ea8d63f70f1724, type: 3}
+      propertyPath: languageIcons.Array.size
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8635382724218571381, guid: 39ef43164a793b8408ea8d63f70f1724, type: 3}
+      propertyPath: languageIcons.Array.data[0].target
+      value: 
+      objectReference: {fileID: 227543367}
+    - target: {fileID: 8635382724218571381, guid: 39ef43164a793b8408ea8d63f70f1724, type: 3}
+      propertyPath: languageIcons.Array.data[1].target
+      value: 
+      objectReference: {fileID: 0}
+    - target: {fileID: 8635382724218571381, guid: 39ef43164a793b8408ea8d63f70f1724, type: 3}
+      propertyPath: languageIcons.Array.data[0].koreanSprite
+      value: 
+      objectReference: {fileID: 3066386462262309269, guid: df4a88331095f7d4883143631cc10112, type: 3}
+    - target: {fileID: 8635382724218571381, guid: 39ef43164a793b8408ea8d63f70f1724, type: 3}
+      propertyPath: languageIcons.Array.data[0].englishSprite
+      value: 
+      objectReference: {fileID: 938470346616453969, guid: d0b34abbc057fae4599735f938e6eb0d, type: 3}
     - target: {fileID: 8649987872625273450, guid: 39ef43164a793b8408ea8d63f70f1724, type: 3}
       propertyPath: m_AnchorMax.y
       value: 0

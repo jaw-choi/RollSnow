@@ -16,6 +16,11 @@ public class RunStatsUI : MonoBehaviour
     [SerializeField] private string sizeFormat = "Size : {0:F2}";
     [SerializeField] private string scoreFormat = "Score : {0}";
     [SerializeField] private string goldFormat = "Gold : {0}";
+    [SerializeField] private LocalizedString speedFormatLocalized;
+    [SerializeField] private LocalizedString distanceFormatLocalized;
+    [SerializeField] private LocalizedString sizeFormatLocalized;
+    [SerializeField] private LocalizedString scoreFormatLocalized;
+    [SerializeField] private LocalizedString goldFormatLocalized;
 
     void Update()
     {
@@ -23,19 +28,25 @@ public class RunStatsUI : MonoBehaviour
         if (gm == null || !gm.IsPlaying())
             return;
 
+        string speedFormatResolved = LocalizationUtility.Resolve(speedFormatLocalized, speedFormat);
+        string distanceFormatResolved = LocalizationUtility.Resolve(distanceFormatLocalized, distanceFormat);
+        string sizeFormatResolved = LocalizationUtility.Resolve(sizeFormatLocalized, sizeFormat);
+        string scoreFormatResolved = LocalizationUtility.Resolve(scoreFormatLocalized, scoreFormat);
+        string goldFormatResolved = LocalizationUtility.Resolve(goldFormatLocalized, goldFormat);
+
         if (speedLabel != null)
-            speedLabel.text = string.Format(speedFormat, gm.GetCurrentSpeed());
+            speedLabel.text = string.Format(speedFormatResolved, gm.GetCurrentSpeed());
 
         if (distanceLabel != null)
-            distanceLabel.text = string.Format(distanceFormat, Mathf.FloorToInt(gm.GetDistanceDescended()));
+            distanceLabel.text = string.Format(distanceFormatResolved, Mathf.FloorToInt(gm.GetDistanceDescended()));
 
         if (sizeLabel != null)
-            sizeLabel.text = string.Format(sizeFormat, gm.GetCurrentSize());
+            sizeLabel.text = string.Format(sizeFormatResolved, gm.GetCurrentSize());
 
         if (scoreLabel != null)
-            scoreLabel.text = string.Format(scoreFormat, gm.GetDisplayScore());
+            scoreLabel.text = string.Format(scoreFormatResolved, gm.GetDisplayScore());
 
         if (goldLabel != null)
-            goldLabel.text = string.Format(goldFormat, gm.GetRunGoldEarned());
+            goldLabel.text = string.Format(goldFormatResolved, gm.GetRunGoldEarned());
     }
 }

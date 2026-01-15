@@ -57,7 +57,15 @@ public class PlayerController : MonoBehaviour
     float initialMoveSpeed;
     Vector3 currentVelocity;
     float speedMultiplier = 1f;
+    float speedBaselineMultiplier = 1f;
+    float speedBaselineMoveSpeed = 0f;
+    bool hasSpeedEffectBaseline = false;
     Coroutine speedEffectRoutine;
+    bool boundarySlideActive;
+    bool boundaryClampLeftActive;
+    bool boundaryClampRightActive;
+    float boundaryClampMinX;
+    float boundaryClampMaxX;
 
     Rigidbody rb;
     bool inputModeLogged;
@@ -171,6 +179,13 @@ public class PlayerController : MonoBehaviour
         }
 
         // 2) when pressed, start tracking to differentiate tap vs hold.
+        if (boundarySlideActive && (pressedDown || released))
+        {
+            ReleaseBoundarySlideToMap();
+            pressedDown = false;
+            released = false;
+        }
+
         // Pressed down handling
         if (pressedDown)
         {
@@ -264,9 +279,16 @@ public class PlayerController : MonoBehaviour
         Vector3 newPos = useRigidbody && rb != null ? rb.position : transform.position;
         newPos += currentVelocity * deltaTime;
 
-        if (minX < maxX)
+        float minClamp = minX;
+        float maxClamp = maxX;
+        if (boundaryClampLeftActive)
+            minClamp = Mathf.Max(minClamp, boundaryClampMinX);
+        if (boundaryClampRightActive)
+            maxClamp = Mathf.Min(maxClamp, boundaryClampMaxX);
+
+        if (minClamp < maxClamp)
         {
-            float clampedX = Mathf.Clamp(newPos.x, minX, maxX);
+            float clampedX = Mathf.Clamp(newPos.x, minClamp, maxClamp);
             if (!Mathf.Approximately(clampedX, newPos.x))
                 currentVelocity.x = 0f;
             newPos.x = clampedX;
@@ -285,7 +307,7 @@ public class PlayerController : MonoBehaviour
 
     void UpdateSkiVelocity(float deltaTime)
     {
-        float targetLateral = dirValue * currentMoveSpeed;
+        float targetLateral = boundarySlideActive ? 0f : dirValue * currentMoveSpeed;
         float targetDownhill = GetDownhillSpeed();
         if (preserveSpeedWhileTurning && currentMoveSpeed > 0f)
         {
@@ -320,10 +342,18 @@ public class PlayerController : MonoBehaviour
             speedEffectRoutine = null;
         }
         speedMultiplier = 1f;
+        hasSpeedEffectBaseline = false;
+        speedBaselineMultiplier = 1f;
+        speedBaselineMoveSpeed = 0f;
         moveSpeed = initialMoveSpeed;
         baseMoveSpeed = Mathf.Max(0f, moveSpeed);
         currentMoveSpeed = GetEffectiveBaseSpeed();
         currentVelocity = new Vector3(dirValue * currentMoveSpeed, GetDownhillSpeed(), 0f);
+        boundarySlideActive = false;
+        boundaryClampLeftActive = false;
+        boundaryClampRightActive = false;
+        boundaryClampMinX = 0f;
+        boundaryClampMaxX = 0f;
 
         if (rb != null)
         {
@@ -340,6 +370,70 @@ public class PlayerController : MonoBehaviour
         if (minX < maxX)
             safePos.x = Mathf.Clamp(safePos.x, minX, maxX);
         transform.SetPositionAndRotation(safePos, rotation);
+    }
+
+    public void ActivateBoundarySlide(float boundaryX, bool isLeftBoundary)
+    {
+        boundarySlideActive = true;
+        SetBoundaryClamp(boundaryX, isLeftBoundary);
+        currentVelocity.x = 0f;
+        if (rb != null)
+            rb.linearVelocity = currentVelocity;
+    }
+
+    public void ClearBoundaryClamp(bool isLeftBoundary)
+    {
+        if (isLeftBoundary)
+            boundaryClampLeftActive = false;
+        else
+            boundaryClampRightActive = false;
+
+        if (!boundaryClampLeftActive && !boundaryClampRightActive)
+            boundarySlideActive = false;
+    }
+
+    public bool IsBoundarySliding => boundarySlideActive;
+    public bool HasBoundaryClamp => boundaryClampLeftActive || boundaryClampRightActive;
+
+    void ReleaseBoundarySlideToMap()
+    {
+        if (!boundarySlideActive)
+            return;
+
+        boundarySlideActive = false;
+        int targetDir = GetBoundaryReturnDir();
+        moveDir = targetDir;
+        dirValue = targetDir;
+        flipInProgress = false;
+        flipTriggeredThisPress = true;
+    }
+
+    int GetBoundaryReturnDir()
+    {
+        if (boundaryClampLeftActive && !boundaryClampRightActive)
+            return 1;
+        if (boundaryClampRightActive && !boundaryClampLeftActive)
+            return -1;
+
+        if (minX >= maxX)
+            return moveDir;
+
+        float center = (minX + maxX) * 0.5f;
+        return transform.position.x <= center ? 1 : -1;
+    }
+
+    void SetBoundaryClamp(float boundaryX, bool isLeftBoundary)
+    {
+        if (isLeftBoundary)
+        {
+            boundaryClampLeftActive = true;
+            boundaryClampMinX = boundaryX;
+        }
+        else
+        {
+            boundaryClampRightActive = true;
+            boundaryClampMaxX = boundaryX;
+        }
     }
 
     void UpdateMoveSpeed(float deltaTime)
@@ -373,7 +467,7 @@ public class PlayerController : MonoBehaviour
         return Mathf.InverseLerp(baseSpeed, maxSpeed, currentMoveSpeed);
     }
 
-    public void ApplySpeedMultiplier(float multiplier, float duration)
+    public void ApplySpeedMultiplier(float multiplier, float duration, bool snapToMax = false, bool snapToMin = false)
     {
         multiplier = Mathf.Clamp(multiplier, 0.1f, 5f);
         if (speedEffectRoutine != null)
@@ -382,7 +476,26 @@ public class PlayerController : MonoBehaviour
             speedEffectRoutine = null;
         }
 
+        speedBaselineMultiplier = speedMultiplier;
+        speedBaselineMoveSpeed = currentMoveSpeed;
+        hasSpeedEffectBaseline = true;
+
         SetSpeedMultiplier(multiplier);
+
+        if (snapToMax && multiplier > 1f)
+        {
+            currentMoveSpeed = GetEffectiveMaxSpeed();
+            currentVelocity = new Vector3(dirValue * currentMoveSpeed, GetDownhillSpeed(), 0f);
+            if (rb != null)
+                rb.linearVelocity = currentVelocity;
+        }
+        else if (snapToMin && multiplier < 1f)
+        {
+            currentMoveSpeed = GetEffectiveBaseSpeed();
+            currentVelocity = new Vector3(dirValue * currentMoveSpeed, GetDownhillSpeed(), 0f);
+            if (rb != null)
+                rb.linearVelocity = currentVelocity;
+        }
 
         if (duration > 0f)
             speedEffectRoutine = StartCoroutine(ResetSpeedAfter(duration));
@@ -415,8 +528,24 @@ public class PlayerController : MonoBehaviour
     System.Collections.IEnumerator ResetSpeedAfter(float duration)
     {
         yield return new WaitForSeconds(duration);
-        SetSpeedMultiplier(1f);
+        RestoreSpeedBaseline();
         speedEffectRoutine = null;
+    }
+
+    void RestoreSpeedBaseline()
+    {
+        if (!hasSpeedEffectBaseline)
+        {
+            SetSpeedMultiplier(1f);
+            return;
+        }
+
+        SetSpeedMultiplier(speedBaselineMultiplier);
+        currentMoveSpeed = Mathf.Clamp(speedBaselineMoveSpeed, 0f, GetEffectiveMaxSpeed());
+        currentVelocity = new Vector3(dirValue * currentMoveSpeed, GetDownhillSpeed(), 0f);
+        if (rb != null)
+            rb.linearVelocity = currentVelocity;
+        hasSpeedEffectBaseline = false;
     }
 
     bool IsGameplayActive()

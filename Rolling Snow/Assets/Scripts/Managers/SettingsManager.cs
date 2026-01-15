@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using UnityEngine.Audio;
 
@@ -19,6 +20,7 @@ public sealed class SettingsManager : MonoBehaviour
     private const string KeyShake = "opt_shake";
     private const string KeyHit = "opt_hitstop";
     private const string KeyFPS = "opt_fps";
+    private const string KeyLanguage = "opt_language";
 
     public float Master { get; private set; }
     public float Music { get; private set; }
@@ -27,6 +29,13 @@ public sealed class SettingsManager : MonoBehaviour
     public bool ScreenShake { get; private set; }
     public bool HitStop { get; private set; }
     public int TargetFps { get; private set; }
+    public GameLanguage Language { get; private set; }
+
+    public event Action<GameLanguage> LanguageChanged;
+
+    [Header("Language")]
+    [SerializeField] private GameLanguage defaultLanguage = GameLanguage.Korean;
+    [SerializeField] private bool useSystemLanguage = true;
 
     void Awake()
     {
@@ -45,6 +54,20 @@ public sealed class SettingsManager : MonoBehaviour
     public void SetScreenShake(bool on) { ScreenShake = on; PlayerPrefs.SetInt(KeyShake, on ? 1 : 0); }
     public void SetHitStop(bool on) { HitStop = on; PlayerPrefs.SetInt(KeyHit, on ? 1 : 0); }
     public void SetTargetFps(int fps) { TargetFps = (fps >= 120) ? 120 : 60; PlayerPrefs.SetInt(KeyFPS, TargetFps); ApplyFps(); }
+    public void SetLanguage(GameLanguage language)
+    {
+        if (Language == language)
+            return;
+
+        Language = language;
+        PlayerPrefs.SetInt(KeyLanguage, (int)language);
+        LanguageChanged?.Invoke(Language);
+    }
+
+    public void ToggleLanguage()
+    {
+        SetLanguage(Language == GameLanguage.Korean ? GameLanguage.English : GameLanguage.Korean);
+    }
 
     public void ApplyAll()
     {
@@ -77,7 +100,17 @@ public sealed class SettingsManager : MonoBehaviour
         ScreenShake = PlayerPrefs.GetInt(KeyShake, defaults.screenShake ? 1 : 0) == 1;
         HitStop = PlayerPrefs.GetInt(KeyHit, defaults.hitStop ? 1 : 0) == 1;
         TargetFps = PlayerPrefs.GetInt(KeyFPS, defaults.targetFps);
+        int languageValue = PlayerPrefs.GetInt(KeyLanguage, (int)GetDefaultLanguage());
+        Language = languageValue == (int)GameLanguage.English ? GameLanguage.English : GameLanguage.Korean;
     }
 
     private void SaveFloat(string key, float v) { PlayerPrefs.SetFloat(key, v); }
+
+    GameLanguage GetDefaultLanguage()
+    {
+        if (!useSystemLanguage)
+            return defaultLanguage;
+
+        return Application.systemLanguage == SystemLanguage.Korean ? GameLanguage.Korean : GameLanguage.English;
+    }
 }

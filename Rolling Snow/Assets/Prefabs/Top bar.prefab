@@ -112,7 +112,16 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::HeartRewardSample
   adRewardHearts: 1
   rewardedAdManager: {fileID: 0}
-  adRewardGold: 20
+  adConfirmPanel: {fileID: 6393636893006219139, guid: f10cc6aa730d0b14a85d6f4c2a9c8c83, type: 3}
+  adConfirmPanelPrefab: {fileID: 6393636893006219139, guid: f10cc6aa730d0b14a85d6f4c2a9c8c83, type: 3}
+  adConfirmParent: {fileID: 1466159617601614645}
+  adConfirmMessageLabel: {fileID: 0}
+  adConfirmMessage: "\uAD11\uACE0\uB97C \uBCF4\uC2DC\uACA0\uC2B5\uB2C8\uAE4C"
+  adConfirmYesButton: {fileID: 0}
+  adConfirmNoButton: {fileID: 0}
+  adConfirmYesButtonName: Yes
+  adConfirmNoButtonName: No
+  adRewardGold: 50
   gemCost: 10
   gemKey: Sample.Gems
   goldCost: 50
@@ -150,6 +159,7 @@ RectTransform:
   m_Children:
   - {fileID: 2054163016788619819}
   - {fileID: 73235726157220957}
+  - {fileID: 1466159617601614645}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
@@ -212,7 +222,46 @@ MonoBehaviour:
   emptyHeartPrefab: {fileID: 8292738887184221166, guid: 5053c87579147a44eb421b8588a63add, type: 3}
   hideTimerWhenFull: 1
   fullText: FULL
+  fullTextLocalized:
+    korean: 
+    english: 
   refreshIntervalSeconds: 1
+  heartRemainVisibleThreshold: 5
+--- !u!1 &5521040797057946113
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1466159617601614645}
+  m_Layer: 0
+  m_Name: AdCheckPanelParent
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &1466159617601614645
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5521040797057946113}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 5757872452882874326}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: 0, y: -1000}
+  m_SizeDelta: {x: 100, y: 100}
+  m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &5702661229002232157
 GameObject:
   m_ObjectHideFlags: 0

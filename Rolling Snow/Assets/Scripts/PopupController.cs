@@ -12,13 +12,13 @@ public class PopupController : MonoBehaviour
 
     public void Open()
     {
-        //if (overlay != null) overlay.SetActive(true);
+        if (overlay != null) overlay.SetActive(true);
         if (popup != null) popup.SetActive(true);
     }
 
     public void Close()
     {
         if (popup != null) popup.SetActive(false);
-        //if (overlay != null) overlay.SetActive(false);
+        if (overlay != null) overlay.SetActive(false);
     }
 }

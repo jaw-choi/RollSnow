@@ -20,6 +20,12 @@ public class Player : MonoBehaviour
     [Header("Skin Effects")]
     [SerializeField] private SkinCatalog skinCatalog;
     [SerializeField] private SkinDeathEffect[] skinDeathEffects;
+    [Header("Powerups")]
+    [SerializeField] private PlayerInvincibility invincibility;
+    [Header("Boundary")]
+    [SerializeField] private string boundaryTag = "Boundary";
+    [SerializeField] private LayerMask boundaryLayers;
+    [SerializeField] private string boundaryNameContains = "background obstacle";
 
     [System.Serializable]
     private class SkinDeathEffect
@@ -51,6 +57,12 @@ public class Player : MonoBehaviour
         CacheCamera();
         defaultDeathEffectAnimator = deathEffectAnimator;
         RefreshSkinDeathEffect();
+        if (invincibility == null)
+            invincibility = GetComponentInChildren<PlayerInvincibility>(true);
+        if (invincibility == null)
+            invincibility = gameObject.AddComponent<PlayerInvincibility>();
+        if (invincibility != null)
+            invincibility.SetSpriteRoot(spriteRoot);
 
         if (GameManager.Instance != null)
         {
@@ -107,6 +119,10 @@ public class Player : MonoBehaviour
                 }
             }
         }
+
+        var controller = GetController();
+        if (controller != null && controller.HasBoundaryClamp && (invincibility == null || !invincibility.IsInvincible))
+            TriggerGameOver();
     }
 
     public void ResetPlayerData()
@@ -116,6 +132,8 @@ public class Player : MonoBehaviour
         ApplyScale();
         ClearTrails();
         ResetDeathState();
+        if (invincibility != null)
+            invincibility.ResetState();
         SetSpriteRenderersEnabled(true);
         ResetControllerState();
     }
@@ -142,16 +160,129 @@ public class Player : MonoBehaviour
             TryHandleCollision(collision.collider);
     }
 
+    void OnTriggerExit2D(Collider2D other)
+    {
+        HandleBoundaryExit(other);
+    }
+
+    void OnTriggerExit(Collider other)
+    {
+        HandleBoundaryExit(other);
+    }
+
+    void OnCollisionExit2D(Collision2D collision)
+    {
+        if (collision != null)
+            HandleBoundaryExit(collision.collider);
+    }
+
+    void OnCollisionExit(Collision collision)
+    {
+        if (collision != null)
+            HandleBoundaryExit(collision.collider);
+    }
+
     void TryHandleCollision(Component other)
     {
         if (other == null) return;
+
+        if (IsBoundary(other))
+        {
+            HandleBoundaryCollision(other);
+            return;
+        }
 
         if (!other.CompareTag("Obstacle"))
         {
             return;
         }
 
+        if (invincibility != null && invincibility.IsInvincible)
+        {
+            invincibility.HandleObstacleHit(other);
+            return;
+        }
+
         TriggerGameOver();
+    }
+
+    void HandleBoundaryCollision(Component other)
+    {
+        if (invincibility != null && invincibility.IsInvincible)
+        {
+            if (TryGetBoundaryInfo(other, out float boundaryX, out bool isLeftBoundary))
+            {
+                var controller = GetController();
+                if (controller != null)
+                    controller.ActivateBoundarySlide(boundaryX, isLeftBoundary);
+            }
+            return;
+        }
+
+        TriggerGameOver();
+    }
+
+    void HandleBoundaryExit(Component other)
+    {
+        if (other == null || !IsBoundary(other))
+            return;
+
+        if (!TryGetBoundaryInfo(other, out _, out bool isLeftBoundary))
+            return;
+
+        var controller = GetController();
+        if (controller != null)
+            controller.ClearBoundaryClamp(isLeftBoundary);
+    }
+
+    bool IsBoundary(Component other)
+    {
+        var obj = other.gameObject;
+        if (boundaryLayers.value != 0 && (boundaryLayers.value & (1 << obj.layer)) != 0)
+            return true;
+
+        if (!string.IsNullOrEmpty(boundaryTag) && obj.CompareTag(boundaryTag))
+            return true;
+
+        if (!string.IsNullOrEmpty(boundaryNameContains))
+        {
+            string name = obj.name;
+            if (!string.IsNullOrEmpty(name) && name.IndexOf(boundaryNameContains, System.StringComparison.OrdinalIgnoreCase) >= 0)
+                return true;
+        }
+
+        return false;
+    }
+
+    bool TryGetBoundaryInfo(Component other, out float boundaryX, out bool isLeftBoundary)
+    {
+        boundaryX = 0f;
+        isLeftBoundary = false;
+        if (other == null)
+            return false;
+
+        float playerX = transform.position.x;
+        var collider2D = other as Collider2D;
+        if (collider2D != null)
+        {
+            var bounds = collider2D.bounds;
+            isLeftBoundary = playerX > bounds.center.x;
+            boundaryX = isLeftBoundary ? bounds.max.x : bounds.min.x;
+            return true;
+        }
+
+        var collider3D = other as Collider;
+        if (collider3D != null)
+        {
+            var bounds = collider3D.bounds;
+            isLeftBoundary = playerX > bounds.center.x;
+            boundaryX = isLeftBoundary ? bounds.max.x : bounds.min.x;
+            return true;
+        }
+
+        boundaryX = other.transform.position.x;
+        isLeftBoundary = playerX > boundaryX;
+        return true;
     }
 
     void TriggerGameOver()
@@ -248,6 +379,14 @@ public class Player : MonoBehaviour
 
         if (controller != null)
             controller.ResetControllerState(transform.position, transform.rotation);
+    }
+
+    PlayerController GetController()
+    {
+        var controller = GetComponent<PlayerController>();
+        if (controller == null)
+            controller = GetComponentInChildren<PlayerController>();
+        return controller;
     }
 
     void RefreshSkinDeathEffect()

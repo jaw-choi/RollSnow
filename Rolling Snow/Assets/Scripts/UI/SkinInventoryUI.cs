@@ -11,6 +11,8 @@ public class SkinInventoryUI : MonoBehaviour
     [Header("Preview")]
     [SerializeField] private Image previewImage;
     [SerializeField] private Sprite[] previewSprites;
+    [SerializeField] private Sprite[] previewSpritesKorean;
+    [SerializeField] private Sprite[] previewSpritesEnglish;
     [SerializeField] private TextMeshProUGUI statusLabel;
     [SerializeField] private Image statusImage;
     [SerializeField] private Sprite lockedSprite;
@@ -34,6 +36,10 @@ public class SkinInventoryUI : MonoBehaviour
     [SerializeField] private string equippedText = "Equipped";
     [SerializeField] private string lockedText = "Locked";
     [SerializeField] private string ownedText = "Owned";
+    [SerializeField] private LocalizedString applyTextLocalized;
+    [SerializeField] private LocalizedString equippedTextLocalized;
+    [SerializeField] private LocalizedString lockedTextLocalized;
+    [SerializeField] private LocalizedString ownedTextLocalized;
 
     [Header("Navigation")]
     [SerializeField] private Button leftButton;
@@ -44,12 +50,14 @@ public class SkinInventoryUI : MonoBehaviour
     void OnEnable()
     {
         HookButtons(true);
+        HookLanguage(true);
         SelectEquippedOrDefault();
     }
 
     void OnDisable()
     {
         HookButtons(false);
+        HookLanguage(false);
     }
 
     void HookButtons(bool on)
@@ -71,6 +79,23 @@ public class SkinInventoryUI : MonoBehaviour
             if (on) applyButton.onClick.AddListener(OnApplyClicked);
             else applyButton.onClick.RemoveListener(OnApplyClicked);
         }
+    }
+
+    void HookLanguage(bool on)
+    {
+        var settings = SettingsManager.Instance;
+        if (settings == null)
+            return;
+
+        if (on)
+            settings.LanguageChanged += HandleLanguageChanged;
+        else
+            settings.LanguageChanged -= HandleLanguageChanged;
+    }
+
+    void HandleLanguageChanged(GameLanguage language)
+    {
+        RefreshUI();
     }
 
     public void OnLeftClicked()
@@ -149,11 +174,11 @@ public class SkinInventoryUI : MonoBehaviour
         if (statusLabel != null)
         {
             if (!owned)
-                statusLabel.text = lockedText;
+                statusLabel.text = LocalizationUtility.Resolve(lockedTextLocalized, lockedText);
             else if (isEquipped)
-                statusLabel.text = equippedText;
+                statusLabel.text = LocalizationUtility.Resolve(equippedTextLocalized, equippedText);
             else
-                statusLabel.text = ownedText;
+                statusLabel.text = LocalizationUtility.Resolve(ownedTextLocalized, ownedText);
         }
 
         if (statusImage != null)
@@ -181,7 +206,9 @@ public class SkinInventoryUI : MonoBehaviour
     void UpdateApplyVisual(bool owned, bool isEquipped)
     {
         if (applyButtonLabel != null)
-            applyButtonLabel.text = owned && isEquipped ? equippedText : applyText;
+            applyButtonLabel.text = owned && isEquipped
+                ? LocalizationUtility.Resolve(equippedTextLocalized, equippedText)
+                : LocalizationUtility.Resolve(applyTextLocalized, applyText);
 
         if (applyButtonImage != null)
         {
@@ -230,8 +257,9 @@ public class SkinInventoryUI : MonoBehaviour
         if (previewImage != null)
         {
             Sprite preview = null;
-            if (previewSprites != null && currentIndex >= 0 && currentIndex < previewSprites.Length)
-                preview = previewSprites[currentIndex];
+            var localizedPreviews = GetLocalizedPreviewSprites();
+            if (localizedPreviews != null && currentIndex >= 0 && currentIndex < localizedPreviews.Length)
+                preview = localizedPreviews[currentIndex];
             if (preview == null && entry != null)
                 preview = entry.sprite;
 
@@ -250,5 +278,15 @@ public class SkinInventoryUI : MonoBehaviour
             applyButton.interactable = owned && !isEquipped;
 
         UpdateApplyVisual(owned, isEquipped);
+    }
+
+    Sprite[] GetLocalizedPreviewSprites()
+    {
+        var language = LocalizationUtility.GetCurrentLanguage();
+        if (language == GameLanguage.English && previewSpritesEnglish != null && previewSpritesEnglish.Length > 0)
+            return previewSpritesEnglish;
+        if (language == GameLanguage.Korean && previewSpritesKorean != null && previewSpritesKorean.Length > 0)
+            return previewSpritesKorean;
+        return previewSprites;
     }
 }
