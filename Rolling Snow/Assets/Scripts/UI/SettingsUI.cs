@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -38,6 +39,8 @@ public class SettingsUI : MonoBehaviour
 
     [Header("Language")]
     [SerializeField] private Button languageButton;
+    [SerializeField] private Button languageLeftButton;
+    [SerializeField] private Button languageRightButton;
     [SerializeField] private LanguageIconSwap[] languageIcons;
 
     void OnEnable()
@@ -86,10 +89,20 @@ public class SettingsUI : MonoBehaviour
                 hapticsToggle.onValueChanged.RemoveListener(OnHaptics);
                 hapticsToggle.onValueChanged.AddListener(OnHaptics);
             }
-            if (languageButton != null)
+            if (languageButton != null && !IsLanguageButtonAlias(languageButton))
             {
                 languageButton.onClick.RemoveListener(OnLanguageClicked);
                 languageButton.onClick.AddListener(OnLanguageClicked);
+            }
+            if (languageLeftButton != null)
+            {
+                languageLeftButton.onClick.RemoveListener(OnLanguageLeftClicked);
+                languageLeftButton.onClick.AddListener(OnLanguageLeftClicked);
+            }
+            if (languageRightButton != null)
+            {
+                languageRightButton.onClick.RemoveListener(OnLanguageRightClicked);
+                languageRightButton.onClick.AddListener(OnLanguageRightClicked);
             }
         }
         else
@@ -100,8 +113,12 @@ public class SettingsUI : MonoBehaviour
                 sfxSlider.onValueChanged.RemoveListener(OnSfxChanged);
             if (hapticsToggle != null)
                 hapticsToggle.onValueChanged.RemoveListener(OnHaptics);
-            if (languageButton != null)
+            if (languageButton != null && !IsLanguageButtonAlias(languageButton))
                 languageButton.onClick.RemoveListener(OnLanguageClicked);
+            if (languageLeftButton != null)
+                languageLeftButton.onClick.RemoveListener(OnLanguageLeftClicked);
+            if (languageRightButton != null)
+                languageRightButton.onClick.RemoveListener(OnLanguageRightClicked);
         }
     }
 
@@ -124,12 +141,52 @@ public class SettingsUI : MonoBehaviour
 
     void OnLanguageClicked()
     {
+        StepLanguage(1);
+    }
+
+    void OnLanguageLeftClicked()
+    {
+        StepLanguage(-1);
+    }
+
+    void OnLanguageRightClicked()
+    {
+        StepLanguage(1);
+    }
+
+    void StepLanguage(int delta)
+    {
         var settings = SettingsManager.Instance;
-        if (settings != null)
-        {
-            settings.ToggleLanguage();
-            UpdateLanguageIcons(settings.Language);
-        }
+        if (settings == null)
+            return;
+
+        settings.SetLanguage(GetSteppedLanguage(settings.Language, delta));
+        UpdateLanguageIcons(settings.Language);
+    }
+
+    GameLanguage GetSteppedLanguage(GameLanguage current, int delta)
+    {
+        if (delta == 0)
+            return current;
+
+        var values = (GameLanguage[])Enum.GetValues(typeof(GameLanguage));
+        if (values == null || values.Length == 0)
+            return current;
+
+        int index = Array.IndexOf(values, current);
+        if (index < 0)
+            index = 0;
+
+        int next = (index + delta) % values.Length;
+        if (next < 0)
+            next += values.Length;
+
+        return values[next];
+    }
+
+    bool IsLanguageButtonAlias(Button button)
+    {
+        return button != null && (button == languageLeftButton || button == languageRightButton);
     }
 
     void HandleLanguageChanged(GameLanguage language)

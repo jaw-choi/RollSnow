@@ -60,7 +60,9 @@ public class AudioManager : MonoBehaviour
         Gacha,
         No,
         SpeedUp,
-        ObstacleHit
+        ObstacleHit,
+        SpeedDown,
+        DeadSpecial
     }
 
     enum BgmMode

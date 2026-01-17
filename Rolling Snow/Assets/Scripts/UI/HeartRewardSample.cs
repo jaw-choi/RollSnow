@@ -10,6 +10,7 @@ public class HeartRewardSample : MonoBehaviour
     [SerializeField] private RewardedAdManager rewardedAdManager;
 
     [Header("Ad Confirmation")]
+    [SerializeField] private bool skipAdConfirm = true;
     [SerializeField] private GameObject adConfirmPanel;
     [SerializeField] private GameObject adConfirmPanelPrefab;
     [SerializeField] private Transform adConfirmParent;
@@ -134,6 +135,12 @@ public class HeartRewardSample : MonoBehaviour
 
     void ShowAdConfirm(Action onConfirm)
     {
+        if (skipAdConfirm)
+        {
+            onConfirm?.Invoke();
+            return;
+        }
+
         var panel = GetOrCreateConfirmPanel();
         if (panel == null)
         {

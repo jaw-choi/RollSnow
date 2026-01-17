@@ -18,10 +18,18 @@ MonoBehaviour:
   equippedKey: Skin.Equipped
   skins:
   - id: defaultSkinId
-    displayName: 0
+    displayName: defaultSkinId
     rarity: 0
     sprite: {fileID: 3286163911610860551, guid: b20f62714df9e5a46b8ba5e28908e49e, type: 3}
-  - id: 1
-    displayName: 1
+  - id: honey
+    displayName: honey
     rarity: 0
     sprite: {fileID: 3286163911610860551, guid: 38564c25fc407a2469e4a00761ea891d, type: 3}
+  - id: blacksesame
+    displayName: blacksesame
+    rarity: 0
+    sprite: {fileID: 3286163911610860551, guid: 1471ab57be4f4c64e84df590b5d36d98, type: 3}
+  - id: mintchocolate
+    displayName: mintchocolate
+    rarity: 0
+    sprite: {fileID: 3286163911610860551, guid: 75d775a62c113e243b20cce84ffec242, type: 3}

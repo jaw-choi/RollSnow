@@ -255,9 +255,24 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerController
   moveSpeed: 5
+  moveSpeedIncreasePerSecond: 0
+  maxMoveSpeed: 3
+  minX: -9.49
+  maxX: 9.49
+  descentSpeed: 2
+  groundY: 1.2
+  downhillSteepnessMultiplier: 1.5
+  maxDownhillSpeedMultiplier: 1.6
   tapThreshold: 0.18
   slowFlipDuration: 0.6
-  quickFlipDuration: 0.15
+  highSpeedTurnAccelerationMultiplier: 1.6
+  highSpeedFlipDurationMultiplier: 0.75
+  preserveSpeedWhileTurning: 1
+  preserveHorizontalSpeedWhileTurning: 1
+  downhillAcceleration: 5
+  horizontalAcceleration: 10
+  snowSprayController: {fileID: 0}
+  turnBurstCount: 8
 --- !u!114 &351361346
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -323,6 +338,25 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9122fe2da8e5c944386c6d54e03a0700, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Player
+  growthRate: 0.02
+  maxScale: 1
+  deathAnimator: {fileID: 0}
+  deathEffectAnimator: {fileID: 0}
+  deathEffectAnchor: {fileID: 0}
+  spriteRoot: {fileID: 0}
+  deathTriggerName: Death
+  deathStateName: Death
+  deathAnimationSeconds: 0.8
+  deathAnimationLogInterval: 0.2
+  disableSpriteOnGameOver: 1
+  skinCatalog: {fileID: 0}
+  skinDeathEffects: []
+  invincibility: {fileID: 0}
+  boundaryTag: Boundary
+  boundaryLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  boundaryNameContains: background obstacle
 --- !u!1 &371810948
 GameObject:
   m_ObjectHideFlags: 0

@@ -20,6 +20,8 @@ public class Player : MonoBehaviour
     [Header("Skin Effects")]
     [SerializeField] private SkinCatalog skinCatalog;
     [SerializeField] private SkinDeathEffect[] skinDeathEffects;
+    [SerializeField] private AudioManager.Sfx defaultDeathSfx = AudioManager.Sfx.Dead;
+    [SerializeField] private SkinDeathSfx[] skinDeathSfx;
     [Header("Powerups")]
     [SerializeField] private PlayerInvincibility invincibility;
     [Header("Boundary")]
@@ -32,6 +34,13 @@ public class Player : MonoBehaviour
     {
         public string skinId;
         public Animator animator;
+    }
+
+    [System.Serializable]
+    private class SkinDeathSfx
+    {
+        public string skinId;
+        public AudioManager.Sfx sfx = AudioManager.Sfx.Dead;
     }
 
     Vector3 baseScale;
@@ -397,10 +406,12 @@ public class Player : MonoBehaviour
             return;
         }
 
-        string defaultId = skinCatalog.GetDefaultSkinId();
-        string equippedId = SkinStorage.GetEquippedSkinId(defaultId, skinCatalog.equippedKey);
-        if (!SkinStorage.IsUnlocked(equippedId, defaultId, skinCatalog.unlockPrefix))
-            equippedId = defaultId;
+        string equippedId = GetEquippedSkinId();
+        if (string.IsNullOrEmpty(equippedId))
+        {
+            deathEffectAnimator = defaultDeathEffectAnimator;
+            return;
+        }
 
         Animator selected = null;
         for (int i = 0; i < skinDeathEffects.Length; i++)
@@ -417,6 +428,41 @@ public class Player : MonoBehaviour
         }
 
         deathEffectAnimator = selected != null ? selected : defaultDeathEffectAnimator;
+    }
+
+    string GetEquippedSkinId()
+    {
+        if (skinCatalog == null)
+            return string.Empty;
+
+        string defaultId = skinCatalog.GetDefaultSkinId();
+        string equippedId = SkinStorage.GetEquippedSkinId(defaultId, skinCatalog.equippedKey);
+        if (!SkinStorage.IsUnlocked(equippedId, defaultId, skinCatalog.unlockPrefix))
+            equippedId = defaultId;
+
+        return equippedId;
+    }
+
+    public AudioManager.Sfx GetDeathSfx()
+    {
+        if (skinDeathSfx == null || skinDeathSfx.Length == 0)
+            return defaultDeathSfx;
+
+        string equippedId = GetEquippedSkinId();
+        if (string.IsNullOrEmpty(equippedId))
+            return defaultDeathSfx;
+
+        for (int i = 0; i < skinDeathSfx.Length; i++)
+        {
+            var entry = skinDeathSfx[i];
+            if (entry == null || string.IsNullOrEmpty(entry.skinId))
+                continue;
+
+            if (entry.skinId == equippedId)
+                return entry.sfx;
+        }
+
+        return defaultDeathSfx;
     }
 
     IEnumerator DeathSequence()

@@ -152,7 +152,10 @@ public class GameManager : MonoBehaviour
         if (AudioManager.instance != null)
         {
             AudioManager.instance.PlayBGM(false);
-            AudioManager.instance.PlaySfx(AudioManager.Sfx.Dead);
+            AudioManager.Sfx deathSfx = AudioManager.Sfx.Dead;
+            if (player != null && !player.Equals(null))
+                deathSfx = player.GetDeathSfx();
+            AudioManager.instance.PlaySfx(deathSfx);
         }
     }
 

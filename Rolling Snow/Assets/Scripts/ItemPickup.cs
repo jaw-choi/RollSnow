@@ -3,6 +3,15 @@ using UnityEngine.Events;
 
 public class ItemPickup : MonoBehaviour
 {
+    [System.Serializable]
+    private class ItemTypeConfig
+    {
+        public ItemType type;
+        public Sprite sprite;
+        public AudioManager.Sfx sfx = AudioManager.Sfx.GetItem;
+        public GameObject pickupEffectPrefab;
+    }
+
     public enum ItemType
     {
         Gold,
@@ -10,9 +19,6 @@ public class ItemPickup : MonoBehaviour
         SpeedUp,
         SpeedDown
     }
-
-    [Header("Type")]
-    [SerializeField] private ItemType itemType = ItemType.Gold;
 
     [Header("Player Filter")]
     [SerializeField] private string playerTag = "Player";
@@ -34,6 +40,10 @@ public class ItemPickup : MonoBehaviour
     [SerializeField] private bool useHaptics = true;
     [SerializeField] private float hapticCooldown = 0.12f;
 
+    [Header("Random Type")]
+    [SerializeField] private ItemTypeConfig[] typeConfigs;
+    [SerializeField] private SpriteRenderer itemSpriteRenderer;
+
     [Header("Reaction")]
     [SerializeField] private GameObject pickupEffectPrefab;
     [SerializeField] private Transform pickupEffectAnchor;
@@ -47,7 +57,14 @@ public class ItemPickup : MonoBehaviour
     [Header("Pickup")]
     [SerializeField] private bool disableOnPickup = true;
 
+    ItemType itemType = ItemType.Gold;
+    ItemTypeConfig activeConfig;
     bool pickedUp;
+
+    void Awake()
+    {
+        RandomizeType();
+    }
 
     void OnTriggerEnter(Collider other) => TryPickup(other);
     void OnTriggerEnter2D(Collider2D other) => TryPickup(other);
@@ -97,6 +114,7 @@ public class ItemPickup : MonoBehaviour
     public void ResetPickup(bool restoreActive = true)
     {
         pickedUp = false;
+        RandomizeType();
         if (restoreActive && !gameObject.activeSelf)
             gameObject.SetActive(true);
         EnablePickupColliders();
@@ -176,20 +194,52 @@ public class ItemPickup : MonoBehaviour
         }
     }
 
+    void RandomizeType()
+    {
+        var pool = typeConfigs;
+        if (pool == null || pool.Length == 0)
+            return;
+
+        int attempts = pool.Length;
+        ItemTypeConfig selected = null;
+        while (attempts-- > 0 && selected == null)
+        {
+            int index = Random.Range(0, pool.Length);
+            selected = pool[index];
+        }
+
+        if (selected == null)
+            return;
+
+        itemType = selected.type;
+        activeConfig = selected;
+        ApplyTypeSprite();
+    }
+
+    void ApplyTypeSprite()
+    {
+        if (itemSpriteRenderer == null)
+            itemSpriteRenderer = GetComponentInChildren<SpriteRenderer>(true);
+        if (itemSpriteRenderer == null || activeConfig == null)
+            return;
+
+        if (activeConfig.sprite != null)
+            itemSpriteRenderer.sprite = activeConfig.sprite;
+    }
+
     void PlayPickupSfx()
     {
         if (!playSfx || AudioManager.instance == null)
             return;
 
-        AudioManager.Sfx sfx = itemType == ItemType.SpeedUp
-            ? AudioManager.Sfx.SpeedUp
-            : AudioManager.Sfx.GetItem;
+        AudioManager.Sfx sfx = ResolvePickupSfx();
         AudioManager.instance.PlaySfx(sfx);
     }
 
     void PlayPickupReaction(Player player)
     {
-        if (pickupEffectPrefab != null)
+        GameObject effectPrefab = ResolvePickupEffectPrefab();
+        if (effectPrefab != null)
         {
             Transform anchor = pickupEffectAnchor;
             if (anchor == null && spawnEffectOnPlayer && player != null)
@@ -199,7 +249,7 @@ public class ItemPickup : MonoBehaviour
 
             Vector3 position = anchor.TransformPoint(pickupEffectOffset);
             Quaternion rotation = anchor.rotation;
-            GameObject effect = Instantiate(pickupEffectPrefab, position, rotation);
+            GameObject effect = Instantiate(effectPrefab, position, rotation);
             if (parentEffectToAnchor && anchor != transform)
                 effect.transform.SetParent(anchor, true);
             var floatEffect = effect.GetComponent<FloatingFadeEffect>();
@@ -216,5 +266,25 @@ public class ItemPickup : MonoBehaviour
 
         if (onPickedUp != null)
             onPickedUp.Invoke();
+    }
+
+    AudioManager.Sfx ResolvePickupSfx()
+    {
+        if (activeConfig != null)
+            return activeConfig.sfx;
+
+        if (itemType == ItemType.SpeedUp)
+            return AudioManager.Sfx.SpeedUp;
+        if (itemType == ItemType.SpeedDown)
+            return AudioManager.Sfx.SpeedDown;
+        return AudioManager.Sfx.GetItem;
+    }
+
+    GameObject ResolvePickupEffectPrefab()
+    {
+        if (activeConfig != null && activeConfig.pickupEffectPrefab != null)
+            return activeConfig.pickupEffectPrefab;
+
+        return pickupEffectPrefab;
     }
 }

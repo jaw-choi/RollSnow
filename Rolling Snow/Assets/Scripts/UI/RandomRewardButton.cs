@@ -29,7 +29,10 @@ public class RandomRewardButton : MonoBehaviour
         public string id;
         public string displayName;
         public SkinRarity rarity = SkinRarity.Common;
+        public float weight = 1f;
         public Sprite sprite;
+        public Sprite koreanSprite;
+        public Sprite englishSprite;
     }
 
     public event Action<RewardType> Rewarded;
@@ -108,7 +111,10 @@ public class RandomRewardButton : MonoBehaviour
     [Header("Skin Result Content")]
     [SerializeField] private SkinCatalog skinCatalog;
     [SerializeField] private SkinResultEntry[] skinResultEntries;
+    [SerializeField] private bool preferSkinResultEntries = false;
     [SerializeField] private Sprite[] skinResultSprites;
+    [SerializeField] private Sprite[] skinResultSpritesKorean;
+    [SerializeField] private Sprite[] skinResultSpritesEnglish;
     [SerializeField] private bool preferUnownedSkins = true;
     [SerializeField] private string skinUnlockPrefix = "Skin.Unlocked.";
 
@@ -431,8 +437,9 @@ public class RandomRewardButton : MonoBehaviour
 
         if (hasImageTarget)
         {
-            skinResultImage.enabled = entry != null && entry.sprite != null;
-            skinResultImage.sprite = entry != null ? entry.sprite : null;
+            Sprite displaySprite = ResolveSkinResultSprite(entry);
+            skinResultImage.enabled = displaySprite != null;
+            skinResultImage.sprite = displaySprite;
         }
 
         if (entry != null)
@@ -537,11 +544,14 @@ public class RandomRewardButton : MonoBehaviour
         entry = null;
         skinId = null;
 
+        if (skinResultEntries != null && skinResultEntries.Length > 0)
+        {
+            if (preferSkinResultEntries || skinCatalog == null || skinCatalog.skins == null || skinCatalog.skins.Length == 0)
+                return TrySelectFromEntries(skinResultEntries, out entry, out skinId);
+        }
+
         if (skinCatalog != null && skinCatalog.skins != null && skinCatalog.skins.Length > 0)
             return TrySelectFromCatalog(skinCatalog, out entry, out skinId);
-
-        if (skinResultEntries != null && skinResultEntries.Length > 0)
-            return TrySelectFromEntries(skinResultEntries, out entry, out skinId);
 
         if (skinResultSprites != null && skinResultSprites.Length > 0)
             return TrySelectFromSprites(skinResultSprites, out entry, out skinId);
@@ -627,6 +637,8 @@ public class RandomRewardButton : MonoBehaviour
         int count = entries.Length;
         int[] all = new int[count];
         int[] unowned = new int[count];
+        float[] allWeights = new float[count];
+        float[] unownedWeights = new float[count];
         int allCount = 0;
         int unownedCount = 0;
         string defaultId = GetDefaultSkinId();
@@ -634,7 +646,7 @@ public class RandomRewardButton : MonoBehaviour
         for (int i = 0; i < count; i++)
         {
             SkinResultEntry candidate = entries[i];
-            if (candidate == null || candidate.sprite == null)
+            if (candidate == null || !HasSkinResultSprite(candidate))
                 continue;
 
             string candidateId = GetSkinId(candidate, i);
@@ -642,20 +654,24 @@ public class RandomRewardButton : MonoBehaviour
                 continue;
 
             all[allCount++] = i;
+            allWeights[allCount - 1] = Mathf.Max(0f, candidate.weight);
             if (preferUnownedSkins && !IsSkinUnlocked(candidateId))
+            {
                 unowned[unownedCount++] = i;
+                unownedWeights[unownedCount - 1] = Mathf.Max(0f, candidate.weight);
+            }
         }
 
         if (allCount == 0)
             return false;
 
         int selectedIndex = (preferUnownedSkins && unownedCount > 0)
-            ? unowned[UnityEngine.Random.Range(0, unownedCount)]
-            : all[UnityEngine.Random.Range(0, allCount)];
+            ? SelectWeightedIndex(unowned, unownedWeights, unownedCount)
+            : SelectWeightedIndex(all, allWeights, allCount);
 
         entry = entries[selectedIndex];
         skinId = GetSkinId(entry, selectedIndex);
-        return entry != null && entry.sprite != null;
+        return entry != null && HasSkinResultSprite(entry);
     }
 
     bool TrySelectFromSprites(Sprite[] sprites, out SkinResultEntry entry, out string skinId)
@@ -694,12 +710,13 @@ public class RandomRewardButton : MonoBehaviour
 
         Sprite selectedSprite = sprites[selectedIndex];
         skinId = GetSkinId(selectedSprite, selectedIndex);
+        Sprite displaySprite = ResolveSkinResultSprite(selectedSprite, selectedIndex);
         entry = new SkinResultEntry
         {
             id = skinId,
             displayName = selectedSprite != null ? selectedSprite.name : string.Empty,
             rarity = SkinRarity.Common,
-            sprite = selectedSprite
+            sprite = displaySprite
         };
 
         return selectedSprite != null;
@@ -770,6 +787,73 @@ public class RandomRewardButton : MonoBehaviour
             return sprite.name;
 
         return $"skin_{index}";
+    }
+
+    bool HasSkinResultSprite(SkinResultEntry entry)
+    {
+        if (entry == null)
+            return false;
+
+        return entry.sprite != null || entry.koreanSprite != null || entry.englishSprite != null;
+    }
+
+    Sprite ResolveSkinResultSprite(SkinResultEntry entry)
+    {
+        if (entry == null)
+            return null;
+
+        Sprite localized = ResolveLocalizedSprite(entry.koreanSprite, entry.englishSprite);
+        return localized != null ? localized : entry.sprite;
+    }
+
+    Sprite ResolveSkinResultSprite(Sprite baseSprite, int index)
+    {
+        Sprite localized = ResolveLocalizedSprite(
+            GetSpriteAt(skinResultSpritesKorean, index),
+            GetSpriteAt(skinResultSpritesEnglish, index)
+        );
+
+        return localized != null ? localized : baseSprite;
+    }
+
+    Sprite ResolveLocalizedSprite(Sprite korean, Sprite english)
+    {
+        var language = LocalizationUtility.GetCurrentLanguage();
+        Sprite localized = language == GameLanguage.English ? english : korean;
+        if (localized == null)
+            localized = language == GameLanguage.English ? korean : english;
+        return localized;
+    }
+
+    Sprite GetSpriteAt(Sprite[] sprites, int index)
+    {
+        if (sprites == null || index < 0 || index >= sprites.Length)
+            return null;
+
+        return sprites[index];
+    }
+
+    static int SelectWeightedIndex(int[] indices, float[] weights, int count)
+    {
+        if (count <= 0)
+            return -1;
+
+        float total = 0f;
+        for (int i = 0; i < count; i++)
+            total += Mathf.Max(0f, weights[i]);
+
+        if (total <= 0f)
+            return indices[UnityEngine.Random.Range(0, count)];
+
+        float roll = UnityEngine.Random.value * total;
+        for (int i = 0; i < count; i++)
+        {
+            roll -= Mathf.Max(0f, weights[i]);
+            if (roll <= 0f)
+                return indices[i];
+        }
+
+        return indices[count - 1];
     }
 
     void ApplySkinResultText(SkinResultEntry entry)

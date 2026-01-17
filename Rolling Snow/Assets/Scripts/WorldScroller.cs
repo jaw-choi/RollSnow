@@ -205,6 +205,7 @@ public class WorldScroller : MonoBehaviour
         bool hasBounds;
         readonly List<SegmentResetEntry> resetEntries = new List<SegmentResetEntry>();
         readonly HashSet<Transform> resetEntryLookup = new HashSet<Transform>();
+        static readonly Dictionary<Transform, SegmentSnapshot> initialSnapshots = new Dictionary<Transform, SegmentSnapshot>();
 
         public SegmentInfo(Transform transform)
         {
@@ -284,6 +285,8 @@ public class WorldScroller : MonoBehaviour
             if (transform == null)
                 return;
 
+            CleanupSnapshots();
+
             var pickups = transform.GetComponentsInChildren<ItemPickup>(true);
             for (int i = 0; i < pickups.Length; i++)
             {
@@ -351,14 +354,26 @@ public class WorldScroller : MonoBehaviour
             if (target == null || resetEntryLookup.Contains(target))
                 return;
 
+            if (!initialSnapshots.TryGetValue(target, out var snapshot))
+            {
+                snapshot = new SegmentSnapshot
+                {
+                    localPosition = target.localPosition,
+                    localRotation = target.localRotation,
+                    localScale = target.localScale,
+                    wasActive = target.gameObject.activeSelf
+                };
+                initialSnapshots[target] = snapshot;
+            }
+
             resetEntryLookup.Add(target);
             resetEntries.Add(new SegmentResetEntry
             {
                 transform = target,
-                localPosition = target.localPosition,
-                localRotation = target.localRotation,
-                localScale = target.localScale,
-                wasActive = target.gameObject.activeSelf,
+                localPosition = snapshot.localPosition,
+                localRotation = snapshot.localRotation,
+                localScale = snapshot.localScale,
+                wasActive = snapshot.wasActive,
                 pickup = pickup,
                 rb3d = target.GetComponent<Rigidbody>(),
                 rb2d = target.GetComponent<Rigidbody2D>()
@@ -392,6 +407,37 @@ public class WorldScroller : MonoBehaviour
             public ItemPickup pickup;
             public Rigidbody rb3d;
             public Rigidbody2D rb2d;
+        }
+
+        struct SegmentSnapshot
+        {
+            public Vector3 localPosition;
+            public Quaternion localRotation;
+            public Vector3 localScale;
+            public bool wasActive;
+        }
+
+        static void CleanupSnapshots()
+        {
+            if (initialSnapshots.Count == 0)
+                return;
+
+            List<Transform> dead = null;
+            foreach (var entry in initialSnapshots)
+            {
+                if (entry.Key != null)
+                    continue;
+
+                if (dead == null)
+                    dead = new List<Transform>();
+                dead.Add(entry.Key);
+            }
+
+            if (dead == null)
+                return;
+
+            for (int i = 0; i < dead.Count; i++)
+                initialSnapshots.Remove(dead[i]);
         }
 
         static bool TryBuildBounds(Transform root, out Bounds bounds)

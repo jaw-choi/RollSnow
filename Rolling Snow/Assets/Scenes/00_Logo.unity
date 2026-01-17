@@ -337,7 +337,7 @@ MonoBehaviour:
   scoreTextObjectName: Score
   scoreDisplayMultiplier: 5
   scoreItemScoreValue: 15
-  scoreToGoldMultiplier: 0.1
+  scoreToGoldMultiplier: 0.01
   finalScoreMultiplier: 1
   speedScoreBonus: 0
   sizeScoreBonus: 0

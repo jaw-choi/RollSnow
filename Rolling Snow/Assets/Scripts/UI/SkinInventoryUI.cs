@@ -29,8 +29,14 @@ public class SkinInventoryUI : MonoBehaviour
     [SerializeField] private TextMeshProUGUI applyButtonLabel;
     [SerializeField] private Image applyButtonImage;
     [SerializeField] private Sprite applySprite;
+    [SerializeField] private Sprite applySpriteKorean;
+    [SerializeField] private Sprite applySpriteEnglish;
     [SerializeField] private Sprite applyEquippedSprite;
+    [SerializeField] private Sprite applyEquippedSpriteKorean;
+    [SerializeField] private Sprite applyEquippedSpriteEnglish;
     [SerializeField] private Sprite applyLockedSprite;
+    [SerializeField] private Sprite applyLockedSpriteKorean;
+    [SerializeField] private Sprite applyLockedSpriteEnglish;
     [SerializeField] private bool hideApplyTextWhenSprite = true;
     [SerializeField] private string applyText = "Apply";
     [SerializeField] private string equippedText = "Equipped";
@@ -214,11 +220,11 @@ public class SkinInventoryUI : MonoBehaviour
         {
             Sprite sprite = null;
             if (!owned)
-                sprite = applyLockedSprite;
+                sprite = ResolveLocalizedApplySprite(applyLockedSprite, applyLockedSpriteKorean, applyLockedSpriteEnglish);
             else if (isEquipped)
-                sprite = applyEquippedSprite;
+                sprite = ResolveLocalizedApplySprite(applyEquippedSprite, applyEquippedSpriteKorean, applyEquippedSpriteEnglish);
             else
-                sprite = applySprite;
+                sprite = ResolveLocalizedApplySprite(applySprite, applySpriteKorean, applySpriteEnglish);
 
             applyButtonImage.enabled = sprite != null;
             if (sprite != null)
@@ -288,5 +294,15 @@ public class SkinInventoryUI : MonoBehaviour
         if (language == GameLanguage.Korean && previewSpritesKorean != null && previewSpritesKorean.Length > 0)
             return previewSpritesKorean;
         return previewSprites;
+    }
+
+    Sprite ResolveLocalizedApplySprite(Sprite fallback, Sprite korean, Sprite english)
+    {
+        var language = LocalizationUtility.GetCurrentLanguage();
+        if (language == GameLanguage.English && english != null)
+            return english;
+        if (language == GameLanguage.Korean && korean != null)
+            return korean;
+        return fallback;
     }
 }
