@@ -118,7 +118,7 @@
 - 기획: hdbanana4
 - 개발: jaw-choi
 - 아트: hdbanana4
-- 사운드: jaw-choi
+- 사운드: jaw-choi, "qubodup", "Eleven labs"
 
 ## 라이선스
 - 추후 결정
