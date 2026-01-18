@@ -1,5 +1,6 @@
 using TMPro;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 public class SkinInventoryUI : MonoBehaviour
@@ -57,6 +58,7 @@ public class SkinInventoryUI : MonoBehaviour
     {
         HookButtons(true);
         HookLanguage(true);
+        HookScene(true);
         SelectEquippedOrDefault();
     }
 
@@ -64,6 +66,7 @@ public class SkinInventoryUI : MonoBehaviour
     {
         HookButtons(false);
         HookLanguage(false);
+        HookScene(false);
     }
 
     void HookButtons(bool on)
@@ -99,9 +102,22 @@ public class SkinInventoryUI : MonoBehaviour
             settings.LanguageChanged -= HandleLanguageChanged;
     }
 
+    void HookScene(bool on)
+    {
+        if (on)
+            SceneManager.sceneLoaded += HandleSceneLoaded;
+        else
+            SceneManager.sceneLoaded -= HandleSceneLoaded;
+    }
+
     void HandleLanguageChanged(GameLanguage language)
     {
         RefreshUI();
+    }
+
+    void HandleSceneLoaded(Scene scene, LoadSceneMode mode)
+    {
+        SelectEquippedOrDefault();
     }
 
     public void OnLeftClicked()
