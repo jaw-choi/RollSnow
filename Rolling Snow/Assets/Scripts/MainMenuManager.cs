@@ -32,13 +32,13 @@ public class MainMenuManager : MonoBehaviour
         }
 
         instance = this;
-        Debug.Log($"[MainMenuManager] Initializing in scene '{gameObject.scene.name}'.");
+        //Debug.Log($"[MainMenuManager] Initializing in scene '{gameObject.scene.name}'.");
         DontDestroyOnLoad(gameObject);
 
         BuildScenePrefabLookup();
         SceneManager.sceneLoaded += HandleSceneLoaded;
         var currentScene = SceneManager.GetActiveScene();
-        Debug.Log($"[MainMenuManager] Awake complete. Forcing initial load for scene '{currentScene.name}'.");
+        //Debug.Log($"[MainMenuManager] Awake complete. Forcing initial load for scene '{currentScene.name}'.");
         HandleSceneLoaded(currentScene, LoadSceneMode.Single);
     }
 
@@ -46,7 +46,7 @@ public class MainMenuManager : MonoBehaviour
     {
         if (instance == this)
         {
-            Debug.Log("[MainMenuManager] Instance destroyed. Unsubscribing from sceneLoaded.");
+            //Debug.Log("[MainMenuManager] Instance destroyed. Unsubscribing from sceneLoaded.");
             SceneManager.sceneLoaded -= HandleSceneLoaded;
         }
     }
@@ -54,7 +54,7 @@ public class MainMenuManager : MonoBehaviour
     private void HandleSceneLoaded(Scene scene, LoadSceneMode mode)
     {
         currentSceneCanvasParent = ResolveCanvasForScene(scene);
-        Debug.Log($"[MainMenuManager] Scene loaded: '{scene.name}' (mode: {mode}). Swapping prefab.");
+        //Debug.Log($"[MainMenuManager] Scene loaded: '{scene.name}' (mode: {mode}). Swapping prefab.");
         SwapScenePrefab(scene.name);
     }
 
@@ -62,7 +62,7 @@ public class MainMenuManager : MonoBehaviour
     {
         // Always use the actual hierarchy root because DontDestroyOnLoad only works on root objects.
         var rootTransform = transform.root != null ? transform.root : transform;
-        Debug.Log($"[MainMenuManager] Resolving persistent root. Result: '{rootTransform.name}'.");
+        //Debug.Log($"[MainMenuManager] Resolving persistent root. Result: '{rootTransform.name}'.");
         return rootTransform.gameObject;
     }
 
@@ -79,30 +79,30 @@ public class MainMenuManager : MonoBehaviour
         {
             if (string.IsNullOrEmpty(entry.sceneName) || entry.prefab == null)
             {
-                Debug.LogWarning("[MainMenuManager] Skipping empty scene prefab mapping (missing name or prefab).");
+                //Debug.LogWarning("[MainMenuManager] Skipping empty scene prefab mapping (missing name or prefab).");
                 continue;
             }
 
             scenePrefabLookup[entry.sceneName] = entry.prefab;
-            Debug.Log($"[MainMenuManager] Registered prefab '{entry.prefab.name}' for scene '{entry.sceneName}'.");
+            //Debug.Log($"[MainMenuManager] Registered prefab '{entry.prefab.name}' for scene '{entry.sceneName}'.");
         }
     }
 
     private void SwapScenePrefab(string sceneName)
     {
-        Debug.Log($"[MainMenuManager] Attempting to activate prefab for scene '{sceneName}'.");
+        //Debug.Log($"[MainMenuManager] Attempting to activate prefab for scene '{sceneName}'.");
         var nextPrefab = GetOrCreatePrefabInstance(sceneName);
 
         if (activeScenePrefab == nextPrefab)
         {
-            Debug.Log($"[MainMenuManager] Prefab for scene '{sceneName}' is already active.");
+            //Debug.Log($"[MainMenuManager] Prefab for scene '{sceneName}' is already active.");
             return;
         }
 
         if (activeScenePrefab != null)
         {
             activeScenePrefab.SetActive(false);
-            Debug.Log($"[MainMenuManager] Deactivated previous prefab '{activeScenePrefab.name}'.");
+            //Debug.Log($"[MainMenuManager] Deactivated previous prefab '{activeScenePrefab.name}'.");
         }
 
         activeScenePrefab = nextPrefab;
@@ -110,11 +110,11 @@ public class MainMenuManager : MonoBehaviour
         if (activeScenePrefab != null)
         {
             activeScenePrefab.SetActive(true);
-            Debug.Log($"[MainMenuManager] Activated prefab '{activeScenePrefab.name}' for scene '{sceneName}'.");
+            //Debug.Log($"[MainMenuManager] Activated prefab '{activeScenePrefab.name}' for scene '{sceneName}'.");
         }
         else
         {
-            Debug.LogWarning($"[MainMenuManager] No prefab configured for scene '{sceneName}'.");
+            //Debug.LogWarning($"[MainMenuManager] No prefab configured for scene '{sceneName}'.");
         }
     }
 
@@ -122,13 +122,13 @@ public class MainMenuManager : MonoBehaviour
     {
         if (!scenePrefabLookup.TryGetValue(sceneName, out var prefab) || prefab == null)
         {
-            Debug.LogWarning($"[MainMenuManager] Prefab lookup failed for scene '{sceneName}'.");
+            //Debug.LogWarning($"[MainMenuManager] Prefab lookup failed for scene '{sceneName}'.");
             return null;
         }
 
         if (scenePrefabInstances.TryGetValue(sceneName, out var existingInstance) && existingInstance != null)
         {
-            Debug.Log($"[MainMenuManager] Reusing existing prefab instance '{existingInstance.name}' for scene '{sceneName}'.");
+            //Debug.Log($"[MainMenuManager] Reusing existing prefab instance '{existingInstance.name}' for scene '{sceneName}'.");
             return existingInstance;
         }
 
@@ -136,7 +136,7 @@ public class MainMenuManager : MonoBehaviour
         var instance = Instantiate(prefab, parent, false);
         instance.SetActive(false);
         scenePrefabInstances[sceneName] = instance;
-        Debug.Log($"[MainMenuManager] Instantiated new prefab '{instance.name}' for scene '{sceneName}' under parent '{parent.name}'.");
+        //Debug.Log($"[MainMenuManager] Instantiated new prefab '{instance.name}' for scene '{sceneName}' under parent '{parent.name}'.");
         return instance;
     }
 
@@ -149,12 +149,12 @@ public class MainMenuManager : MonoBehaviour
 
         if (currentSceneCanvasParent != null)
         {
-            Debug.Log($"[MainMenuManager] Using scene canvas '{currentSceneCanvasParent.name}' as parent.");
+            //Debug.Log($"[MainMenuManager] Using scene canvas '{currentSceneCanvasParent.name}' as parent.");
             return currentSceneCanvasParent;
         }
 
         var fallback = ResolvePersistentRoot().transform;
-        Debug.LogWarning($"[MainMenuManager] No canvas found in current scene. Falling back to '{fallback.name}'.");
+        //Debug.LogWarning($"[MainMenuManager] No canvas found in current scene. Falling back to '{fallback.name}'.");
         return fallback;
     }
 
@@ -171,7 +171,7 @@ public class MainMenuManager : MonoBehaviour
 
             if (canvas.enabled)
             {
-                Debug.Log($"[MainMenuManager] Found active canvas '{canvas.name}' in scene '{scene.name}'.");
+                //Debug.Log($"[MainMenuManager] Found active canvas '{canvas.name}' in scene '{scene.name}'.");
                 return canvas.transform;
             }
 
@@ -183,11 +183,11 @@ public class MainMenuManager : MonoBehaviour
 
         if (fallback != null)
         {
-            Debug.LogWarning($"[MainMenuManager] Only inactive canvas '{fallback.name}' found in scene '{scene.name}'. Using it as parent.");
+            //Debug.LogWarning($"[MainMenuManager] Only inactive canvas '{fallback.name}' found in scene '{scene.name}'. Using it as parent.");
             return fallback;
         }
 
-        Debug.LogWarning($"[MainMenuManager] No canvas found in scene '{scene.name}'.");
+        //Debug.LogWarning($"[MainMenuManager] No canvas found in scene '{scene.name}'.");
         return null;
     }
 }

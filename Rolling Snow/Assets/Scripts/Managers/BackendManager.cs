@@ -1,0 +1,46 @@
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+
+// 뒤끝 SDK namespace 추가
+using BackEnd;
+
+public class BackendManager : MonoBehaviour
+{
+    void Start()
+    {
+        var bro = Backend.Initialize(); // 뒤끝 초기화
+
+        // 뒤끝 초기화에 대한 응답값
+        if (bro.IsSuccess())
+        {
+            Debug.Log("초기화 성공 : " + bro); // 성공일 경우 statusCode 204 Success
+        }
+        else
+        {
+            Debug.LogError("초기화 실패 : " + bro); // 실패일 경우 statusCode 400대 에러 발생
+        }
+
+        Test();
+    }
+
+    // 동기 함수를 비동기에서 호출하게 해주는 함수(유니티 UI 접근 불가)
+    void Test()
+    {
+
+        //BackendLogin.Instance.CustomSignUp("user1", "1234"); // [추가] 뒤끝 회원가입(주석 처리)
+
+        BackendLogin.Instance.CustomLogin("user1", "1234"); // [추가] 뒤끝 로그인
+
+        //BackendLogin.Instance.UpdateNickname("원하는 이름"); // [추가] 닉네임 변겅
+
+
+        BackendRank.Instance.RankInsert(100); // [추가] 랭킹 등록하기 함수
+        BackendRank.Instance.RankGet(); // [추가] 랭킹 불러오기 함수
+
+        BackendGameData.Instance.GameDataInsert(); //[추가] 데이터 삽입 함수
+
+        Debug.Log("테스트를 종료합니다.");
+    }
+}
