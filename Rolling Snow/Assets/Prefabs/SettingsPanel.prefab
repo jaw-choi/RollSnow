@@ -1232,14 +1232,13 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SettingsUI
   mode: 0
-  masterSlider: {fileID: 5509696007911898711}
   musicSlider: {fileID: 1510461773385517166}
   sfxSlider: {fileID: 0}
   hapticsToggle: {fileID: 3024004558343485943}
   languageButton: {fileID: 6768871960724155697}
-  mainMenuButton: {fileID: 0}
-  backButton: {fileID: 2100524734805710874}
-  restartButton: {fileID: 0}
+  languageLeftButton: {fileID: 0}
+  languageRightButton: {fileID: 0}
+  languageIcons: []
 --- !u!1 &6284672295730957825
 GameObject:
   m_ObjectHideFlags: 0

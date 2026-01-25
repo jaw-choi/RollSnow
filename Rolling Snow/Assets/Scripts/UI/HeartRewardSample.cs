@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -27,6 +28,16 @@ public class HeartRewardSample : MonoBehaviour
     [Header("Gold Reward")]
     [SerializeField] private int adRewardGold = 20;
 
+    [Header("Ad Cooldown")]
+    [SerializeField] private float adCooldownSeconds = 60f;
+    [SerializeField] private Button heartAdButton;
+    [SerializeField] private Button goldAdButton;
+    [SerializeField] private TextMeshProUGUI heartCooldownLabel;
+    [SerializeField] private TextMeshProUGUI goldCooldownLabel;
+    [SerializeField] private string cooldownFormat = "{0}s";
+    [SerializeField] private float cooldownTickSeconds = 1f;
+    [SerializeField] private bool hideCooldownLabelWhenReady = true;
+
     [Header("Gem Reward (Sample Storage)")]
     [SerializeField] private int gemCost = 10;
     [SerializeField] private string gemKey = "Sample.Gems";
@@ -38,6 +49,8 @@ public class HeartRewardSample : MonoBehaviour
     Action pendingAdAction;
     GameObject adConfirmInstance;
     bool confirmBindingsReady;
+    Coroutine heartCooldownRoutine;
+    Coroutine goldCooldownRoutine;
 
     void Awake()
     {
@@ -71,6 +84,7 @@ public class HeartRewardSample : MonoBehaviour
                     return;
 
                 system.GrantHearts(Mathf.Max(1, adRewardHearts));
+                StartCooldown(heartAdButton, heartCooldownLabel, ref heartCooldownRoutine);
             });
         });
     }
@@ -114,6 +128,7 @@ public class HeartRewardSample : MonoBehaviour
                     return;
 
                 gold.AddGold(Mathf.Max(1, adRewardGold));
+                StartCooldown(goldAdButton, goldCooldownLabel, ref goldCooldownRoutine);
             });
         });
     }
@@ -284,5 +299,64 @@ public class HeartRewardSample : MonoBehaviour
     bool IsSceneObject(GameObject obj)
     {
         return obj != null && obj.scene.IsValid();
+    }
+
+    void StartCooldown(Button target, TextMeshProUGUI label, ref Coroutine routine)
+    {
+        if (target == null && label == null)
+            return;
+
+        if (routine != null)
+            StopCoroutine(routine);
+
+        routine = StartCoroutine(CooldownRoutine(target, label));
+    }
+
+    IEnumerator CooldownRoutine(Button target, TextMeshProUGUI label)
+    {
+        if (target != null)
+            target.interactable = false;
+
+        float duration = Mathf.Max(0.1f, adCooldownSeconds);
+        float tick = Mathf.Max(0.1f, cooldownTickSeconds);
+        float remaining = duration;
+        UpdateCooldownLabel(label, remaining, true);
+
+        float elapsed = 0f;
+        while (elapsed < duration)
+        {
+            yield return new WaitForSecondsRealtime(tick);
+            elapsed += tick;
+            remaining = Mathf.Max(0f, duration - elapsed);
+            UpdateCooldownLabel(label, remaining, true);
+        }
+
+        if (target != null)
+            target.interactable = true;
+
+        UpdateCooldownLabel(label, 0f, false);
+    }
+
+    void UpdateCooldownLabel(TextMeshProUGUI label, float remaining, bool active)
+    {
+        if (label == null)
+            return;
+
+        if (active)
+        {
+            int seconds = Mathf.CeilToInt(Mathf.Max(0f, remaining));
+            label.text = string.Format(cooldownFormat, seconds);
+            label.gameObject.SetActive(true);
+            return;
+        }
+
+        if (hideCooldownLabelWhenReady)
+        {
+            label.gameObject.SetActive(false);
+        }
+        else
+        {
+            label.text = string.Empty;
+        }
     }
 }

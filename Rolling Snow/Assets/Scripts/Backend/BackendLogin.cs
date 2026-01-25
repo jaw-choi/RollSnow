@@ -1,8 +1,8 @@
-using System.Collections;
-using System.Collections.Generic;
+using System;
 using UnityEngine;
+using LitJson;
 
-// 뒤끝 SDK namespace 추가
+// Backend SDK namespace
 using BackEnd;
 
 public class BackendLogin
@@ -22,51 +22,113 @@ public class BackendLogin
         }
     }
 
-    public void CustomSignUp(string id, string pw)
+    public BackendReturnObject CustomSignUp(string id, string pw)
     {
-        Debug.Log("회원가입을 요청합니다.");
+        Debug.Log("Requesting custom sign up.");
 
         var bro = Backend.BMember.CustomSignUp(id, pw);
 
         if (bro.IsSuccess())
         {
-            Debug.Log("회원가입에 성공했습니다. : " + bro);
+            Debug.Log("Custom sign up success: " + bro);
         }
         else
         {
-            Debug.LogError("회원가입에 실패했습니다. : " + bro);
+            Debug.LogError("Custom sign up failed: " + bro);
         }
+
+        return bro;
     }
 
-    public void CustomLogin(string id, string pw)
+    public BackendReturnObject CustomLogin(string id, string pw)
     {
-        Debug.Log("로그인을 요청합니다.");
+        Debug.Log("Requesting custom login.");
 
         var bro = Backend.BMember.CustomLogin(id, pw);
 
         if (bro.IsSuccess())
         {
-            Debug.Log("로그인이 성공했습니다. : " + bro);
+            Debug.Log("Custom login success: " + bro);
         }
         else
         {
-            Debug.LogError("로그인이 실패했습니다. : " + bro);
+            Debug.LogError("Custom login failed: " + bro);
         }
+
+        return bro;
     }
 
-    public void UpdateNickname(string nickname)
+    public BackendReturnObject UpdateNickname(string nickname)
     {
-        Debug.Log("닉네임 변경을 요청합니다.");
+        Debug.Log("Requesting nickname update.");
 
         var bro = Backend.BMember.UpdateNickname(nickname);
 
         if (bro.IsSuccess())
         {
-            Debug.Log("닉네임 변경에 성공했습니다 : " + bro);
+            Debug.Log("Nickname update success: " + bro);
         }
         else
         {
-            Debug.LogError("닉네임 변경에 실패했습니다 : " + bro);
+            Debug.LogError("Nickname update failed: " + bro);
+        }
+
+        return bro;
+    }
+
+    public BackendReturnObject CheckNickname(string nickname)
+    {
+        Debug.Log("Checking nickname availability.");
+
+        var bro = Backend.BMember.CheckNicknameDuplication(nickname);
+        if (bro.IsSuccess())
+        {
+            Debug.Log("Nickname is available: " + bro);
+        }
+        else
+        {
+            Debug.LogWarning("Nickname is not available: " + bro);
+        }
+
+        return bro;
+    }
+
+    public bool TryGetNickname(out string nickname)
+    {
+        nickname = string.Empty;
+
+        var bro = Backend.BMember.GetUserInfo();
+        if (!bro.IsSuccess())
+        {
+            Debug.LogWarning("GetUserInfo failed: " + bro);
+            return false;
+        }
+
+        JsonData json = bro.GetReturnValuetoJSON();
+        if (json == null)
+            return false;
+
+        try
+        {
+            JsonData row = json["row"];
+            if (row == null)
+                return false;
+
+            JsonData nickData = row["nickname"];
+            if (nickData == null)
+                return false;
+
+            string raw = nickData.ToString();
+            if (string.IsNullOrEmpty(raw) || raw == "null")
+                return false;
+
+            nickname = raw;
+            return true;
+        }
+        catch (Exception ex)
+        {
+            Debug.LogWarning("Nickname parse failed: " + ex.Message);
+            return false;
         }
     }
 }

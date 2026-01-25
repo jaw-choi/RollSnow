@@ -1,8 +1,8 @@
 using System.Collections.Generic;
-using System.Text;
 using UnityEngine;
+using LitJson;
 
-// 뒤끝 SDK namespace 추가
+// Backend SDK namespace
 using BackEnd;
 
 public class BackendRank
@@ -21,90 +21,157 @@ public class BackendRank
             return _instance;
         }
     }
-    public void RankInsert(int score)
+
+    public struct RankEntry
     {
-        // [변경 필요] '복사한 UUID 값'을 '뒤끝 콘솔 > 랭킹 관리'에서 생성한 랭킹의 UUID값으로 변경해주세요.  
-        string rankUUID = "019beecc-63cc-7bc4-84c8-bdb15f588a51"; // 예시 : "4088f640-693e-11ed-ad29-ad8f0c3d4c70"
+        public int Rank;
+        public string Nickname;
+        public int Score;
+        public string GamerInDate;
+        public int Index;
+    }
 
-        string tableName = "USER_DATA";
-        string rowInDate = string.Empty;
+    private const string DefaultRankUuid = "019beecc-63cc-7bc4-84c8-bdb15f588a51";
+    public string RankUuid { get; set; } = DefaultRankUuid;
 
-        // 랭킹을 삽입하기 위해서는 게임 데이터에서 사용하는 데이터의 inDate값이 필요합니다.  
-        // 따라서 데이터를 불러온 후, 해당 데이터의 inDate값을 추출하는 작업을 해야합니다.  
-        Debug.Log("데이터 조회를 시도합니다.");
-        var bro = Backend.GameData.GetMyData(tableName, new Where());
-
-        if (bro.IsSuccess() == false)
+    public bool RankInsert(int score)
+    {
+        string tableName = BackendGameData.TableName;
+        if (!BackendGameData.Instance.EnsureRowInDate())
         {
-            Debug.LogError("데이터 조회 중 문제가 발생했습니다 : " + bro);
-            return;
+            Debug.LogError("Rank insert failed: missing user data row.");
+            return false;
         }
 
-        Debug.Log("데이터 조회에 성공했습니다 : " + bro);
-
-        if (bro.FlattenRows().Count > 0)
+        string rowInDate = BackendGameData.Instance.RowInDate;
+        if (string.IsNullOrEmpty(rowInDate))
         {
-            rowInDate = bro.FlattenRows()[0]["inDate"].ToString();
+            Debug.LogError("Rank insert failed: rowInDate empty.");
+            return false;
         }
-        else
-        {
-            Debug.Log("데이터가 존재하지 않습니다. 데이터 삽입을 시도합니다.");
-            var bro2 = Backend.GameData.Insert(tableName);
-
-            if (bro2.IsSuccess() == false)
-            {
-                Debug.LogError("데이터 삽입 중 문제가 발생했습니다 : " + bro2);
-                return;
-            }
-
-            Debug.Log("데이터 삽입에 성공했습니다 : " + bro2);
-
-            rowInDate = bro2.GetInDate();
-        }
-
-        Debug.Log("내 게임 정보의 rowInDate : " + rowInDate); // 추출된 rowIndate의 값은 다음과 같습니다.  
 
         Param param = new Param();
         param.Add("score", score);
 
-        // 추출된 rowIndate를 가진 데이터에 param값으로 수정을 진행하고 랭킹에 데이터를 업데이트합니다.  
-        Debug.Log("랭킹 삽입을 시도합니다.");
-        var rankBro = Backend.URank.User.UpdateUserScore(rankUUID, tableName, rowInDate, param);
+        Debug.Log("Requesting rank update.");
+        var rankBro = Backend.URank.User.UpdateUserScore(RankUuid, tableName, rowInDate, param);
 
-        if (rankBro.IsSuccess() == false)
+        if (!rankBro.IsSuccess())
         {
-            Debug.LogError("랭킹 등록 중 오류가 발생했습니다. : " + rankBro);
-            return;
+            Debug.LogError("Rank update failed: " + rankBro);
+            return false;
         }
 
-        Debug.Log("랭킹 삽입에 성공했습니다. : " + rankBro);
+        Debug.Log("Rank update success: " + rankBro);
+        BackendGameData.Instance.GameDataUpdate(score, null);
+        return true;
     }
-    public void RankGet()
-    {
-        string rankUUID = "019beecc-63cc-7bc4-84c8-bdb15f588a51"; // 예시 : "4088f640-693e-11ed-ad29-ad8f0c3d4c70"
-        var bro = Backend.URank.User.GetRankList(rankUUID);
 
-        if (bro.IsSuccess() == false)
+    public bool TryGetRankList(out List<RankEntry> entries)
+    {
+        entries = new List<RankEntry>();
+        var bro = Backend.URank.User.GetRankList(RankUuid);
+
+        if (!bro.IsSuccess())
         {
-            Debug.LogError("랭킹 조회중 오류가 발생했습니다. : " + bro);
-            return;
+            Debug.LogError("Rank list fetch failed: " + bro);
+            return false;
         }
 
-        Debug.Log("랭킹 조회에 성공했습니다. : " + bro);
-
-        Debug.Log("총 랭킹 등록 유저 수 : " + bro.GetFlattenJSON()["totalCount"].ToString());
-
-        foreach (LitJson.JsonData jsonData in bro.FlattenRows())
+        foreach (JsonData jsonData in bro.FlattenRows())
         {
-            StringBuilder info = new StringBuilder();
+            if (TryParseRankEntry(jsonData, out RankEntry entry))
+                entries.Add(entry);
+        }
 
-            info.AppendLine("순위 : " + jsonData["rank"].ToString());
-            info.AppendLine("닉네임 : " + jsonData["nickname"].ToString());
-            info.AppendLine("점수 : " + jsonData["score"].ToString());
-            info.AppendLine("gamerInDate : " + jsonData["gamerInDate"].ToString());
-            info.AppendLine("정렬번호 : " + jsonData["index"].ToString());
-            info.AppendLine();
-            Debug.Log(info);
+        return true;
+    }
+
+    public bool TryGetMyRank(out RankEntry entry)
+    {
+        entry = new RankEntry();
+        var bro = Backend.URank.User.GetMyRank(RankUuid);
+
+        if (!bro.IsSuccess())
+        {
+            Debug.LogWarning("My rank fetch failed: " + bro);
+            return false;
+        }
+
+        var rows = bro.FlattenRows();
+        if (rows == null || rows.Count == 0)
+            return false;
+
+        return TryParseRankEntry(rows[0], out entry);
+    }
+
+    public bool TryGetTopRank(out RankEntry entry)
+    {
+        entry = new RankEntry();
+        if (!TryGetRankList(out List<RankEntry> entries))
+            return false;
+
+        if (entries.Count == 0)
+            return false;
+
+        entry = entries[0];
+        return true;
+    }
+
+    public string GetCachedYesterdayWinner()
+    {
+        return PlayerPrefs.GetString("Rank.YesterdayWinner", string.Empty);
+    }
+
+    public void SetCachedYesterdayWinner(string nickname)
+    {
+        PlayerPrefs.SetString("Rank.YesterdayWinner", nickname ?? string.Empty);
+        PlayerPrefs.Save();
+    }
+
+    private bool TryParseRankEntry(JsonData jsonData, out RankEntry entry)
+    {
+        entry = new RankEntry
+        {
+            Rank = ParseInt(jsonData, "rank"),
+            Nickname = ParseString(jsonData, "nickname"),
+            Score = ParseInt(jsonData, "score"),
+            GamerInDate = ParseString(jsonData, "gamerInDate"),
+            Index = ParseInt(jsonData, "index")
+        };
+
+        return entry.Rank > 0 || !string.IsNullOrEmpty(entry.Nickname);
+    }
+
+    private static int ParseInt(JsonData data, string key)
+    {
+        if (data == null || string.IsNullOrEmpty(key))
+            return 0;
+
+        try
+        {
+            int value;
+            return int.TryParse(data[key].ToString(), out value) ? value : 0;
+        }
+        catch
+        {
+            return 0;
+        }
+    }
+
+    private static string ParseString(JsonData data, string key)
+    {
+        if (data == null || string.IsNullOrEmpty(key))
+            return string.Empty;
+
+        try
+        {
+            var value = data[key];
+            return value != null ? value.ToString() : string.Empty;
+        }
+        catch
+        {
+            return string.Empty;
         }
     }
 }

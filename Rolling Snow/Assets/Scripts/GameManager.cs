@@ -1,6 +1,10 @@
+using System;
 using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+#if ENABLE_INPUT_SYSTEM
+using UnityEngine.InputSystem;
+#endif
 
 public class GameManager : MonoBehaviour
 {
@@ -31,9 +35,12 @@ public class GameManager : MonoBehaviour
     [Header("Scenes")]
     [SerializeField] private string gameSceneName = "04_GameScene";
     [SerializeField] private string mainMenuSceneName = "01_MainMenu";
+    [Header("Input")]
+    [SerializeField] private bool handleBackButton = true;
 
     public bool IsGameOver { get; private set; } = false;
     public bool IsCleared { get; private set; } = false;
+    public event Action<int> HighScoreUpdated;
 
     ResultPanelUI resultPanel;
     [SerializeField] private Player player;
@@ -107,6 +114,7 @@ public class GameManager : MonoBehaviour
 
     void Update()
     {
+        HandleBackButton();
         if (!IsGameOver && isGameplayActive)
         {
             score += scoreRate * Time.deltaTime;
@@ -309,6 +317,27 @@ public class GameManager : MonoBehaviour
     public bool IsPlaying()
     {
         return !IsGameOver && isGameplayActive;
+    }
+
+    void HandleBackButton()
+    {
+        if (!handleBackButton)
+            return;
+
+        bool backPressed = false;
+#if ENABLE_INPUT_SYSTEM
+        backPressed = Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame;
+#else
+        backPressed = Input.GetKeyDown(KeyCode.Escape);
+#endif
+
+        if (!backPressed)
+            return;
+
+        if (IsInGameScene())
+            LoadMainMenu();
+        else
+            Application.Quit();
     }
 
     bool IsInGameScene()
@@ -694,6 +723,7 @@ public class GameManager : MonoBehaviour
 
         PlayerPrefs.SetInt(HighScoreKey, finalScore);
         PlayerPrefs.Save();
+        HighScoreUpdated?.Invoke(finalScore);
     }
 
     int GetCurrentGold()
