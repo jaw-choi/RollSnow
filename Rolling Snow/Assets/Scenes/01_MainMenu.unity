@@ -1204,10 +1204,10 @@ RectTransform:
   - {fileID: 1689692139}
   m_Father: {fileID: 549078604}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0.5, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: -395.5, y: 450.80304}
+  m_SizeDelta: {x: 792, y: 0}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &355652044
 MonoBehaviour:
@@ -5204,16 +5204,16 @@ RectTransform:
   m_GameObject: {fileID: 1325093535}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 3.6391, y: 4.671813, z: 3.6391}
+  m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 549078604}
   m_Father: {fileID: 1996903198}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.5, y: 0.5}
-  m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: 3.0108}
-  m_SizeDelta: {x: 200, y: 200}
+  m_AnchorMin: {x: 0.06826895, y: 0.038727596}
+  m_AnchorMax: {x: 0.93173116, y: 0.83100003}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1325093537
 MonoBehaviour:
@@ -6231,7 +6231,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &1567755420
 RectTransform:
   m_ObjectHideFlags: 0
@@ -6774,8 +6774,8 @@ RectTransform:
   m_GameObject: {fileID: 1996903197}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
+  m_LocalScale: {x: 0.9, y: 0.9, z: 0.9}
+  m_ConstrainProportionsScale: 1
   m_Children:
   - {fileID: 1325093536}
   - {fileID: 76200846}
@@ -6785,10 +6785,10 @@ RectTransform:
   - {fileID: 1566754201}
   m_Father: {fileID: 1526921923}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 1, y: 1}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
+  m_SizeDelta: {x: 937, y: 1138}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1996903199
 MonoBehaviour:
@@ -6815,6 +6815,20 @@ MonoBehaviour:
   topRankFormat: 'Top 1: {0} ({1})'
   dailyRewardNotice: 'top1 reward: 300 gold'
   yesterdayWinnerFormat: 'Yesterday reward: {0}'
+  enableDailyRankReward: 1
+  rewardFunctionName: DailyRankReward
+  claimRewardButton: {fileID: 0}
+  claimRewardButtonLabel: {fileID: 0}
+  autoCreateClaimButton: 1
+  claimButtonSize: {x: 170, y: 34}
+  claimButtonOffset: {x: 0, y: -28}
+  claimAvailableText: Claim reward
+  claimClaimedText: Claimed
+  claimUnavailableText: Not eligible
+  claimCheckingText: Checking...
+  claimWorkingText: Claiming...
+  claimFailedText: Claim failed
+  claimSuccessText: Claimed +{0} gold
 --- !u!114 &1996903200
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -6828,15 +6842,15 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 0.392}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 10907, guid: 0000000000000000f000000000000000, type: 0}
-  m_Type: 1
+  m_Sprite: {fileID: 5763467605972699345, guid: 6e2cac3bdc43baf4a9666ef07248c0b6, type: 3}
+  m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
   m_FillMethod: 4
@@ -7028,7 +7042,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &2083375097
 RectTransform:
   m_ObjectHideFlags: 0
