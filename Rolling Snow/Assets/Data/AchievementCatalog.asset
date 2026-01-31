@@ -13,24 +13,90 @@ MonoBehaviour:
   m_Name: AchievementCatalog
   m_EditorClassIdentifier: Assembly-CSharp::AchievementCatalog
   prefsPrefix: Achievement.Completed.
+  claimedPrefsPrefix: Achievement.Claimed.
   achievements:
   - id: distance_100
     condition: 0
     distanceThreshold: 100
     countThreshold: 0
+    displayName: 100G
+    displayNameLocalized:
+      korean: 
+      english: 
+    rewardSprite: {fileID: -3416602495281830137, guid: 83c92f6da595b074b803e6caabbfafa7, type: 3}
+    rewardGold: 100
+    rewardHearts: 0
+    rewardSkinId: 
+    rewardSkinUnlockPrefix: Skin.Unlocked.
+    rewardMessage: 100G
+    rewardMessageLocalized:
+      korean: 
+      english: 
   - id: distance_500
     condition: 0
     distanceThreshold: 500
     countThreshold: 0
+    displayName: 200G
+    displayNameLocalized:
+      korean: 
+      english: 
+    rewardSprite: {fileID: -6803640457013485039, guid: fd67e5511b2eefe418848c528c2add7b, type: 3}
+    rewardGold: 200
+    rewardHearts: 0
+    rewardSkinId: 
+    rewardSkinUnlockPrefix: Skin.Unlocked.
+    rewardMessage: 200G
+    rewardMessageLocalized:
+      korean: 
+      english: 
   - id: distance_1000
     condition: 0
     distanceThreshold: 1000
     countThreshold: 0
+    displayName: 
+    displayNameLocalized:
+      korean: 
+      english: 
+    rewardSprite: {fileID: 1078902266021732888, guid: 4d2505e3c121fc3409a7a6be257984f3, type: 3}
+    rewardGold: 300
+    rewardHearts: 0
+    rewardSkinId: mintchocolate
+    rewardSkinUnlockPrefix: Skin.Unlocked.
+    rewardMessage: 
+    rewardMessageLocalized:
+      korean: 
+      english: 
   - id: score_item_3
     condition: 1
     distanceThreshold: 0
     countThreshold: 3
+    displayName: 
+    displayNameLocalized:
+      korean: 
+      english: 
+    rewardSprite: {fileID: -3416602495281830137, guid: 83c92f6da595b074b803e6caabbfafa7, type: 3}
+    rewardGold: 100
+    rewardHearts: 0
+    rewardSkinId: 
+    rewardSkinUnlockPrefix: Skin.Unlocked.
+    rewardMessage: 
+    rewardMessageLocalized:
+      korean: 
+      english: 
   - id: coin_item_3
     condition: 2
     distanceThreshold: 0
     countThreshold: 3
+    displayName: 
+    displayNameLocalized:
+      korean: 
+      english: 
+    rewardSprite: {fileID: -3416602495281830137, guid: 83c92f6da595b074b803e6caabbfafa7, type: 3}
+    rewardGold: 100
+    rewardHearts: 0
+    rewardSkinId: 
+    rewardSkinUnlockPrefix: Skin.Unlocked.
+    rewardMessage: 
+    rewardMessageLocalized:
+      korean: 
+      english: 

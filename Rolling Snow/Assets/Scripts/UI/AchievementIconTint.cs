@@ -16,6 +16,11 @@ public class AchievementIconTint : MonoBehaviour
     [SerializeField] private Color lockedColor = new Color(0.45f, 0.45f, 0.45f, 1f);
     [SerializeField] private Color completedColor = new Color(0f, 0f, 0f, 1f);
 
+    public string AchievementId => achievementId;
+    public AchievementCatalog Catalog => catalog;
+    public string PrefsPrefix => prefsPrefix;
+    public bool ReadFromPlayerPrefs => readFromPlayerPrefs;
+
     void Awake()
     {
         CacheIconImages();

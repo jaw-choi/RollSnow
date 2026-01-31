@@ -41,6 +41,7 @@ public class GameManager : MonoBehaviour
     public bool IsGameOver { get; private set; } = false;
     public bool IsCleared { get; private set; } = false;
     public event Action<int> HighScoreUpdated;
+    public event Action<AchievementDefinition> AchievementCompleted;
 
     ResultPanelUI resultPanel;
     [SerializeField] private Player player;
@@ -763,29 +764,22 @@ public class GameManager : MonoBehaviour
                     break;
             }
 
-            TryCompleteAchievement(achievement.id, complete);
+            TryCompleteAchievement(achievement, complete);
         }
     }
 
-    void TryCompleteAchievement(string id, bool condition)
+    void TryCompleteAchievement(AchievementDefinition achievement, bool condition)
     {
-        if (!condition || string.IsNullOrEmpty(id))
+        if (achievement == null)
+            return;
+        if (!condition || string.IsNullOrEmpty(achievement.id))
             return;
 
-        string key = GetAchievementKey(id);
-        if (PlayerPrefs.GetInt(key, 0) > 0)
+        if (AchievementStorage.IsCompleted(achievement.id, achievementCatalog, achievementPrefsPrefix))
             return;
 
-        PlayerPrefs.SetInt(key, 1);
-        PlayerPrefs.Save();
-    }
+        AchievementStorage.SetCompleted(achievement.id, achievementCatalog, achievementPrefsPrefix, true);
 
-    string GetAchievementKey(string id)
-    {
-        string prefix = achievementCatalog != null ? achievementCatalog.prefsPrefix : achievementPrefsPrefix;
-        if (string.IsNullOrEmpty(prefix))
-            return id;
-
-        return $"{prefix}{id}";
+        AchievementCompleted?.Invoke(achievement);
     }
 }

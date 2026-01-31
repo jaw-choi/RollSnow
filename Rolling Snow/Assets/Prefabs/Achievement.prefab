@@ -389,6 +389,7 @@ GameObject:
   - component: {fileID: 5843285106860732118}
   - component: {fileID: 8649557045137536360}
   - component: {fileID: 5098875010446571553}
+  - component: {fileID: 9076536452098723456}
   m_Layer: 0
   m_Name: Achievement
   m_TagString: Untagged
@@ -459,6 +460,29 @@ MonoBehaviour:
   - {fileID: 6647302073698575176}
   lockedColor: {r: 0.45, g: 0.45, b: 0.45, a: 1}
   completedColor: {r: 1, g: 1, b: 1, a: 1}
+--- !u!114 &9076536452098723456
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6105471995354595359}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7400f9ad1d9735444a7af67a1fe70f68, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  catalog: {fileID: 0}
+  achievementId: 
+  useIconTintSource: 1
+  requireCompleted: 1
+  ignoreIfClaimed: 1
+  completedPrefsPrefix: Achievement.Completed.
+  claimedPrefsPrefix: Achievement.Claimed.
+  popup: {fileID: 0}
+  targetButton: {fileID: 0}
+  autoHookButton: 1
+  autoRefreshInteractable: 1
 --- !u!1 &7560554571371800112
 GameObject:
   m_ObjectHideFlags: 0
