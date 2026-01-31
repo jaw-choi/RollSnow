@@ -67,6 +67,10 @@ MonoBehaviour:
   scoreLabel: {fileID: 5605597368841480636}
   highlightImage: {fileID: 7768030160217786675}
   highlightColor: {r: 0.93333334, g: 0.8862745, b: 0.83137256, a: 1}
+  rewardImage: {fileID: 4869301933271385744}
+  rewardImageRank1: {fileID: 7238136783815828026, guid: d8e4f4742663eae499d48490d8754236, type: 3}
+  rewardImageRank2: {fileID: 9216063754415868429, guid: fad55bb3f8399864a8cf55ea7712869e, type: 3}
+  rewardImageRank3: {fileID: -152566817039374648, guid: 9e79044d0c2745348b81cf0ae8553ba4, type: 3}
 --- !u!1 &208222611456729650
 GameObject:
   m_ObjectHideFlags: 0

@@ -132,14 +132,14 @@ public class PlayerController : MonoBehaviour
             {
                 pressedDown = true;
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
-                Debug.Log($"Input detected: Mouse Down @ {Time.time:F2}");
+                //Debug.Log($"Input detected: Mouse Down @ {Time.time:F2}");
 #endif
             }
             if (mouse.leftButton.wasReleasedThisFrame)
             {
                 released = true;
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
-                Debug.Log($"Input detected: Mouse Up @ {Time.time:F2}");
+                //Debug.Log($"Input detected: Mouse Up @ {Time.time:F2}");
 #endif
             }
         }
@@ -159,14 +159,14 @@ public class PlayerController : MonoBehaviour
             {
                 pressedDown = true;
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
-                Debug.Log($"Input detected: Touch Down @ {Time.time:F2}");
+                //Debug.Log($"Input detected: Touch Down @ {Time.time:F2}");
 #endif
             }
             if (primary.press.wasReleasedThisFrame)
             {
                 released = true;
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
-                Debug.Log($"Input detected: Touch Up @ {Time.time:F2}");
+                //Debug.Log($"Input detected: Touch Up @ {Time.time:F2}");
 #endif
             }
         }

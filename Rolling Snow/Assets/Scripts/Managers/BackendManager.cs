@@ -16,6 +16,7 @@ public class BackendManager : MonoBehaviour
     [SerializeField] private string idPrefKey = "Backend.CustomId";
     [SerializeField] private string pwPrefKey = "Backend.CustomPw";
     [SerializeField] private string nicknamePrefKey = "Backend.Nickname";
+    [SerializeField] private string functionSignatureKey = "c2110ff1-f8e6-11f0-b5b6-e5df1ba1698210893";
     [SerializeField] private int signupRetryCount = 3;
     [SerializeField] private float signupRetryDelay = 0.2f;
 
@@ -28,15 +29,22 @@ public class BackendManager : MonoBehaviour
     public event Action LoginCompleted;
     public event Action<string> NicknameChanged;
 
+    public string FunctionSignatureKey => functionSignatureKey;
+
     static bool pendingAutoOpenRanking;
     static bool pendingRequireNickname;
     bool isHookedToGameManager;
 
     void Awake()
     {
-        if (Instance != null && Instance != this)
+        // Robust singleton check: destroy this instance if another already exists
+        if (Instance != null)
         {
-            Destroy(gameObject);
+            if (Instance != this)
+            {
+                Debug.LogWarning("Duplicate BackendManager detected. Destroying this instance.");
+                Destroy(gameObject);
+            }
             return;
         }
 
@@ -181,6 +189,9 @@ public class BackendManager : MonoBehaviour
         id = GenerateId();
         pw = GeneratePassword();
         SaveCredentials(id, pw);
+        // Mark that this is a fresh install / first-run credentials so
+        // the nickname panel is required before the player proceeds.
+        pendingRequireNickname = true;
         return true;
     }
 

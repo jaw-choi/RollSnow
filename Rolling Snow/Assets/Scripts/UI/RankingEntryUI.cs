@@ -9,6 +9,12 @@ public class RankingEntryUI : MonoBehaviour
     [SerializeField] private TextMeshProUGUI scoreLabel;
     [SerializeField] private Image highlightImage;
     [SerializeField] private Color highlightColor = new Color(1f, 0.9f, 0.4f, 0.25f);
+    
+    [Header("Reward Images")]
+    [SerializeField] private Image rewardImage;
+    [SerializeField] private Sprite rewardImageRank1;
+    [SerializeField] private Sprite rewardImageRank2;
+    [SerializeField] private Sprite rewardImageRank3;
 
     public void SetEntry(int rank, string nickname, int score, bool highlight)
     {
@@ -24,6 +30,39 @@ public class RankingEntryUI : MonoBehaviour
             highlightImage.gameObject.SetActive(highlight);
             if (highlight)
                 highlightImage.color = highlightColor;
+        }
+        
+        // Show reward image for ranks 1, 2, 3
+        ShowRewardImageForRank(rank);
+    }
+
+    void ShowRewardImageForRank(int rank)
+    {
+        if (rewardImage == null)
+            return;
+
+        Sprite spriteToShow = null;
+        switch (rank)
+        {
+            case 1:
+                spriteToShow = rewardImageRank1;
+                break;
+            case 2:
+                spriteToShow = rewardImageRank2;
+                break;
+            case 3:
+                spriteToShow = rewardImageRank3;
+                break;
+        }
+
+        if (spriteToShow != null)
+        {
+            rewardImage.sprite = spriteToShow;
+            rewardImage.gameObject.SetActive(true);
+        }
+        else
+        {
+            rewardImage.gameObject.SetActive(false);
         }
     }
 }
