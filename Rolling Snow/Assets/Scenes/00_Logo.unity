@@ -167,6 +167,59 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &726304766
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 726304768}
+  - component: {fileID: 726304767}
+  m_Layer: 0
+  m_Name: BackendManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &726304767
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 726304766}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7a8834acd8fbda64993206efbbf0b0a9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BackendManager
+  autoLoginOnStart: 1
+  forceEnableIfDisabledAtRuntime: 1
+  persistBetweenScenes: 1
+  idPrefKey: Backend.CustomId
+  pwPrefKey: Backend.CustomPw
+  nicknamePrefKey: Backend.Nickname
+  functionSignatureKey: c2110ff1-f8e6-11f0-b5b6-e5df1ba1698210893
+  signupRetryCount: 3
+  signupRetryDelay: 0.2
+--- !u!4 &726304768
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 726304766}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 720, y: 1544, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1023380278
 GameObject:
   m_ObjectHideFlags: 0
@@ -742,7 +795,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7e05433d4b3a53848a99e78afba0bb17, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::RewardedAdManager
-  adUnitId: ca-app-pub-8502618733998421/2441408968
+  androidAdUnitId: ca-app-pub-8502618733998421/2441408968
+  iosAdUnitId: ca-app-pub-8502618733998421/2766319319
   persistBetweenScenes: 1
 --- !u!4 &2141497549
 Transform:
@@ -770,3 +824,4 @@ SceneRoots:
   - {fileID: 1023380280}
   - {fileID: 172527851}
   - {fileID: 2141497549}
+  - {fileID: 726304768}

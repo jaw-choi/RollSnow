@@ -1,9 +1,9 @@
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using LitJson;
-
-// Backend SDK namespace
-using BackEnd;
+using Firebase.Auth;
+using Firebase.Firestore;
 
 public class BackendRank
 {
@@ -29,93 +29,163 @@ public class BackendRank
         public int Score;
         public string GamerInDate;
         public int Index;
+        public string UserId;
     }
 
     private const string DefaultRankUuid = "019beecc-63cc-7bc4-84c8-bdb15f588a51";
     public string RankUuid { get; set; } = DefaultRankUuid;
 
-    public bool RankInsert(int score)
+    const int DefaultLimit = 50;
+
+    List<RankEntry> cachedEntries = new List<RankEntry>();
+
+    public IEnumerator RankInsert(int score)
     {
-        string tableName = BackendGameData.TableName;
-        if (!BackendGameData.Instance.EnsureRowInDate())
+        if (!TryGetBackend(out FirebaseAuth auth, out FirebaseFirestore firestore))
         {
-            Debug.LogError("Rank insert failed: missing user data row.");
-            return false;
+            Debug.LogWarning("Rank insert skipped: Firebase is not initialized.");
+            yield break;
         }
 
-        string rowInDate = BackendGameData.Instance.RowInDate;
-        if (string.IsNullOrEmpty(rowInDate))
+        var user = auth.CurrentUser;
+        if (user == null)
         {
-            Debug.LogError("Rank insert failed: rowInDate empty.");
-            return false;
+            Debug.LogError("Rank insert failed: not logged in.");
+            yield break;
         }
 
-        Param param = new Param();
-        param.Add("score", score);
+        yield return BackendGameData.Instance.EnsureUserDocument();
 
-        Debug.Log("Requesting rank update.");
-        var rankBro = Backend.URank.User.UpdateUserScore(RankUuid, tableName, rowInDate, param);
+        string dateKey = GetDateKey();
+        string nickname = BackendManager.Instance != null ? BackendManager.Instance.Nickname : string.Empty;
 
-        if (!rankBro.IsSuccess())
+        var entryRef = GetEntriesCollection(firestore, dateKey).Document(user.UserId);
+        var data = new Dictionary<string, object>
         {
-            Debug.LogError("Rank update failed: " + rankBro);
-            return false;
+            { "uid", user.UserId },
+            { "nickname", nickname ?? string.Empty },
+            { "score", score },
+            { "dateKey", dateKey },
+            { "updatedAt", FieldValue.ServerTimestamp }
+        };
+
+        var task = entryRef.SetAsync(data, SetOptions.MergeAll);
+        yield return new WaitUntil(() => task.IsCompleted);
+
+        if (task.Exception != null)
+        {
+            Debug.LogError("Rank update failed: " + task.Exception.GetBaseException().Message);
+            yield break;
         }
 
-        Debug.Log("Rank update success: " + rankBro);
-        BackendGameData.Instance.GameDataUpdate(score, null);
-        return true;
+        Debug.Log("Rank update success.");
+        yield return BackendGameData.Instance.GameDataUpdate(score, null);
+
+        if (RankingPanelUI.Instance != null && RankingPanelUI.Instance.IsVisible())
+            RankingPanelUI.Instance.RefreshRankings();
+    }
+
+    public IEnumerator FetchRankList(Action<bool, List<RankEntry>> onComplete, int limit = DefaultLimit)
+    {
+        if (onComplete == null)
+            yield break;
+
+        var entries = new List<RankEntry>();
+        if (!TryGetBackend(out FirebaseAuth _, out FirebaseFirestore firestore))
+        {
+            Debug.LogWarning("Rank list fetch skipped: Firebase is not initialized.");
+            onComplete(false, entries);
+            yield break;
+        }
+
+        var query = GetEntriesCollection(firestore, GetDateKey()).OrderByDescending("score").Limit(Mathf.Max(1, limit));
+        var task = query.GetSnapshotAsync(Source.Server);
+        yield return new WaitUntil(() => task.IsCompleted);
+
+        if (task.Exception != null)
+        {
+            Debug.LogWarning("Rank list server fetch failed. Fallback to default source: " + task.Exception.GetBaseException().Message);
+            task = query.GetSnapshotAsync();
+            yield return new WaitUntil(() => task.IsCompleted);
+            if (task.Exception != null)
+            {
+                Debug.LogError("Rank list fetch failed: " + task.Exception.GetBaseException().Message);
+                onComplete(false, entries);
+                yield break;
+            }
+        }
+
+        int index = 0;
+        var snapshot = task.Result;
+        if (snapshot != null)
+        {
+            foreach (var doc in snapshot.Documents)
+            {
+                index++;
+                string nickname = ReadString(doc, "nickname");
+                int score = ReadInt(doc, "score");
+                string uidField = ReadString(doc, "uid");
+                string uid = !string.IsNullOrEmpty(uidField) ? uidField : doc.Id;
+
+                entries.Add(new RankEntry
+                {
+                    Rank = index,
+                    Nickname = nickname,
+                    Score = score,
+                    GamerInDate = uid,
+                    Index = index - 1,
+                    UserId = uid
+                });
+            }
+        }
+
+        Debug.Log("Rank list fetch success. count=" + entries.Count);
+        cachedEntries = entries;
+        onComplete(true, entries);
     }
 
     public bool TryGetRankList(out List<RankEntry> entries)
     {
-        entries = new List<RankEntry>();
-        var bro = Backend.URank.User.GetRankList(RankUuid);
-
-        if (!bro.IsSuccess())
-        {
-            Debug.LogError("Rank list fetch failed: " + bro);
-            return false;
-        }
-
-        foreach (JsonData jsonData in bro.FlattenRows())
-        {
-            if (TryParseRankEntry(jsonData, out RankEntry entry))
-                entries.Add(entry);
-        }
-
-        return true;
+        entries = new List<RankEntry>(cachedEntries);
+        return entries.Count > 0;
     }
 
     public bool TryGetMyRank(out RankEntry entry)
     {
-        entry = new RankEntry();
-        var bro = Backend.URank.User.GetMyRank(RankUuid);
+        var auth = BackendManager.Instance != null && BackendManager.Instance.IsInitialized
+            ? BackendManager.Instance.Auth
+            : null;
 
-        if (!bro.IsSuccess())
-        {
-            Debug.LogWarning("My rank fetch failed: " + bro);
-            return false;
-        }
+        entry = FindMyEntry(cachedEntries,
+            auth != null && auth.CurrentUser != null ? auth.CurrentUser.UserId : string.Empty,
+            BackendManager.Instance != null ? BackendManager.Instance.Nickname : string.Empty);
 
-        var rows = bro.FlattenRows();
-        if (rows == null || rows.Count == 0)
-            return false;
-
-        return TryParseRankEntry(rows[0], out entry);
+        return entry.Rank > 0;
     }
 
-    public bool TryGetTopRank(out RankEntry entry)
+    public RankEntry FindMyEntry(List<RankEntry> entries, string userId, string nickname)
     {
-        entry = new RankEntry();
-        if (!TryGetRankList(out List<RankEntry> entries))
-            return false;
+        if (entries != null)
+        {
+            for (int i = 0; i < entries.Count; i++)
+            {
+                var entry = entries[i];
+                if (!string.IsNullOrEmpty(userId) && entry.UserId == userId)
+                    return entry;
+                if (!string.IsNullOrEmpty(nickname) && entry.Nickname == nickname)
+                    return entry;
+            }
+        }
 
-        if (entries.Count == 0)
-            return false;
-
-        entry = entries[0];
-        return true;
+        return new RankEntry
+        {
+            Rank = 0,
+            Nickname = nickname ?? string.Empty,
+            Score = 0,
+            GamerInDate = userId ?? string.Empty,
+            Index = -1,
+            UserId = userId ?? string.Empty
+        };
     }
 
     public string GetCachedYesterdayWinner()
@@ -129,49 +199,84 @@ public class BackendRank
         PlayerPrefs.Save();
     }
 
-    private bool TryParseRankEntry(JsonData jsonData, out RankEntry entry)
+    static int ReadInt(DocumentSnapshot doc, string key)
     {
-        entry = new RankEntry
-        {
-            Rank = ParseInt(jsonData, "rank"),
-            Nickname = ParseString(jsonData, "nickname"),
-            Score = ParseInt(jsonData, "score"),
-            GamerInDate = ParseString(jsonData, "gamerInDate"),
-            Index = ParseInt(jsonData, "index")
-        };
-
-        return entry.Rank > 0 || !string.IsNullOrEmpty(entry.Nickname);
-    }
-
-    private static int ParseInt(JsonData data, string key)
-    {
-        if (data == null || string.IsNullOrEmpty(key))
+        if (doc == null || !doc.ContainsField(key))
             return 0;
 
         try
         {
-            int value;
-            return int.TryParse(data[key].ToString(), out value) ? value : 0;
+            object raw = doc.GetValue<object>(key);
+            if (raw is long l)
+                return (int)l;
+            if (raw is int i)
+                return i;
+            if (raw is double d)
+                return Mathf.RoundToInt((float)d);
+            if (raw is string s && int.TryParse(s, out int value))
+                return value;
         }
-        catch
-        {
-            return 0;
-        }
+        catch { }
+
+        return 0;
     }
 
-    private static string ParseString(JsonData data, string key)
+    static string ReadString(DocumentSnapshot doc, string key)
     {
-        if (data == null || string.IsNullOrEmpty(key))
+        if (doc == null || !doc.ContainsField(key))
             return string.Empty;
 
         try
         {
-            var value = data[key];
-            return value != null ? value.ToString() : string.Empty;
+            return doc.GetValue<string>(key) ?? string.Empty;
         }
         catch
         {
             return string.Empty;
         }
+    }
+
+    static string GetDateKey()
+    {
+        DateTime kst = GetKoreaNow();
+        return kst.ToString("yyyyMMdd");
+    }
+
+    static DateTime GetKoreaNow()
+    {
+        try
+        {
+            var tz = TimeZoneInfo.FindSystemTimeZoneById("Korea Standard Time");
+            return TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, tz);
+        }
+        catch
+        {
+            return DateTime.UtcNow.AddHours(9);
+        }
+    }
+
+    static bool TryGetBackend(out FirebaseAuth auth, out FirebaseFirestore firestore)
+    {
+        var manager = BackendManager.Instance;
+        if (manager != null && manager.IsInitialized)
+        {
+            auth = manager.Auth;
+            firestore = manager.Firestore;
+            if (auth != null && firestore != null)
+                return true;
+        }
+
+        auth = null;
+        firestore = null;
+        return false;
+    }
+
+    CollectionReference GetEntriesCollection(FirebaseFirestore firestore, string dateKey)
+    {
+        return firestore.Collection("leaderboards")
+            .Document(RankUuid)
+            .Collection("daily")
+            .Document(dateKey)
+            .Collection("entries");
     }
 }

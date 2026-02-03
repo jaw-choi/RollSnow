@@ -1,4 +1,4 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
@@ -7,6 +7,8 @@ using UnityEngine.UI;
 public class RankingPanelUI : MonoBehaviour
 {
     public static RankingPanelUI Instance { get; private set; }
+    static string pendingNicknameUserId;
+    static string pendingNicknameValue;
 
     [Header("UI")]
     [SerializeField] private GameObject panelRoot;
@@ -50,12 +52,15 @@ public class RankingPanelUI : MonoBehaviour
 
     [Header("Countdown Timer")]
     [SerializeField] private float countdownUpdateInterval = 1f;
-    [SerializeField] private float rewardStatusCheckInterval = 5f; // 서버 상태 확인은 5초마다
+    [SerializeField] private float rewardStatusCheckInterval = 5f;
 
     readonly List<RankingEntryUI> spawnedEntries = new List<RankingEntryUI>();
+    readonly List<BackendRank.RankEntry> visibleEntries = new List<BackendRank.RankEntry>();
     BackendRankReward rewardService;
     Coroutine claimFeedbackRoutine;
     Coroutine countdownTimerRoutine;
+    Coroutine refreshRankingsRoutine;
+    Coroutine refreshRewardRoutine;
     bool claimInProgress;
     int currentPlayerRank = -1;
 
@@ -98,8 +103,7 @@ public class RankingPanelUI : MonoBehaviour
 
     void HandleNicknameChanged(string nickname)
     {
-        // Do not refresh rankings when nickname changes
-        // Only refresh when panel is explicitly opened
+        NotifyLocalNicknameUpdated(GetCurrentUserId(), nickname);
     }
 
     public void OpenAndRefresh()
@@ -126,21 +130,43 @@ public class RankingPanelUI : MonoBehaviour
 
     public void RefreshRankings()
     {
+        if (refreshRankingsRoutine != null)
+            StopCoroutine(refreshRankingsRoutine);
+
+        refreshRankingsRoutine = StartCoroutine(RefreshRankingsRoutine());
+    }
+
+    IEnumerator RefreshRankingsRoutine()
+    {
         string yesterdayWinner = BackendRank.Instance.GetCachedYesterdayWinner();
         if (yesterdayWinnerLabel != null)
             yesterdayWinnerLabel.text = string.Format(yesterdayWinnerFormat,
                 string.IsNullOrEmpty(yesterdayWinner) ? "-" : yesterdayWinner);
 
-        if (!BackendRank.Instance.TryGetRankList(out List<BackendRank.RankEntry> entries))
+        bool success = false;
+        List<BackendRank.RankEntry> entries = null;
+        yield return BackendRank.Instance.FetchRankList((ok, list) =>
+        {
+            success = ok;
+            entries = list;
+        });
+
+        if (!success || entries == null)
         {
             ApplyEmptyLabels();
             ClearEntries();
             currentPlayerRank = -1;
             RefreshRewardStatus();
-            return;
+            refreshRankingsRoutine = null;
+            yield break;
         }
 
-        BackendRank.Instance.TryGetMyRank(out BackendRank.RankEntry myEntry);
+        ApplyPendingNicknameOverride(entries);
+
+        var myEntry = BackendRank.Instance.FindMyEntry(entries,
+            GetCurrentUserId(),
+            BackendManager.Instance != null ? BackendManager.Instance.Nickname : string.Empty);
+
         currentPlayerRank = myEntry.Rank;
 
         if (entries.Count > 0)
@@ -158,12 +184,14 @@ public class RankingPanelUI : MonoBehaviour
         if (myRankLabel != null)
         {
             string rankText = myEntry.Rank > 0 ? myEntry.Rank.ToString() : "-";
-            myRankLabel.text = string.Format(myRankFormat, rankText);
+            string myNickname = BackendManager.Instance != null ? BackendManager.Instance.Nickname : myEntry.Nickname;
+            myRankLabel.text = FormatMyRankLabel(rankText, myNickname);
         }
 
         PopulateEntries(entries, myEntry);
         StartCountdownTimer();
         RefreshRewardStatus();
+        refreshRankingsRoutine = null;
     }
 
     void ApplyEmptyLabels()
@@ -171,7 +199,10 @@ public class RankingPanelUI : MonoBehaviour
         if (topRankLabel != null)
             topRankLabel.text = string.Format(topRankFormat, "-", "0");
         if (myRankLabel != null)
-            myRankLabel.text = string.Format(myRankFormat, "-");
+        {
+            string myNickname = BackendManager.Instance != null ? BackendManager.Instance.Nickname : string.Empty;
+            myRankLabel.text = FormatMyRankLabel("-", myNickname);
+        }
     }
 
     void PopulateEntries(List<BackendRank.RankEntry> entries, BackendRank.RankEntry myEntry)
@@ -181,17 +212,106 @@ public class RankingPanelUI : MonoBehaviour
             return;
 
         string myNickname = BackendManager.Instance != null ? BackendManager.Instance.Nickname : myEntry.Nickname;
+        string myUserId = GetCurrentUserId();
         for (int i = 0; i < entries.Count; i++)
         {
             var entry = entries[i];
             var item = Instantiate(entryPrefab, listContent);
-            bool highlight = !string.IsNullOrEmpty(myNickname) && entry.Nickname == myNickname;
-            item.SetEntry(entry.Rank, entry.Nickname, entry.Score, highlight);
+            bool isMe = !string.IsNullOrEmpty(myUserId) && entry.UserId == myUserId;
+            string displayNickname = isMe && !string.IsNullOrEmpty(myNickname) ? myNickname : entry.Nickname;
+            bool highlight = isMe || (!string.IsNullOrEmpty(myNickname) && entry.Nickname == myNickname);
+            item.SetEntry(entry.Rank, displayNickname, entry.Score, highlight);
+            visibleEntries.Add(new BackendRank.RankEntry
+            {
+                Rank = entry.Rank,
+                Nickname = displayNickname,
+                Score = entry.Score,
+                GamerInDate = entry.GamerInDate,
+                Index = entry.Index,
+                UserId = entry.UserId
+            });
             spawnedEntries.Add(item);
         }
 
         if (scrollRect != null)
             scrollRect.verticalNormalizedPosition = 1f;
+    }
+
+    string FormatMyRankLabel(string rankText, string nickname)
+    {
+        string safeNickname = string.IsNullOrEmpty(nickname) ? "-" : nickname;
+        if (string.IsNullOrEmpty(myRankFormat))
+            return $"My Rank: {rankText} ({safeNickname})";
+
+        if (myRankFormat.Contains("{1}"))
+            return string.Format(myRankFormat, rankText, safeNickname);
+
+        return string.Format(myRankFormat, rankText) + $" ({safeNickname})";
+    }
+
+    string GetCurrentUserId()
+    {
+        string managerUserId = BackendManager.Instance != null ? BackendManager.Instance.UserId : string.Empty;
+        if (!string.IsNullOrEmpty(managerUserId))
+            return managerUserId;
+
+        return BackendLogin.Instance.CurrentUserId;
+    }
+
+    void ApplyPendingNicknameOverride(List<BackendRank.RankEntry> entries)
+    {
+        if (entries == null || string.IsNullOrEmpty(pendingNicknameUserId) || string.IsNullOrEmpty(pendingNicknameValue))
+            return;
+
+        for (int i = 0; i < entries.Count; i++)
+        {
+            var entry = entries[i];
+            if (entry.UserId != pendingNicknameUserId)
+                continue;
+
+            entry.Nickname = pendingNicknameValue;
+            entries[i] = entry;
+        }
+    }
+
+    void ApplyNicknameToVisibleEntries(string userId, string nickname)
+    {
+        if (string.IsNullOrEmpty(userId) || string.IsNullOrEmpty(nickname))
+            return;
+
+        bool patched = false;
+        for (int i = 0; i < spawnedEntries.Count && i < visibleEntries.Count; i++)
+        {
+            if (visibleEntries[i].UserId != userId)
+                continue;
+
+            var entry = visibleEntries[i];
+            entry.Nickname = nickname;
+            visibleEntries[i] = entry;
+            spawnedEntries[i].SetEntry(entry.Rank, nickname, entry.Score, true);
+            patched = true;
+        }
+
+        if (myRankLabel != null)
+        {
+            string rankText = currentPlayerRank > 0 ? currentPlayerRank.ToString() : "-";
+            myRankLabel.text = FormatMyRankLabel(rankText, nickname);
+        }
+
+        if (!patched && IsVisible())
+            RefreshRankings();
+    }
+
+    public static void NotifyLocalNicknameUpdated(string userId, string nickname)
+    {
+        if (string.IsNullOrEmpty(userId) || string.IsNullOrEmpty(nickname))
+            return;
+
+        pendingNicknameUserId = userId;
+        pendingNicknameValue = nickname;
+
+        if (Instance != null)
+            Instance.ApplyNicknameToVisibleEntries(userId, nickname);
     }
 
     void ClearEntries()
@@ -203,6 +323,7 @@ public class RankingPanelUI : MonoBehaviour
         }
 
         spawnedEntries.Clear();
+        visibleEntries.Clear();
     }
 
     BackendRankReward GetRewardService()
@@ -303,42 +424,62 @@ public class RankingPanelUI : MonoBehaviour
             return;
         }
 
-        if (claimInProgress || claimFeedbackRoutine != null)
+        if (claimInProgress || refreshRewardRoutine != null)
             return;
 
+        refreshRewardRoutine = StartCoroutine(RefreshRewardStatusRoutine());
+    }
+
+    IEnumerator RefreshRewardStatusRoutine()
+    {
         EnsureClaimButton();
         HookClaimButton(true);
 
         if (claimRewardButton == null || claimRewardButtonLabel == null)
-            return;
+        {
+            refreshRewardRoutine = null;
+            yield break;
+        }
 
         if (BackendManager.Instance == null || !BackendManager.Instance.IsLoggedIn)
         {
             claimRewardButton.gameObject.SetActive(false);
             HideAlarmDot();
-            return;
+            refreshRewardRoutine = null;
+            yield break;
         }
 
-        // Only show reward button and image for ranks 1, 2, 3
         if (currentPlayerRank < 1 || currentPlayerRank > 3)
         {
             claimRewardButton.gameObject.SetActive(false);
             HideRewardImage();
             HideAlarmDot();
-            return;
+            refreshRewardRoutine = null;
+            yield break;
         }
 
         claimRewardButton.interactable = false;
         SetClaimLabel(claimCheckingText);
 
         var service = GetRewardService();
-        if (!service.TryGetStatus(out var status))
+        bool success = false;
+        BackendRankReward.RewardStatus status = new BackendRankReward.RewardStatus();
+        yield return service.TryGetStatus((ok, result) =>
+        {
+            success = ok;
+            status = result;
+        });
+
+        refreshRewardRoutine = null;
+
+        if (!success)
         {
             SetClaimLabel(claimFailedText);
             claimRewardButton.gameObject.SetActive(false);
             HideAlarmDot();
-            return;
+            yield break;
         }
+
         Debug.Log($"[RankRewardStatus] Success={status.IsSuccess}, Claimable={status.IsClaimable}, Claimed={status.IsClaimed}, Gold={status.RewardGold}, Winner={status.WinnerNickname}, Date={status.RewardDate}, Remaining={status.RemainingSeconds}, Message={status.Message}");
 
         if (!string.IsNullOrEmpty(status.WinnerNickname))
@@ -354,7 +495,7 @@ public class RankingPanelUI : MonoBehaviour
             claimRewardButton.interactable = false;
             claimRewardButton.gameObject.SetActive(false);
             HideAlarmDot();
-            return;
+            yield break;
         }
 
         if (status.IsClaimable)
@@ -363,7 +504,7 @@ public class RankingPanelUI : MonoBehaviour
             claimRewardButton.interactable = true;
             claimRewardButton.gameObject.SetActive(true);
             ShowAlarmDot();
-            return;
+            yield break;
         }
 
         SetClaimLabel(claimUnavailableText);
@@ -383,14 +524,12 @@ public class RankingPanelUI : MonoBehaviour
         if (claimInProgress)
             return;
 
-        // 보상 이미지가 현재 보이는 상태인지 확인하고 토글
         if (rewardImageCanvasGroup != null && rewardImageCanvasGroup.gameObject.activeSelf)
         {
             HideRewardImage();
             return;
         }
 
-        // 보상 이미지를 표시
         ShowRewardImage();
     }
 
@@ -434,7 +573,7 @@ public class RankingPanelUI : MonoBehaviour
 
     IEnumerator CountdownTimerRoutine()
     {
-        float timeSinceLastStatusCheck = rewardStatusCheckInterval; // 첫 루프에서 바로 서버 호출하도록 설정
+        float timeSinceLastStatusCheck = rewardStatusCheckInterval;
         int localRemainingSeconds = 0;
         bool hadValidRemaining = false;
         bool didZeroRefresh = false;
@@ -443,11 +582,9 @@ public class RankingPanelUI : MonoBehaviour
         {
             timeSinceLastStatusCheck += countdownUpdateInterval;
 
-            // 5초마다 한 번 서버 시간 확인하여 18시까지의 남은 시간 계산
             if (timeSinceLastStatusCheck >= rewardStatusCheckInterval)
             {
                 var service = GetRewardService();
-                // Use server time to calculate remaining seconds until 3:47 PM Korea time
                 int remainingFrom3_47PM = service.GetRemainingSecondsUntil3_47PM();
                 if (remainingFrom3_47PM > 0)
                 {
@@ -462,11 +599,8 @@ public class RankingPanelUI : MonoBehaviour
                 timeSinceLastStatusCheck = 0f;
             }
 
-            // 로컬에서 매초 시간 감소 및 표시
             localRemainingSeconds = Mathf.Max(0, localRemainingSeconds - (int)countdownUpdateInterval);
 
-            // If we have never received a positive remainingSeconds from server,
-            // show a placeholder instead of 00:00:00 to avoid appearing stuck at zero.
             if (localRemainingSeconds <= 0 && !hadValidRemaining)
             {
                 if (dailyRewardLabel != null)
@@ -477,7 +611,6 @@ public class RankingPanelUI : MonoBehaviour
                 UpdateCountdownDisplay(localRemainingSeconds);
             }
 
-            // When countdown reaches zero after a valid remaining time, refresh claim status once.
             if (localRemainingSeconds <= 0 && hadValidRemaining && !didZeroRefresh)
             {
                 Debug.Log("Countdown reached 0. Refreshing claim status (no auto-claim). ");
@@ -491,15 +624,12 @@ public class RankingPanelUI : MonoBehaviour
 
     int ParseRemainingTime(string rewardDate)
     {
-        // 서버로부터 받은 시간 데이터를 파싱
-        // 형식: "HH:MM:SS" 또는 초 단위 숫자
         if (string.IsNullOrEmpty(rewardDate))
             return 0;
 
         if (int.TryParse(rewardDate, out int seconds))
             return Mathf.Max(0, seconds);
 
-        // HH:MM:SS 형식 파싱
         string[] parts = rewardDate.Split(':');
         if (parts.Length == 3)
         {
@@ -532,7 +662,6 @@ public class RankingPanelUI : MonoBehaviour
         if (rewardImageCanvasGroup == null)
             return;
 
-        // Only show reward image for ranks 1, 2, 3
         if (currentPlayerRank < 1 || currentPlayerRank > 3)
         {
             HideRewardImage();
@@ -587,10 +716,23 @@ public class RankingPanelUI : MonoBehaviour
         if (claimInProgress)
             return;
 
+        StartCoroutine(AutoClaimRewardRoutine());
+    }
+
+    IEnumerator AutoClaimRewardRoutine()
+    {
         claimInProgress = true;
 
         var service = GetRewardService();
-        if (service.TryClaim(out var result))
+        bool success = false;
+        BackendRankReward.ClaimResult result = new BackendRankReward.ClaimResult();
+        yield return service.TryClaim((ok, claimResult) =>
+        {
+            success = ok;
+            result = claimResult;
+        });
+
+        if (success)
         {
             if (!string.IsNullOrEmpty(result.WinnerNickname))
                 BackendRank.Instance.SetCachedYesterdayWinner(result.WinnerNickname);
@@ -603,7 +745,6 @@ public class RankingPanelUI : MonoBehaviour
                     goldSystem.AddGold(gold);
             }
 
-            // 보상 지급 후 패널 종료 (랭킹은 새로고침하지 않음)
             SetVisible(false);
         }
 

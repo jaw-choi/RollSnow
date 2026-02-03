@@ -1,9 +1,9 @@
 using System;
+using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
-using LitJson;
-
-// Backend SDK namespace
-using BackEnd;
+using Firebase.Auth;
+using Firebase.Firestore;
 
 public class BackendLogin
 {
@@ -22,113 +22,237 @@ public class BackendLogin
         }
     }
 
-    public BackendReturnObject CustomSignUp(string id, string pw)
+    const string GuestEmailDomain = "guest.local";
+
+    static bool IsOfflineError(System.Exception ex)
     {
-        Debug.Log("Requesting custom sign up.");
-
-        var bro = Backend.BMember.CustomSignUp(id, pw);
-
-        if (bro.IsSuccess())
-        {
-            Debug.Log("Custom sign up success: " + bro);
-        }
-        else
-        {
-            Debug.LogError("Custom sign up failed: " + bro);
-        }
-
-        return bro;
-    }
-
-    public BackendReturnObject CustomLogin(string id, string pw)
-    {
-        Debug.Log("Requesting custom login.");
-
-        var bro = Backend.BMember.CustomLogin(id, pw);
-
-        if (bro.IsSuccess())
-        {
-            Debug.Log("Custom login success: " + bro);
-        }
-        else
-        {
-            Debug.LogError("Custom login failed: " + bro);
-        }
-
-        return bro;
-    }
-
-    public BackendReturnObject UpdateNickname(string nickname)
-    {
-        Debug.Log("Requesting nickname update.");
-
-        var bro = Backend.BMember.UpdateNickname(nickname);
-
-        if (bro.IsSuccess())
-        {
-            Debug.Log("Nickname update success: " + bro);
-        }
-        else
-        {
-            Debug.LogError("Nickname update failed: " + bro);
-        }
-
-        return bro;
-    }
-
-    public BackendReturnObject CheckNickname(string nickname)
-    {
-        Debug.Log("Checking nickname availability.");
-
-        var bro = Backend.BMember.CheckNicknameDuplication(nickname);
-        if (bro.IsSuccess())
-        {
-            Debug.Log("Nickname is available: " + bro);
-        }
-        else
-        {
-            Debug.LogWarning("Nickname is not available: " + bro);
-        }
-
-        return bro;
-    }
-
-    public bool TryGetNickname(out string nickname)
-    {
-        nickname = string.Empty;
-
-        var bro = Backend.BMember.GetUserInfo();
-        if (!bro.IsSuccess())
-        {
-            Debug.LogWarning("GetUserInfo failed: " + bro);
-            return false;
-        }
-
-        JsonData json = bro.GetReturnValuetoJSON();
-        if (json == null)
+        if (ex == null)
             return false;
 
-        try
+        string message = ex.GetBaseException().Message;
+        return !string.IsNullOrEmpty(message) &&
+               message.IndexOf("offline", StringComparison.OrdinalIgnoreCase) >= 0;
+    }
+
+    public string CurrentUserId
+    {
+        get
         {
-            JsonData row = json["row"];
-            if (row == null)
-                return false;
-
-            JsonData nickData = row["nickname"];
-            if (nickData == null)
-                return false;
-
-            string raw = nickData.ToString();
-            if (string.IsNullOrEmpty(raw) || raw == "null")
-                return false;
-
-            nickname = raw;
-            return true;
+            var auth = FirebaseAuth.DefaultInstance;
+            return auth != null && auth.CurrentUser != null ? auth.CurrentUser.UserId : string.Empty;
         }
-        catch (Exception ex)
+    }
+
+    public static string MakeEmail(string id)
+    {
+        if (string.IsNullOrEmpty(id))
+            return string.Empty;
+
+        return id + "@" + GuestEmailDomain;
+    }
+
+    public IEnumerator CustomSignUp(string id, string pw, Action<bool, string> onComplete)
+    {
+        if (onComplete == null)
+            yield break;
+
+        var auth = FirebaseAuth.DefaultInstance;
+        if (auth == null)
         {
-            Debug.LogWarning("Nickname parse failed: " + ex.Message);
-            return false;
+            onComplete(false, "AuthUnavailable");
+            yield break;
         }
+
+        string email = MakeEmail(id);
+        if (string.IsNullOrEmpty(email) || string.IsNullOrEmpty(pw))
+        {
+            onComplete(false, "InvalidCredentials");
+            yield break;
+        }
+
+        var task = auth.CreateUserWithEmailAndPasswordAsync(email, pw);
+        yield return new WaitUntil(() => task.IsCompleted);
+
+        if (task.Exception != null)
+        {
+            Debug.LogError("Custom sign up failed: " + task.Exception.GetBaseException().Message);
+            onComplete(false, "SignUpFailed");
+            yield break;
+        }
+
+        Debug.Log("Custom sign up success.");
+        onComplete(true, string.Empty);
+    }
+
+    public IEnumerator CustomLogin(string id, string pw, Action<bool, string> onComplete)
+    {
+        if (onComplete == null)
+            yield break;
+
+        var auth = FirebaseAuth.DefaultInstance;
+        if (auth == null)
+        {
+            onComplete(false, "AuthUnavailable");
+            yield break;
+        }
+
+        string email = MakeEmail(id);
+        if (string.IsNullOrEmpty(email) || string.IsNullOrEmpty(pw))
+        {
+            onComplete(false, "InvalidCredentials");
+            yield break;
+        }
+
+        var task = auth.SignInWithEmailAndPasswordAsync(email, pw);
+        yield return new WaitUntil(() => task.IsCompleted);
+
+        if (task.Exception != null)
+        {
+            Debug.LogError("Custom login failed: " + task.Exception.GetBaseException().Message);
+            onComplete(false, "LoginFailed");
+            yield break;
+        }
+
+        Debug.Log("Custom login success.");
+        onComplete(true, string.Empty);
+    }
+
+    public IEnumerator UpdateNickname(string nickname, Action<bool, string> onComplete)
+    {
+        if (onComplete == null)
+            yield break;
+
+        var auth = FirebaseAuth.DefaultInstance;
+        var user = auth != null ? auth.CurrentUser : null;
+        if (user == null)
+        {
+            onComplete(false, "NotLoggedIn");
+            yield break;
+        }
+
+        if (string.IsNullOrEmpty(nickname))
+        {
+            onComplete(false, "InvalidNickname");
+            yield break;
+        }
+
+        var firestore = FirebaseFirestore.DefaultInstance;
+        var updates = new Dictionary<string, object>
+        {
+            { "nickname", nickname },
+            { "nicknameLower", nickname.ToLowerInvariant() },
+            { "updatedAt", FieldValue.ServerTimestamp }
+        };
+
+        var docRef = firestore.Collection(BackendGameData.TableName).Document(user.UserId);
+        var task = docRef.SetAsync(updates, SetOptions.MergeAll);
+        yield return new WaitUntil(() => task.IsCompleted);
+
+        if (task.Exception != null)
+        {
+            Debug.LogError("Nickname update failed: " + task.Exception.GetBaseException().Message);
+            onComplete(false, IsOfflineError(task.Exception) ? "Offline" : "UpdateFailed");
+            yield break;
+        }
+
+        var profileTask = user.UpdateUserProfileAsync(new UserProfile { DisplayName = nickname });
+        yield return new WaitUntil(() => profileTask.IsCompleted);
+
+        Debug.Log("Nickname update success.");
+        onComplete(true, string.Empty);
+    }
+
+    public IEnumerator CheckNickname(string nickname, Action<bool, string> onComplete)
+    {
+        if (onComplete == null)
+            yield break;
+
+        var auth = FirebaseAuth.DefaultInstance;
+        var user = auth != null ? auth.CurrentUser : null;
+        if (user == null)
+        {
+            onComplete(false, "NotLoggedIn");
+            yield break;
+        }
+
+        string trimmed = string.IsNullOrEmpty(nickname) ? string.Empty : nickname.Trim();
+        if (string.IsNullOrEmpty(trimmed))
+        {
+            onComplete(false, "InvalidNickname");
+            yield break;
+        }
+
+        var firestore = FirebaseFirestore.DefaultInstance;
+        var query = firestore.Collection(BackendGameData.TableName)
+            .WhereEqualTo("nicknameLower", trimmed.ToLowerInvariant())
+            .Limit(1);
+
+        var task = query.GetSnapshotAsync();
+        yield return new WaitUntil(() => task.IsCompleted);
+
+        if (task.Exception != null)
+        {
+            Debug.LogWarning("Nickname check failed: " + task.Exception.GetBaseException().Message);
+            onComplete(false, IsOfflineError(task.Exception) ? "Offline" : "CheckFailed");
+            yield break;
+        }
+
+        var snapshot = task.Result;
+        if (snapshot == null || snapshot.Count == 0)
+        {
+            onComplete(true, string.Empty);
+            yield break;
+        }
+
+        foreach (var doc in snapshot.Documents)
+        {
+            if (doc.Id != user.UserId)
+            {
+                onComplete(false, "DuplicateNickname");
+                yield break;
+            }
+        }
+
+        onComplete(true, string.Empty);
+    }
+
+    public IEnumerator TryGetNickname(Action<bool, string> onComplete)
+    {
+        if (onComplete == null)
+            yield break;
+
+        var auth = FirebaseAuth.DefaultInstance;
+        var user = auth != null ? auth.CurrentUser : null;
+        if (user == null)
+        {
+            onComplete(false, string.Empty);
+            yield break;
+        }
+
+        var firestore = FirebaseFirestore.DefaultInstance;
+        var docRef = firestore.Collection(BackendGameData.TableName).Document(user.UserId);
+
+        var task = docRef.GetSnapshotAsync();
+        yield return new WaitUntil(() => task.IsCompleted);
+
+        if (task.Exception != null)
+        {
+            Debug.LogWarning("Get nickname failed: " + task.Exception.GetBaseException().Message);
+            onComplete(false, string.Empty);
+            yield break;
+        }
+
+        var snapshot = task.Result;
+        if (snapshot != null && snapshot.Exists && snapshot.ContainsField("nickname"))
+        {
+            string nickname = snapshot.GetValue<string>("nickname");
+            if (!string.IsNullOrEmpty(nickname))
+            {
+                onComplete(true, nickname);
+                yield break;
+            }
+        }
+
+        onComplete(false, string.Empty);
     }
 }

@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "282745606063",
+    "project_id": "rolling-snow-c6ee7",
+    "storage_bucket": "rolling-snow-c6ee7.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:282745606063:android:d4c1bf8ce7200a0172a95a",
+        "android_client_info": {
+          "package_name": "com.BeoMeoStudio.RollingSnow"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBa-7zYk9gQAtAIGjFWHtt9m70J4axevfE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      },
+      "admob_app_id": "ca-app-pub-8502618733998421~6880698492"
+    }
+  ],
+  "configuration_version": "1"
+}

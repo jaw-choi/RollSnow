@@ -24,6 +24,7 @@ public class NicknamePanelUI : MonoBehaviour
     [SerializeField] private int maxLength = 12;
     [SerializeField] private string invalidMessage = "Nickname must be 2-12 characters.";
     [SerializeField] private string duplicateMessage = "Nickname already in use.";
+    [SerializeField] private string offlineMessage = "Network unavailable. Try again.";
     [SerializeField] private string genericErrorMessage = "Nickname update failed.";
 
     NicknameMode currentMode = NicknameMode.FirstSetup;
@@ -33,6 +34,9 @@ public class NicknamePanelUI : MonoBehaviour
     {
         if (panelRoot == null)
             panelRoot = gameObject;
+
+        if (confirmButton == null)
+            Debug.LogWarning("[NicknamePanelUI] confirmButton is not assigned.");
 
         HookButtons(true);
         if (hideOnStart)
@@ -132,10 +136,12 @@ public class NicknamePanelUI : MonoBehaviour
 
     void OnConfirmClicked()
     {
+        Debug.Log("[NicknamePanelUI] Confirm clicked.");
         if (isBusy)
             return;
 
         string nickname = nicknameInput != null ? nicknameInput.text.Trim() : string.Empty;
+        Debug.Log($"[NicknamePanelUI] Input nickname='{nickname}'");
         if (!IsValid(nickname))
         {
             ShowError(invalidMessage);
@@ -157,6 +163,7 @@ public class NicknamePanelUI : MonoBehaviour
 
     void OnNicknameUpdateResult(bool success, string reason)
     {
+        Debug.Log($"[NicknamePanelUI] Update result. success={success}, reason={reason}");
         isBusy = false;
         if (confirmButton != null)
             confirmButton.interactable = true;
@@ -171,6 +178,8 @@ public class NicknamePanelUI : MonoBehaviour
             ShowError(duplicateMessage);
         else if (reason == "InvalidNickname")
             ShowError(invalidMessage);
+        else if (reason == "Offline" || reason == "CheckFailed")
+            ShowError(offlineMessage);
         else
             ShowError(genericErrorMessage);
     }
@@ -192,6 +201,7 @@ public class NicknamePanelUI : MonoBehaviour
 
     void ShowError(string message)
     {
+        Debug.LogWarning("[NicknamePanelUI] " + message);
         if (errorLabel != null)
             errorLabel.text = message;
     }

@@ -1,13 +1,16 @@
 ﻿using GoogleMobileAds.Api;
 using UnityEngine;
 using System;
+using UnityEngine.Serialization;
 
 public class RewardedAdManager : MonoBehaviour
 {
     public static RewardedAdManager Instance { get; private set; }
 
     //[SerializeField] private string adUnitId = "ca-app-pub-3940256099942544/5224354917"; // test id
-    [SerializeField] private string adUnitId = "ca-app-pub-8502618733998421/2441408968"; // my id
+    [FormerlySerializedAs("adUnitId")]
+    [SerializeField] private string androidAdUnitId = "ca-app-pub-8502618733998421/2441408968";
+    [SerializeField] private string iosAdUnitId = "ca-app-pub-8502618733998421/2766319319";
 
     [SerializeField] private bool persistBetweenScenes = true;
     private RewardedAd rewardedAd;
@@ -40,6 +43,13 @@ public class RewardedAdManager : MonoBehaviour
 
     void LoadRewardedAd()
     {
+        string adUnitId = GetRewardedAdUnitId();
+        if (string.IsNullOrEmpty(adUnitId))
+        {
+            Debug.LogError("Rewarded ad unit id is empty.");
+            return;
+        }
+
         var request = new AdRequest();
 
         RewardedAd.Load(adUnitId, request, (RewardedAd ad, LoadAdError error) =>
@@ -67,6 +77,15 @@ public class RewardedAdManager : MonoBehaviour
                 LoadRewardedAd();
             };
         });
+    }
+
+    string GetRewardedAdUnitId()
+    {
+#if UNITY_IOS
+        return !string.IsNullOrEmpty(iosAdUnitId) ? iosAdUnitId : androidAdUnitId;
+#else
+        return androidAdUnitId;
+#endif
     }
 
     public bool IsReady() => rewardedAd != null && rewardedAd.CanShowAd();

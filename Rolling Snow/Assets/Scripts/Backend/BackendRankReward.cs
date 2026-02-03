@@ -1,9 +1,8 @@
-using UnityEngine;
-using LitJson;
+﻿using UnityEngine;
 using System;
-
-// Backend SDK namespace
-using BackEnd;
+using System.Collections;
+using System.Collections.Generic;
+using Firebase.Functions;
 
 public class BackendRankReward
 {
@@ -31,13 +30,14 @@ public class BackendRankReward
     }
 
     public string FunctionName { get; set; } = DefaultFunctionName;
-    // Function signature key required by BackEnd cloud functions
-    // Use BackendManager.FunctionSignatureKey or set this directly
     public string FunctionKey { get; set; } = string.Empty;
 
-    public bool TryGetStatus(out RewardStatus status)
+    public IEnumerator TryGetStatus(Action<bool, RewardStatus> onComplete)
     {
-        status = new RewardStatus
+        if (onComplete == null)
+            yield break;
+
+        RewardStatus status = new RewardStatus
         {
             IsSuccess = false,
             IsClaimable = false,
@@ -49,170 +49,61 @@ public class BackendRankReward
             RemainingSeconds = 0
         };
 
-        var bro = InvokeFunction("status");
-        if (bro == null)
+        var functions = GetFunctions();
+        if (functions == null)
         {
-            Debug.LogError("Rank reward status failed: no response (bro == null)");
-            status.Message = "NoResponse";
-            return false;
+            status.Message = "FunctionsUnavailable";
+            onComplete(false, status);
+            yield break;
         }
 
-        if (!bro.IsSuccess())
+        var data = new Dictionary<string, object>
         {
-            Debug.LogError("Rank reward status failed: " + bro.GetMessage());
-            try
-            {
-                var dbgJson = bro.GetReturnValuetoJSON();
-                Debug.LogError("BRO Return JSON: " + (dbgJson != null ? dbgJson.ToJson() : "null"));
-            }
-            catch { }
-            status.Message = bro.GetMessage();
-            return false;
+            { "action", "status" },
+            { "leaderboardId", BackendRank.Instance.RankUuid },
+            { "dateKey", GetDateKey() }
+        };
+
+        if (!string.IsNullOrEmpty(FunctionKey))
+            data["functionSignatureKey"] = FunctionKey;
+
+        var task = functions.GetHttpsCallable(FunctionName).CallAsync(data);
+        yield return new WaitUntil(() => task.IsCompleted);
+
+        if (task.Exception != null)
+        {
+            Debug.LogError("Rank reward status failed: " + task.Exception.GetBaseException().Message);
+            status.Message = "FunctionError";
+            onComplete(false, status);
+            yield break;
         }
 
-        var data = GetRootObject(bro.GetReturnValuetoJSON());
+        var root = GetRootData(task.Result != null ? task.Result.Data : null);
+        status.IsClaimable = ReadBool(root, "claimable", "isClaimable", "available");
+        status.IsClaimed = ReadBool(root, "claimed", "isClaimed");
+        status.RewardGold = ReadInt(root, "rewardGold", "gold");
+        status.WinnerNickname = ReadString(root, "winnerNickname", "winner", "nickname");
+        status.RewardDate = ReadString(root, "rewardDate", "date");
+        status.RemainingSeconds = ReadInt(root, "remainingSeconds", "remaining", "timeRemaining");
+        status.Message = ReadString(root, "message", "msg");
 
-        // 디버그: 서버로부터 받은 JSON 전체 출력 (문자열)
-        try
-        {
-            var dbg = bro.GetReturnValuetoJSON();
-            Debug.Log("Server response JSON: " + (dbg != null ? dbg.ToJson() : "null"));
-        }
-        catch
-        {
-            Debug.Log("Server response JSON: (could not stringify)");
-        }
-        
-        status.IsClaimable = ReadBool(data, "claimable", "isClaimable", "available");
-        status.IsClaimed = ReadBool(data, "claimed", "isClaimed");
-        status.RewardGold = ReadInt(data, "rewardGold", "gold");
-        status.WinnerNickname = ReadString(data, "winnerNickname", "winner", "nickname");
-        status.RewardDate = ReadString(data, "rewardDate", "date");
-        status.RemainingSeconds = ReadInt(data, "remainingSeconds", "remaining", "timeRemaining");
-
-        // 디버그: 파싱된 RemainingSeconds 출력
-        Debug.Log($"Parsed RemainingSeconds: {status.RemainingSeconds}");
-        
-        // If server didn't return remainingSeconds, try to calculate from nextResetTime
         if (status.RemainingSeconds <= 0)
         {
-            string nextResetTimeStr = ReadString(data, "nextResetTime", "resetTime", "timeUntilReset");
+            string nextResetTimeStr = ReadString(root, "nextResetTime", "resetTime", "timeUntilReset");
             if (!string.IsNullOrEmpty(nextResetTimeStr))
-            {
                 status.RemainingSeconds = CalculateRemainingSecondsFromTime(nextResetTimeStr);
-                Debug.Log($"Calculated RemainingSeconds from nextResetTime: {status.RemainingSeconds}");
-            }
         }
-        
-        status.Message = ReadString(data, "message", "msg");
+
         status.IsSuccess = true;
-
-        // 디버그: 전체 status 정보 로깅
-        Debug.Log($"=== FULL REWARD STATUS ===");
-        Debug.Log($"IsSuccess: {status.IsSuccess}");
-        Debug.Log($"IsClaimable: {status.IsClaimable}");
-        Debug.Log($"IsClaimed: {status.IsClaimed}");
-        Debug.Log($"RewardGold: {status.RewardGold}");
-        Debug.Log($"WinnerNickname: {status.WinnerNickname}");
-        Debug.Log($"RewardDate: {status.RewardDate}");
-        Debug.Log($"RemainingSeconds: {status.RemainingSeconds}");
-        Debug.Log($"Message: {status.Message}");
-        Debug.Log($"========================");
-
-        return true;
+        onComplete(true, status);
     }
 
-    // Try to get the server time and calculate remaining seconds until a target time
-    public int CalculateRemainingSecondsFromTime(string targetTimeStr)
+    public IEnumerator TryClaim(Action<bool, ClaimResult> onComplete)
     {
-        try
-        {
-            // Get current server time
-            var serverTimeBro = Backend.Utils.GetServerTime();
-            if (serverTimeBro == null || !serverTimeBro.IsSuccess())
-            {
-                Debug.LogWarning("Failed to get server time: " + (serverTimeBro != null ? serverTimeBro.GetMessage() : "null"));
-                return 0;
-            }
+        if (onComplete == null)
+            yield break;
 
-            var serverTimeJson = serverTimeBro.GetReturnValuetoJSON();
-            string serverTimeStr = ReadString(serverTimeJson, "utcTime");
-            
-            if (string.IsNullOrEmpty(serverTimeStr) || string.IsNullOrEmpty(targetTimeStr))
-            {
-                Debug.LogWarning($"Invalid time strings: serverTime={serverTimeStr}, targetTime={targetTimeStr}");
-                return 0;
-            }
-
-            DateTime serverTime = DateTime.Parse(serverTimeStr);
-            DateTime targetTime = DateTime.Parse(targetTimeStr);
-
-            TimeSpan remaining = targetTime - serverTime;
-            int remainingSeconds = Mathf.Max(0, (int)remaining.TotalSeconds);
-
-            Debug.Log($"Server time: {serverTime:u}, Target time: {targetTime:u}, Remaining: {remainingSeconds}s");
-            return remainingSeconds;
-        }
-        catch (System.Exception ex)
-        {
-            Debug.LogError("CalculateRemainingSecondsFromTime error: " + ex.Message);
-            return 0;
-        }
-    }
-
-    // Calculate remaining seconds until 15:47 (3:47 PM) Korea time (UTC+9)
-    public int GetRemainingSecondsUntil3_47PM()
-    {
-        try
-        {
-            // Get current server time (UTC)
-            var serverTimeBro = Backend.Utils.GetServerTime();
-            if (serverTimeBro == null || !serverTimeBro.IsSuccess())
-            {
-                Debug.LogWarning("Failed to get server time for 3:47 PM calculation");
-                return 0;
-            }
-
-            var serverTimeJson = serverTimeBro.GetReturnValuetoJSON();
-            string serverTimeStr = ReadString(serverTimeJson, "utcTime");
-            
-            if (string.IsNullOrEmpty(serverTimeStr))
-            {
-                Debug.LogWarning("Invalid server time string");
-                return 0;
-            }
-
-            DateTime utcNow = DateTime.Parse(serverTimeStr);
-            
-            // Convert to Korea time (UTC+9)
-            TimeZoneInfo koreaTimeZone = TimeZoneInfo.FindSystemTimeZoneById("Korea Standard Time");
-            DateTime koreaNow = TimeZoneInfo.ConvertTime(utcNow, koreaTimeZone);
-            
-            // Calculate next 15:47 (3:47 PM) in Korea time
-            DateTime next3_47PM = koreaNow.Date.AddHours(15).AddMinutes(47);
-            
-            // If current time is already past 15:47, set target to tomorrow's 15:47
-            if (koreaNow >= next3_47PM)
-            {
-                next3_47PM = next3_47PM.AddDays(1);
-            }
-
-            TimeSpan remaining = next3_47PM - koreaNow;
-            int remainingSeconds = Mathf.Max(0, (int)remaining.TotalSeconds);
-
-            Debug.Log($"Korea time: {koreaNow:u}, Next 15:47: {next3_47PM:u}, Remaining: {remainingSeconds}s");
-            return remainingSeconds;
-        }
-        catch (System.Exception ex)
-        {
-            Debug.LogError("GetRemainingSecondsUntil3_47PM error: " + ex.Message);
-            return 0;
-        }
-    }
-
-    public bool TryClaim(out ClaimResult result)
-    {
-        result = new ClaimResult
+        ClaimResult result = new ClaimResult
         {
             IsSuccess = false,
             RewardGold = 0,
@@ -221,75 +112,132 @@ public class BackendRankReward
             Message = string.Empty
         };
 
-        var bro = InvokeFunction("claim");
-        if (bro == null)
+        var functions = GetFunctions();
+        if (functions == null)
         {
-            Debug.LogError("Rank reward claim failed: no response (bro == null)");
-            result.Message = "NoResponse";
-            return false;
+            result.Message = "FunctionsUnavailable";
+            onComplete(false, result);
+            yield break;
         }
 
-        if (!bro.IsSuccess())
+        var data = new Dictionary<string, object>
         {
-            Debug.LogError("Rank reward claim failed: " + bro.GetMessage());
-            try
-            {
-                var dbgJson = bro.GetReturnValuetoJSON();
-                Debug.LogError("BRO Return JSON: " + (dbgJson != null ? dbgJson.ToJson() : "null"));
-            }
-            catch { }
-            result.Message = bro.GetMessage();
-            return false;
-        }
+            { "action", "claim" },
+            { "leaderboardId", BackendRank.Instance.RankUuid },
+            { "dateKey", GetDateKey() }
+        };
 
-        var data = GetRootObject(bro.GetReturnValuetoJSON());
-        result.RewardGold = ReadInt(data, "rewardGold", "gold");
-        result.WinnerNickname = ReadString(data, "winnerNickname", "winner", "nickname");
-        result.RewardDate = ReadString(data, "rewardDate", "date");
-        result.Message = ReadString(data, "message", "msg");
-        result.IsSuccess = true;
-        return true;
-    }
-
-    BackendReturnObject InvokeFunction(string action)
-    {
-        var param = new Param();
-        param.Add("action", action);
-        param.Add("rankUuid", BackendRank.Instance.RankUuid);
-        
-        // 디버그: FunctionKey 확인
-        Debug.Log($"InvokeFunction - FunctionName: {FunctionName}, FunctionKey: {(string.IsNullOrEmpty(FunctionKey) ? "EMPTY" : FunctionKey)}");
-        
-        // Add signature key to param if available
         if (!string.IsNullOrEmpty(FunctionKey))
+            data["functionSignatureKey"] = FunctionKey;
+
+        var task = functions.GetHttpsCallable(FunctionName).CallAsync(data);
+        yield return new WaitUntil(() => task.IsCompleted);
+
+        if (task.Exception != null)
         {
-            param.Add("functionSignatureKey", FunctionKey);
-            Debug.Log($"Added functionSignatureKey to param: {FunctionKey}");
-        }
-        else
-        {
-            Debug.LogWarning("FunctionKey is empty! Cloud function call may fail.");
+            Debug.LogError("Rank reward claim failed: " + task.Exception.GetBaseException().Message);
+            result.Message = "FunctionError";
+            onComplete(false, result);
+            yield break;
         }
 
-        var bro = Backend.BFunc.InvokeFunction(FunctionName, param);
-        return bro;
+        var root = GetRootData(task.Result != null ? task.Result.Data : null);
+        result.RewardGold = ReadInt(root, "rewardGold", "gold");
+        result.WinnerNickname = ReadString(root, "winnerNickname", "winner", "nickname");
+        result.RewardDate = ReadString(root, "rewardDate", "date");
+        result.Message = ReadString(root, "message", "msg");
+        result.IsSuccess = true;
+
+        onComplete(true, result);
     }
 
-    static JsonData GetRootObject(JsonData data)
+    public int CalculateRemainingSecondsFromTime(string targetTimeStr)
     {
-        if (data == null)
-            return null;
+        try
+        {
+            if (string.IsNullOrEmpty(targetTimeStr))
+                return 0;
 
-        if (data.IsObject)
-            return data;
+            if (!DateTime.TryParse(targetTimeStr, out DateTime targetTime))
+                return 0;
 
-        if (data.IsArray && data.Count > 0)
-            return data[0];
+            DateTime now = DateTime.UtcNow;
+            if (targetTime.Kind == DateTimeKind.Local)
+                now = DateTime.Now;
 
-        return data;
+            TimeSpan remaining = targetTime - now;
+            return Mathf.Max(0, (int)remaining.TotalSeconds);
+        }
+        catch (Exception ex)
+        {
+            Debug.LogError("CalculateRemainingSecondsFromTime error: " + ex.Message);
+            return 0;
+        }
     }
 
-    static bool ReadBool(JsonData data, params string[] keys)
+    public int GetRemainingSecondsUntil3_47PM()
+    {
+        try
+        {
+            DateTime utcNow = DateTime.UtcNow;
+            DateTime koreaNow = ToKoreaTime(utcNow);
+            DateTime next3_47PM = koreaNow.Date.AddHours(15).AddMinutes(47);
+
+            if (koreaNow >= next3_47PM)
+                next3_47PM = next3_47PM.AddDays(1);
+
+            TimeSpan remaining = next3_47PM - koreaNow;
+            return Mathf.Max(0, (int)remaining.TotalSeconds);
+        }
+        catch (Exception ex)
+        {
+            Debug.LogError("GetRemainingSecondsUntil3_47PM error: " + ex.Message);
+            return 0;
+        }
+    }
+
+    static DateTime ToKoreaTime(DateTime utcNow)
+    {
+        try
+        {
+            var tz = TimeZoneInfo.FindSystemTimeZoneById("Korea Standard Time");
+            return TimeZoneInfo.ConvertTimeFromUtc(utcNow, tz);
+        }
+        catch
+        {
+            return utcNow.AddHours(9);
+        }
+    }
+
+    static string GetDateKey()
+    {
+        DateTime kst = ToKoreaTime(DateTime.UtcNow);
+        return kst.ToString("yyyyMMdd");
+    }
+
+    static FirebaseFunctions GetFunctions()
+    {
+        var manager = BackendManager.Instance;
+        if (manager != null && manager.IsInitialized)
+            return manager.Functions;
+
+        return null;
+    }
+
+    static IDictionary<string, object> GetRootData(object data)
+    {
+        if (data is IDictionary<string, object> dict)
+        {
+            if (dict.TryGetValue("data", out object nested) && nested is IDictionary<string, object> nestedDict)
+                return nestedDict;
+
+            return dict;
+        }
+
+        return new Dictionary<string, object>();
+    }
+
+    static bool ReadBool(IDictionary<string, object> data, params string[] keys)
     {
         if (data == null || keys == null)
             return false;
@@ -303,39 +251,31 @@ public class BackendRankReward
         return false;
     }
 
-    static bool TryReadBool(JsonData data, string key, out bool value)
+    static bool TryReadBool(IDictionary<string, object> data, string key, out bool value)
     {
         value = false;
         if (data == null || string.IsNullOrEmpty(key))
             return false;
 
-        try
-        {
-            var raw = data[key];
-            if (raw == null)
-                return false;
-
-            if (raw.IsBoolean)
-            {
-                value = (bool)raw;
-                return true;
-            }
-
-            if (bool.TryParse(raw.ToString(), out bool parsed))
-            {
-                value = parsed;
-                return true;
-            }
-        }
-        catch
-        {
+        if (!data.TryGetValue(key, out object raw) || raw == null)
             return false;
+
+        if (raw is bool b)
+        {
+            value = b;
+            return true;
+        }
+
+        if (bool.TryParse(raw.ToString(), out bool parsed))
+        {
+            value = parsed;
+            return true;
         }
 
         return false;
     }
 
-    static int ReadInt(JsonData data, params string[] keys)
+    static int ReadInt(IDictionary<string, object> data, params string[] keys)
     {
         if (data == null || keys == null)
             return 0;
@@ -349,27 +289,43 @@ public class BackendRankReward
         return 0;
     }
 
-    static bool TryReadInt(JsonData data, string key, out int value)
+    static bool TryReadInt(IDictionary<string, object> data, string key, out int value)
     {
         value = 0;
         if (data == null || string.IsNullOrEmpty(key))
             return false;
 
-        try
-        {
-            var raw = data[key];
-            if (raw == null)
-                return false;
-
-            return int.TryParse(raw.ToString(), out value);
-        }
-        catch
-        {
+        if (!data.TryGetValue(key, out object raw) || raw == null)
             return false;
+
+        if (raw is long l)
+        {
+            value = (int)l;
+            return true;
         }
+
+        if (raw is int i)
+        {
+            value = i;
+            return true;
+        }
+
+        if (raw is double d)
+        {
+            value = Mathf.RoundToInt((float)d);
+            return true;
+        }
+
+        if (int.TryParse(raw.ToString(), out int parsed))
+        {
+            value = parsed;
+            return true;
+        }
+
+        return false;
     }
 
-    static string ReadString(JsonData data, params string[] keys)
+    static string ReadString(IDictionary<string, object> data, params string[] keys)
     {
         if (data == null || keys == null)
             return string.Empty;
@@ -384,19 +340,14 @@ public class BackendRankReward
         return string.Empty;
     }
 
-    static string ReadString(JsonData data, string key)
+    static string ReadString(IDictionary<string, object> data, string key)
     {
         if (data == null || string.IsNullOrEmpty(key))
             return string.Empty;
 
-        try
-        {
-            var raw = data[key];
-            return raw != null ? raw.ToString() : string.Empty;
-        }
-        catch
-        {
+        if (!data.TryGetValue(key, out object raw) || raw == null)
             return string.Empty;
-        }
+
+        return raw.ToString();
     }
 }
