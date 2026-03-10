@@ -40,14 +40,14 @@ ScriptedImporter:
   spriteData:
     TessellationDetail: 0
     SpriteName: "\uB208\uB369\uC7742Sprite"
-    SpritePivot: {x: 0.5005589, y: 0.5004804}
+    SpritePivot: {x: 0.5, y: 0.5}
     SpriteAlignment: 0
     SpriteBorder: {x: 0, y: 0, z: 0, w: 0}
     SpriteRect:
       serializedVersion: 2
       x: 0
       y: 0
-      width: 331
-      height: 333
+      width: 331.37
+      height: 333.31995
     SpriteID: 5db27c6c60ad24c4491cebe1ba7d9306
     PhysicsOutlines: []
