@@ -635,11 +635,15 @@ PrefabInstance:
     - target: {fileID: 211315160269013177, guid: 39ef43164a793b8408ea8d63f70f1724, type: 3}
       propertyPath: m_Sprite
       value: 
-      objectReference: {fileID: 3298942458128108343, guid: 20c711f8251c0984eba334003c04e760, type: 3}
+      objectReference: {fileID: 7196497775315620220, guid: df4a88331095f7d4883143631cc10112, type: 3}
     - target: {fileID: 1233550927355124118, guid: 39ef43164a793b8408ea8d63f70f1724, type: 3}
       propertyPath: m_AnchorMax.y
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 1541819623452571913, guid: 39ef43164a793b8408ea8d63f70f1724, type: 3}
+      propertyPath: m_Sprite
+      value: 
+      objectReference: {fileID: -5019224332741853369, guid: df4a88331095f7d4883143631cc10112, type: 3}
     - target: {fileID: 1681238216864477617, guid: 39ef43164a793b8408ea8d63f70f1724, type: 3}
       propertyPath: m_AnchorMax.y
       value: 0
@@ -647,7 +651,7 @@ PrefabInstance:
     - target: {fileID: 2105472373306262614, guid: 39ef43164a793b8408ea8d63f70f1724, type: 3}
       propertyPath: m_Sprite
       value: 
-      objectReference: {fileID: -6663762465577788357, guid: 20c711f8251c0984eba334003c04e760, type: 3}
+      objectReference: {fileID: 6742200372594925331, guid: df4a88331095f7d4883143631cc10112, type: 3}
     - target: {fileID: 2603245524135836013, guid: 39ef43164a793b8408ea8d63f70f1724, type: 3}
       propertyPath: m_Name
       value: SettingsPage
@@ -659,7 +663,7 @@ PrefabInstance:
     - target: {fileID: 2891669166837736582, guid: 39ef43164a793b8408ea8d63f70f1724, type: 3}
       propertyPath: m_Sprite
       value: 
-      objectReference: {fileID: 7576656404054081328, guid: 20c711f8251c0984eba334003c04e760, type: 3}
+      objectReference: {fileID: 8708145317444225546, guid: df4a88331095f7d4883143631cc10112, type: 3}
     - target: {fileID: 3084683090529676130, guid: 39ef43164a793b8408ea8d63f70f1724, type: 3}
       propertyPath: m_Name
       value: Language Text
@@ -680,10 +684,14 @@ PrefabInstance:
       propertyPath: m_Sprite
       value: 
       objectReference: {fileID: -6502852923442055395, guid: 5f929fbd31926b24fa1e8312030e80ff, type: 3}
+    - target: {fileID: 5155082898854995542, guid: 39ef43164a793b8408ea8d63f70f1724, type: 3}
+      propertyPath: m_Sprite
+      value: 
+      objectReference: {fileID: -5019224332741853369, guid: df4a88331095f7d4883143631cc10112, type: 3}
     - target: {fileID: 5280674568371474135, guid: 39ef43164a793b8408ea8d63f70f1724, type: 3}
       propertyPath: m_Sprite
       value: 
-      objectReference: {fileID: -5386780695883379965, guid: 20c711f8251c0984eba334003c04e760, type: 3}
+      objectReference: {fileID: 241542269544027513, guid: df4a88331095f7d4883143631cc10112, type: 3}
     - target: {fileID: 5859938779272558552, guid: 39ef43164a793b8408ea8d63f70f1724, type: 3}
       propertyPath: m_AnchorMax.y
       value: 0
@@ -841,7 +849,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: 7450580357b315c49be8857a150212fe, type: 3}
+  m_Sprite: {fileID: 21300000, guid: e03682a6ef58ef643a1eabee1547e0c7, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1

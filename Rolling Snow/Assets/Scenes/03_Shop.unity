@@ -7307,7 +7307,7 @@ PrefabInstance:
     - target: {fileID: 5769449380147567217, guid: 84c8521f06bcafb4986633759ee2cd67, type: 3}
       propertyPath: m_Sprite
       value: 
-      objectReference: {fileID: 21300000, guid: 7450580357b315c49be8857a150212fe, type: 3}
+      objectReference: {fileID: 21300000, guid: e03682a6ef58ef643a1eabee1547e0c7, type: 3}
     - target: {fileID: 6423884082594472954, guid: 84c8521f06bcafb4986633759ee2cd67, type: 3}
       propertyPath: m_fontAsset
       value: 
