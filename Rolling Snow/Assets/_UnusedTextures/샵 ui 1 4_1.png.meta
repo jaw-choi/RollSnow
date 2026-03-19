@@ -1,10 +1,16 @@
 fileFormatVersion: 2
-guid: e17b298ec0679b14095046303bb652f9
+guid: cc2ee32f76cb2ce43bf8927ee32dde01
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: 7608455624420152043
-    second: "\u1109\u1165\u11AF\u110C\u1165\u11BC ui 14_0"
+      213: 7798454337395778408
+    second: "\u1109\u1163\u11B8 ui 1 4_0"
+  - first:
+      213: 6221496591171369899
+    second: "\u1109\u1163\u11B8 ui 1 4_1"
+  - first:
+      213: -1060586379631928352
+    second: "\u1109\u1163\u11B8 ui 1 4_2"
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -109,17 +115,30 @@ TextureImporter:
     ignorePlatformSupport: 0
     androidETC2FallbackOverride: 0
     forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: WebGL
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
   spriteSheet:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: "\u1109\u1165\u11AF\u110C\u1165\u11BC ui 14_0"
+      name: "\u1109\u1163\u11B8 ui 1 4_0"
       rect:
         serializedVersion: 2
         x: 0
-        y: 0
-        width: 284
-        height: 74
+        y: 1391
+        width: 1080
+        height: 529
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -128,8 +147,52 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: be2d2ee341aa69960800000000000000
-      internalID: 7608455624420152043
+      spriteID: 8636491e6eca93c60800000000000000
+      internalID: 7798454337395778408
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: "\u1109\u1163\u11B8 ui 1 4_1"
+      rect:
+        serializedVersion: 2
+        x: 74
+        y: 441
+        width: 931
+        height: 941
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: babb210df22375650800000000000000
+      internalID: 6221496591171369899
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: "\u1109\u1163\u11B8 ui 1 4_2"
+      rect:
+        serializedVersion: 2
+        x: 74
+        y: 51
+        width: 931
+        height: 329
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0ebdb649e4a0841f0800000000000000
+      internalID: -1060586379631928352
       vertices: []
       indices: 
       edges: []
@@ -148,7 +211,9 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      "\u1109\u1165\u11AF\u110C\u1165\u11BC ui 14_0": 7608455624420152043
+      "\u1109\u1163\u11B8 ui 1 4_0": 7798454337395778408
+      "\u1109\u1163\u11B8 ui 1 4_1": 6221496591171369899
+      "\u1109\u1163\u11B8 ui 1 4_2": -1060586379631928352
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
